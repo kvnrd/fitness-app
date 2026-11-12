@@ -1,74 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { todayKey } from '../../components/WeekStrip';
-import { ProgressRing, SectionLabel, Text } from '../../components/ui';
+import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
-import { colors, radius, space } from '../../theme/tokens';
+import { colors, fonts, space } from '../../theme/tokens';
 
-function greeting(d = new Date()) {
-  const h = d.getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-function TodayCard({ day }: { day: DayKey }) {
+function Today({ day }: { day: DayKey }) {
   const { program } = useAppStore();
   const w = program.days[day];
   const { ratio, done, total } = useDayProgress(day);
-  return (
-    <Pressable
-      onPress={() => router.push(`/workout/${day}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${DAY_LABELS[day].long}: ${w.title}`}
-      style={({ pressed }) => [styles.today, pressed && { transform: [{ scale: 0.99 }] }]}
-    >
-      <LinearGradient
-        colors={['#1F2214', '#131315']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text variant="label" color={colors.accent}>
-          Today · {DAY_LABELS[day].long}
-        </Text>
-        <ProgressRing ratio={ratio} size={48}>
-          <Text variant="small" style={{ fontWeight: '700', fontSize: 12 }}>
-            {Math.round(ratio * 100)}%
-          </Text>
-        </ProgressRing>
-      </View>
-      <View style={{ gap: 6 }}>
-        <Text variant="hero">{w.title}</Text>
-        <Text variant="body" color={colors.textSecondary}>
-          {w.focus}
-        </Text>
-      </View>
-      <View style={styles.todayMeta}>
-        <Meta icon="time-outline" label={`${w.durationMin} min`} />
-        <Meta icon="list-outline" label={`${w.exercises.length} ${w.exercises.length === 1 ? 'exercise' : 'exercises'}`} />
-        {total > 0 ? <Meta icon="checkmark-done-outline" label={`${done}/${total} sets`} /> : null}
-      </View>
-      <View style={styles.cta}>
-        <Text variant="bodyStrong" color={colors.accentText}>
-          {ratio > 0 ? 'Continue workout' : w.rest ? 'View recovery' : 'Start workout'}
-        </Text>
-        <Ionicons name="arrow-forward" size={18} color={colors.accentText} />
-      </View>
-    </Pressable>
-  );
-}
+  const action = w.rest ? 'View recovery plan' : ratio >= 1 ? 'Review workout' : ratio > 0 ? 'Continue workout' : 'Start workout';
 
-function Meta({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <Ionicons name={icon} size={15} color={colors.textSecondary} />
-      <Text variant="small" color={colors.textSecondary}>
-        {label}
-      </Text>
+    <View style={{ gap: space.lg }}>
+      <View style={{ gap: space.xs }}>
+        <Text variant="stamp" accessibilityRole="header">
+          {DAY_LABELS[day].long}
+        </Text>
+        <Text variant="title">{w.title}</Text>
+        <Text variant="body" color={colors.textSecondary}>
+          {w.rest
+            ? 'Rest day. Walk and mobility only.'
+            : `${w.durationMin} min, ${plural(w.exercises.length, 'exercise')}${done > 0 ? `, ${done} of ${total} sets logged` : ''}`}
+        </Text>
+      </View>
+      <Button label={action} onPress={() => router.push(`/workout/${day}`)} />
+      {total > 0 ? <ProgressBar ratio={ratio} /> : null}
     </View>
   );
 }
@@ -82,31 +46,21 @@ function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
     <Pressable
       onPress={() => router.push(`/workout/${day}`)}
       accessibilityRole="button"
-      accessibilityLabel={`${DAY_LABELS[day].long}: ${w.title}`}
-      style={({ pressed }) => [styles.dayRow, isToday && styles.dayRowToday, pressed && { backgroundColor: colors.surfaceRaised }]}
+      accessibilityLabel={`${DAY_LABELS[day].long}${isToday ? ', today' : ''}: ${w.title}${complete ? ', completed' : ''}`}
+      style={({ pressed }) => [styles.dayRow, pressed && { backgroundColor: colors.surfaceSunken }]}
     >
-      <View style={styles.dayBadge}>
-        <Text variant="label" color={isToday ? colors.accent : colors.textMuted} style={{ letterSpacing: 0.8 }}>
-          {DAY_LABELS[day].short}
-        </Text>
+      <Text style={styles.dayName} color={isToday ? colors.text : colors.textMuted}>
+        {DAY_LABELS[day].short}
+      </Text>
+      <Text variant="bodyStrong" color={w.rest ? colors.textSecondary : colors.text} style={{ flex: 1 }} numberOfLines={1}>
+        {w.title}
+      </Text>
+      <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
+        {w.rest ? 'Rest' : `${w.durationMin} min`}
+      </Text>
+      <View style={[styles.status, complete && styles.statusDone, !complete && ratio > 0 && styles.statusPartial]}>
+        {complete ? <Ionicons name="checkmark" size={12} color={colors.accentText} /> : null}
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="bodyStrong" color={w.rest ? colors.textSecondary : colors.text}>
-          {w.title}
-        </Text>
-        <Text variant="small" color={colors.textMuted} numberOfLines={1}>
-          {w.rest ? 'Rest day' : `${w.durationMin} min · ${w.focus}`}
-        </Text>
-      </View>
-      {complete ? (
-        <View style={styles.doneBadge}>
-          <Ionicons name="checkmark" size={14} color={colors.accentText} />
-        </View>
-      ) : ratio > 0 ? (
-        <ProgressRing ratio={ratio} size={26} stroke={3} />
-      ) : (
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      )}
     </Pressable>
   );
 }
@@ -115,37 +69,35 @@ export default function TrainScreen() {
   const insets = useSafeAreaInsets();
   const { program } = useAppStore();
   const today = todayKey();
+  const initials = program.trainer.name
+    .split(' ')
+    .map((p) => p[0])
+    .join('');
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
     >
       <View style={styles.header}>
-        <View style={{ gap: 4, flex: 1 }}>
-          <Text variant="small" color={colors.textMuted}>
-            {greeting()}
-          </Text>
-          <Text variant="title">{program.trainer.programName}</Text>
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyStrong">{program.trainer.programName}</Text>
           <Text variant="small" color={colors.textSecondary}>
-            {program.weekLabel} · with {program.trainer.name}
+            {program.weekLabel} with <Text variant="small" color={colors.coach}>{program.trainer.name}</Text>
           </Text>
         </View>
-        <View style={styles.avatar}>
-          <Text variant="bodyStrong" color={colors.accent}>
-            {program.trainer.name
-              .split(' ')
-              .map((p) => p[0])
-              .join('')}
+        <View style={styles.avatar} accessibilityLabel={`Coach ${program.trainer.name}`}>
+          <Text variant="small" color={colors.coach} style={{ fontFamily: fonts.bodySemi }}>
+            {initials}
           </Text>
         </View>
       </View>
 
-      <TodayCard day={today} />
+      <Today day={today} />
 
       <View>
-        <SectionLabel>This week</SectionLabel>
-        <View style={{ gap: space.xs }}>
+        <SectionHeader title="This week" />
+        <View>
           {DAY_KEYS.map((d) => (
             <DayRow key={d} day={d} isToday={d === today} />
           ))}
@@ -156,61 +108,27 @@ export default function TrainScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.xl, maxWidth: 720, width: '100%', alignSelf: 'center' },
+  content: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.xxl, maxWidth: 640, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surfaceRaised,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.coach,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  today: {
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    padding: space.lg,
-    gap: space.lg,
-    borderWidth: 1,
-    borderColor: '#2A2F18',
-  },
-  todayMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
-  cta: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.pill,
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.xs,
   },
   dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    padding: space.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    paddingVertical: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
-  dayRowToday: { borderColor: colors.accent, borderWidth: 1 },
-  dayBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceSunken,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  dayName: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24, width: 44 },
+  status: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: colors.borderStrong, alignItems: 'center', justifyContent: 'center' },
+  statusPartial: { borderColor: colors.textSecondary },
+  statusDone: { backgroundColor: colors.text, borderColor: colors.text },
 });

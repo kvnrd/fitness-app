@@ -25,7 +25,7 @@ npm run typecheck
 
 ## Design
 
-The look is dark and restrained, with a single accent color. All colors, spacing, radii and type live in `src/theme/tokens.ts`. The accent is meant to become per-trainer later (white-label).
+The design direction is "Iron & Chalk": a true-black base, chalk white text, oxide for anything the coach says, and logged numbers set in Big Shoulders Display like stamped plates. The full rationale is in [docs/design.md](docs/design.md), and the tokens are in `src/theme/tokens.ts`.
 
 ## Next
 

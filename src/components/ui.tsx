@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { Pressable, PressableProps, StyleProp, StyleSheet, Text as RNText, TextProps, View, ViewStyle } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { colors, radius, space, type, TypeVariant } from '../theme/tokens';
+import { colors, fonts, radius, space, type, TypeVariant } from '../theme/tokens';
 
 export function Text({
   variant = 'body',
@@ -12,32 +11,31 @@ export function Text({
   return <RNText {...rest} style={[type[variant], { color }, style]} />;
 }
 
-export function Card({ children, style, raised }: { children: ReactNode; style?: StyleProp<ViewStyle>; raised?: boolean }) {
-  return <View style={[styles.card, raised && styles.cardRaised, style]}>{children}</View>;
-}
-
+/** The one primary action on a screen: chalk pill. Secondary actions are outlined. */
 export function Button({
   label,
   variant = 'primary',
   icon,
   style,
+  disabled,
   ...rest
-}: PressableProps & { label: string; variant?: 'primary' | 'secondary' | 'ghost'; icon?: ReactNode; style?: StyleProp<ViewStyle> }) {
-  const bg = variant === 'primary' ? colors.accent : variant === 'secondary' ? colors.surfaceRaised : 'transparent';
-  const fg = variant === 'primary' ? colors.accentText : colors.text;
+}: PressableProps & { label: string; variant?: 'primary' | 'secondary'; icon?: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const primary = variant === 'primary';
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
       {...rest}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: bg, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-        variant === 'secondary' && { borderWidth: 1, borderColor: colors.border },
+        primary && !disabled ? { backgroundColor: colors.accent } : { borderWidth: 1, borderColor: colors.borderStrong },
+        pressed && { opacity: 0.8 },
         style,
       ]}
     >
       {icon}
-      <Text variant="bodyStrong" color={fg}>
+      <Text variant="bodyStrong" color={disabled ? colors.textMuted : primary ? colors.accentText : colors.text}>
         {label}
       </Text>
     </Pressable>
@@ -51,72 +49,45 @@ export function Chip({ label, active, onPress }: { label: string; active?: boole
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={{ selected: active }}
-      style={[styles.chip, active && { backgroundColor: colors.accentSoft, borderColor: colors.accent }]}
+      style={[styles.chip, active && { backgroundColor: colors.text, borderColor: colors.text }]}
     >
-      <Text variant="small" color={active ? colors.accent : colors.textSecondary} style={{ fontWeight: '600' }}>
+      <Text variant="small" color={active ? colors.accentText : colors.textSecondary} style={{ fontFamily: fonts.bodyMedium }}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-export function ProgressRing({
-  size = 44,
-  stroke = 4,
-  ratio,
-  children,
-}: {
-  size?: number;
-  stroke?: number;
-  ratio: number;
-  children?: ReactNode;
-}) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
+/** Thin horizontal progress: chalk over knurl. */
+export function ProgressBar({ ratio, style }: { ratio: number; style?: StyleProp<ViewStyle> }) {
+  const r = Math.min(1, Math.max(0, ratio));
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.border} strokeWidth={stroke} fill="none" />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke={colors.accent}
-          strokeWidth={stroke}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${c} ${c}`}
-          strokeDashoffset={c * (1 - Math.min(1, Math.max(0, ratio)))}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-      {children}
+    <View
+      style={[styles.track, style]}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(r * 100) }}
+    >
+      <View style={[styles.fill, { width: `${r * 100}%` }]} />
     </View>
   );
 }
 
-export function SectionLabel({ children, right }: { children: string; right?: ReactNode }) {
+export function SectionHeader({ title, right }: { title: string; right?: ReactNode }) {
   return (
-    <View style={styles.sectionLabel}>
-      <Text variant="label" color={colors.textMuted}>
-        {children}
-      </Text>
+    <View style={styles.sectionHeader}>
+      <Text variant="title">{title}</Text>
       {right}
     </View>
   );
 }
 
+export function Rule({ style }: { style?: StyleProp<ViewStyle> }) {
+  return <View style={[{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }, style]} />;
+}
+
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    padding: space.md,
-  },
-  cardRaised: { backgroundColor: colors.surfaceRaised },
   button: {
-    minHeight: 52,
+    minHeight: 54,
     paddingHorizontal: space.lg,
     borderRadius: radius.pill,
     alignItems: 'center',
@@ -130,12 +101,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  sectionLabel: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space.sm,
-  },
+  track: { height: 3, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: colors.text },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm },
 });

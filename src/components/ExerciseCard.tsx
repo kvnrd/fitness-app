@@ -2,129 +2,135 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { DayKey, Exercise, LOG_FIELDS } from '../data/types';
+import { DayKey, Exercise, LOG_FIELDS, SetLog } from '../data/types';
 import { rowsFor, useAppStore } from '../state/AppStore';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, fonts, radius, space } from '../theme/tokens';
 import { Text } from './ui';
 
-function prevLabel(exercise: Exercise, prev?: Record<string, string | boolean | undefined>) {
-  if (!prev) return '—';
+function lastLabel(exercise: Exercise, prev?: SetLog) {
+  if (!prev) return '–';
   if (exercise.fields.includes('weight') && prev.weight && prev.reps) return `${prev.weight}×${prev.reps}`;
   const first = exercise.fields.find((f) => prev[f]);
-  return first ? String(prev[first]) : '—';
+  return first ? String(prev[first]) : '–';
 }
 
+/** One exercise as a ledger entry: name and target, coach's cue, then a row per set. */
 export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: Exercise; index: number }) {
   const { logs, previous, updateSet, toggleSetDone } = useAppStore();
   const [open, setOpen] = useState(index === 0);
   const rows = rowsFor(logs[day], exercise);
   const done = rows.filter((r) => r.done).length;
   const complete = done === exercise.sets;
-  // Many fields on a phone: drop the Last column (it still shows as the placeholder) and tighten type.
+  // Many fields on a phone: drop the Last column (it still shows as the placeholder).
   const compact = exercise.fields.length >= 3;
+  const unit = exercise.kind === 'cardio' ? (exercise.sets === 1 ? 'effort' : 'rounds') : 'sets';
 
   return (
-    <View style={[styles.card, complete && { borderColor: colors.accent }]}>
+    <View style={styles.entry}>
       <Pressable
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
+        accessibilityLabel={`${exercise.name}, ${done} of ${exercise.sets} ${unit} done`}
         style={styles.header}
       >
-        <View style={[styles.index, complete && { backgroundColor: colors.accent }]}>
-          {complete ? (
-            <Ionicons name="checkmark" size={16} color={colors.accentText} />
-          ) : (
-            <Text variant="small" color={colors.textSecondary} style={{ fontWeight: '700' }}>
-              {String(index + 1).padStart(2, '0')}
-            </Text>
-          )}
-        </View>
+        <Text style={styles.index} color={complete ? colors.text : colors.textMuted}>
+          {index + 1}
+        </Text>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="heading">{exercise.name}</Text>
+          <Text variant="heading" color={complete ? colors.textSecondary : colors.text}>
+            {exercise.name}
+          </Text>
           <Text variant="small" color={colors.textSecondary}>
-            {exercise.sets} {exercise.kind === 'cardio' ? (exercise.sets === 1 ? 'effort' : 'rounds') : 'sets'} · {exercise.target}
+            {exercise.sets} {unit}, {exercise.target}
           </Text>
         </View>
-        <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
-          {done}/{exercise.sets}
-        </Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
+        {complete ? (
+          <Ionicons name="checkmark-circle" size={22} color={colors.text} />
+        ) : (
+          <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
+            {done}/{exercise.sets}
+          </Text>
+        )}
       </Pressable>
 
       {open ? (
-        <View style={{ gap: space.md }}>
-          <Text variant="small" color={colors.textSecondary}>
-            {exercise.description}
-          </Text>
+        <View style={[styles.body, compact && { paddingLeft: 0 }]}>
+          {exercise.description ? (
+            <Text variant="small" color={colors.coach} style={{ maxWidth: 560 }}>
+              {exercise.description}
+            </Text>
+          ) : null}
 
-          <View style={styles.table}>
+          <View style={{ gap: 4 }}>
             <View style={styles.row}>
               <Text variant="label" color={colors.textMuted} style={styles.colSet}>
                 Set
               </Text>
               {compact ? null : (
-                <Text variant="label" color={colors.textMuted} style={styles.colPrev}>
+                <Text variant="label" color={colors.textMuted} style={styles.colLast}>
                   Last
                 </Text>
               )}
               {exercise.fields.map((f) => (
-                <Text key={f} variant="label" color={colors.textMuted} style={[styles.colField, { textAlign: 'center', letterSpacing: 0.6 }]} numberOfLines={1}>
+                <Text key={f} variant="label" color={colors.textMuted} style={styles.colField} numberOfLines={1}>
                   {LOG_FIELDS[f].short}
                 </Text>
               ))}
               <View style={styles.colCheck} />
             </View>
 
-            {rows.map((row, i) => (
-              <View key={i} style={[styles.row, styles.dataRow, row.done && styles.rowDone]}>
-                <Text variant="bodyStrong" color={row.done ? colors.accent : colors.text} style={styles.colSet}>
-                  {i + 1}
-                </Text>
-                {compact ? null : (
-                  <Text variant="small" color={colors.textMuted} style={[styles.colPrev, { fontVariant: ['tabular-nums'] }]}>
-                    {prevLabel(exercise, previous[exercise.id]?.[i])}
+            {rows.map((row, i) => {
+              const prev = previous[exercise.id]?.[i];
+              return (
+                <View key={i} style={[styles.row, styles.setRow, row.done && styles.setRowDone]}>
+                  <Text style={[styles.setNo, styles.colSet]} color={row.done ? colors.text : colors.textSecondary}>
+                    {i + 1}
                   </Text>
-                )}
-                {exercise.fields.map((f) => (
-                  <View key={f} style={styles.colField}>
-                    <TextInput
-                      value={row[f] ?? ''}
-                      onChangeText={(v) => updateSet(day, exercise, i, f, v)}
-                      placeholder={String(previous[exercise.id]?.[i]?.[f] ?? '–')}
-                      placeholderTextColor={colors.textMuted}
-                      keyboardType={LOG_FIELDS[f].keyboard === 'numeric' ? 'decimal-pad' : 'numbers-and-punctuation'}
-                      accessibilityLabel={`Set ${i + 1} ${LOG_FIELDS[f].label}`}
-                      selectionColor={colors.accent}
-                      style={[styles.input, compact && styles.inputCompact, row.done && { color: colors.textSecondary }]}
-                    />
-                  </View>
-                ))}
-                <Pressable
-                  onPress={() => {
-                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    toggleSetDone(day, exercise, i);
-                  }}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: !!row.done }}
-                  accessibilityLabel={`Mark set ${i + 1} done`}
-                  hitSlop={8}
-                  style={[styles.colCheck, styles.check, row.done && styles.checkOn]}
-                >
-                  <Ionicons name="checkmark" size={18} color={row.done ? colors.accentText : colors.textMuted} />
-                </Pressable>
-              </View>
-            ))}
+                  {compact ? null : (
+                    <Text variant="small" color={colors.textMuted} style={[styles.colLast, { fontVariant: ['tabular-nums'] }]}>
+                      {lastLabel(exercise, prev)}
+                    </Text>
+                  )}
+                  {exercise.fields.map((f) => (
+                    <View key={f} style={styles.colField}>
+                      <TextInput
+                        value={row[f] ?? ''}
+                        onChangeText={(v) => updateSet(day, exercise, i, f, v)}
+                        placeholder={String(prev?.[f] ?? '–')}
+                        placeholderTextColor={colors.placeholder}
+                        keyboardType={LOG_FIELDS[f].keyboard === 'numeric' ? 'decimal-pad' : 'numbers-and-punctuation'}
+                        accessibilityLabel={`Set ${i + 1} ${LOG_FIELDS[f].label}`}
+                        selectionColor={colors.text}
+                        style={[styles.input, compact && { fontSize: 20 }]}
+                      />
+                    </View>
+                  ))}
+                  <Pressable
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      toggleSetDone(day, exercise, i);
+                    }}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!row.done }}
+                    accessibilityLabel={`Set ${i + 1} done`}
+                    hitSlop={8}
+                    style={styles.colCheck}
+                  >
+                    <View style={[styles.check, row.done && styles.checkOn]}>
+                      {row.done ? <Ionicons name="checkmark" size={18} color={colors.accentText} /> : null}
+                    </View>
+                  </Pressable>
+                </View>
+              );
+            })}
           </View>
 
           {exercise.restSeconds ? (
-            <View style={styles.rest}>
-              <Ionicons name="timer-outline" size={14} color={colors.textMuted} />
-              <Text variant="small" color={colors.textMuted}>
-                Rest {Math.floor(exercise.restSeconds / 60)}:{String(exercise.restSeconds % 60).padStart(2, '0')} between{' '}
-                {exercise.kind === 'cardio' ? 'rounds' : 'sets'}
-              </Text>
-            </View>
+            <Text variant="small" color={colors.textMuted}>
+              Rest {Math.floor(exercise.restSeconds / 60)}:{String(exercise.restSeconds % 60).padStart(2, '0')} between{' '}
+              {exercise.kind === 'cardio' ? 'rounds' : 'sets'}
+            </Text>
           ) : null}
         </View>
       ) : null}
@@ -133,57 +139,39 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: space.md,
-    gap: space.md,
-  },
+  entry: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingVertical: space.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  index: {
-    width: 36,
-    height: 36,
+  index: { fontFamily: fonts.display, fontSize: 28, lineHeight: 30, width: 28 },
+  body: { gap: space.md, marginTop: space.md, paddingLeft: 28 + space.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  setRow: { borderRadius: radius.sm, paddingVertical: 4 },
+  setRowDone: { backgroundColor: colors.accentSoft },
+  colSet: { width: 28, textAlign: 'center' },
+  setNo: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24 },
+  colLast: { width: 58 },
+  colField: { flex: 1, minWidth: 0 },
+  colCheck: { width: 44, alignItems: 'center' },
+  input: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.text,
+    backgroundColor: colors.surface,
     borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
+    height: 46,
+    textAlign: 'center',
+    paddingHorizontal: 2,
+    minWidth: 0,
+    width: '100%',
+    fontVariant: ['tabular-nums'],
+  },
+  check: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  table: { gap: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dataRow: {
-    backgroundColor: colors.surfaceSunken,
-    borderRadius: radius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  rowDone: { backgroundColor: colors.accentSoft },
-  colSet: { width: 30, textAlign: 'center' },
-  colPrev: { width: 64 },
-  colField: { flex: 1, minWidth: 0 },
-  colCheck: { width: 40, alignItems: 'center' },
-  input: {
-    ...type.bodyStrong,
-    fontVariant: ['tabular-nums'],
-    color: colors.text,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: 8,
-    height: 40,
-    textAlign: 'center',
-    paddingHorizontal: 4,
-    minWidth: 0,
-    width: '100%',
-  },
-  inputCompact: { fontSize: 14 },
-  check: {
-    height: 36,
-    width: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  rest: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  checkOn: { backgroundColor: colors.text, borderColor: colors.text },
 });

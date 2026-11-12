@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
-import { colors } from '../../theme/tokens';
+import { colors, fonts } from '../../theme/tokens';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -17,20 +17,20 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.bg },
-        tabBarActiveTintColor: colors.accent,
+        tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.surfaceSunken,
+          backgroundColor: colors.bg,
           borderTopColor: colors.border,
           height: 84,
           paddingTop: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.bodyMedium },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Train', tabBarIcon: icon('barbell-outline', 'barbell') }} />
       <Tabs.Screen name="progress" options={{ title: 'Progress', tabBarIcon: icon('stats-chart-outline', 'stats-chart') }} />
-      <Tabs.Screen name="studio" options={{ title: 'Coach Studio', tabBarIcon: icon('create-outline', 'create') }} />
+      <Tabs.Screen name="studio" options={{ title: 'Studio', tabBarIcon: icon('create-outline', 'create') }} />
     </Tabs>
   );
 }

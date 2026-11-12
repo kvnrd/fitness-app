@@ -13,7 +13,7 @@ export const mockProgram: Program = {
     mon: {
       day: 'mon',
       title: 'Lower Strength',
-      focus: 'Squat pattern · Posterior chain',
+      focus: 'Squat pattern, Posterior chain',
       durationMin: 55,
       video: { title: 'Monday walkthrough: bracing under load', durationLabel: '4:12' },
       keyPoints: [
@@ -66,7 +66,7 @@ export const mockProgram: Program = {
     tue: {
       day: 'tue',
       title: 'Engine Intervals',
-      focus: 'Row · Threshold',
+      focus: 'Row, Threshold',
       durationMin: 40,
       video: { title: 'Rowing pacing and stroke rate', durationLabel: '3:05' },
       keyPoints: [
@@ -100,7 +100,7 @@ export const mockProgram: Program = {
     wed: {
       day: 'wed',
       title: 'Upper Push',
-      focus: 'Press · Shoulders · Triceps',
+      focus: 'Press, Shoulders, Triceps',
       durationMin: 50,
       video: { title: 'Bench setup in 60 seconds', durationLabel: '2:48' },
       keyPoints: ['Shoulder blades pinned back and down.', 'Touch the same spot on the chest every rep.'],
@@ -159,7 +159,7 @@ export const mockProgram: Program = {
     fri: {
       day: 'fri',
       title: 'Upper Pull',
-      focus: 'Back · Biceps',
+      focus: 'Back, Biceps',
       durationMin: 50,
       video: { title: 'Pull-up progressions', durationLabel: '3:30' },
       keyPoints: ['Start every pull by driving the elbows down.', 'Full hang at the bottom of each rep.'],
@@ -209,7 +209,7 @@ export const mockProgram: Program = {
     sun: {
       day: 'sun',
       title: 'Recovery',
-      focus: 'Mobility · Walk',
+      focus: 'Mobility, Walk',
       durationMin: 20,
       rest: true,
       keyPoints: ['Walk outside for 20–30 minutes.', 'Hips and thoracic mobility for 10 minutes.'],

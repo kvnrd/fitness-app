@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Chip, SectionLabel, Text } from '../../components/ui';
+import { Button, Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey, Exercise, ExerciseKind, LOG_FIELDS, LogField } from '../../data/types';
 import { useAppStore } from '../../state/AppStore';
-import { colors, radius, space, type } from '../../theme/tokens';
+import { colors, fonts, radius, space, type } from '../../theme/tokens';
 
 const DEFAULT_FIELDS: Record<ExerciseKind, LogField[]> = {
   strength: ['weight', 'reps'],
@@ -41,7 +41,7 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
   const valid = name.trim().length > 0 && fields.length > 0 && Number(sets) > 0;
 
   return (
-    <Card raised style={{ gap: space.md }}>
+    <View style={styles.panel}>
       <View style={{ flexDirection: 'row', gap: space.xs }}>
         {(['strength', 'cardio'] as ExerciseKind[]).map((k) => (
           <Chip
@@ -99,7 +99,7 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
           }}
         />
       </View>
-    </Card>
+    </View>
   );
 }
 
@@ -113,12 +113,11 @@ export default function StudioScreen() {
   return (
     <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]} keyboardShouldPersistTaps="handled">
       <View style={{ gap: 4 }}>
-        <Text variant="label" color={colors.accent}>
-          Coach Studio
+        <Text variant="hero" accessibilityRole="header">
+          Your week
         </Text>
-        <Text variant="title">{program.trainer.programName}</Text>
-        <Text variant="small" color={colors.textSecondary}>
-          Build each day of the week. Changes show up on the Train tab right away.
+        <Text variant="body" color={colors.textSecondary}>
+          Build each day of {program.trainer.programName}. Clients see changes on their Train tab right away.
         </Text>
       </View>
 
@@ -126,7 +125,7 @@ export default function StudioScreen() {
         {DAY_KEYS.map((d) => (
           <Chip
             key={d}
-            label={`${DAY_LABELS[d].short} · ${program.days[d].rest ? 'Rest' : program.days[d].exercises.length}`}
+            label={program.days[d].rest ? `${DAY_LABELS[d].short}, rest` : `${DAY_LABELS[d].short}, ${program.days[d].exercises.length}`}
             active={d === day}
             onPress={() => {
               setDay(d);
@@ -136,8 +135,8 @@ export default function StudioScreen() {
         ))}
       </ScrollView>
 
-      <Card style={{ gap: space.md }}>
-        <SectionLabel>{DAY_LABELS[day].long}</SectionLabel>
+      <View style={{ gap: space.md }}>
+        <Text variant="title">{DAY_LABELS[day].long}</Text>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Field label="Title" value={w.title} onChangeText={(t) => updateDay(day, { title: t })} />
         </View>
@@ -146,35 +145,32 @@ export default function StudioScreen() {
           <Chip label="Training day" active={!w.rest} onPress={() => updateDay(day, { rest: false })} />
           <Chip label="Rest day" active={!!w.rest} onPress={() => updateDay(day, { rest: true })} />
         </View>
-      </Card>
+      </View>
 
       <Pressable style={styles.upload} accessibilityRole="button" accessibilityLabel="Upload walkthrough video">
         <View style={styles.uploadIcon}>
-          <Ionicons name="cloud-upload-outline" size={22} color={colors.accent} />
+          <Ionicons name="cloud-upload-outline" size={22} color={colors.coach} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="bodyStrong">{w.video ? w.video.title : 'Upload walkthrough video'}</Text>
           <Text variant="small" color={colors.textMuted}>
-            {w.video ? `${w.video.durationLabel} · Replace video` : 'MP4 or MOV. Clients see it at the top of the day.'}
+            {w.video ? `${w.video.durationLabel}. Video upload arrives with accounts.` : 'MP4 or MOV. Clients see it at the top of the day.'}
           </Text>
         </View>
-        <Text variant="small" color={colors.textMuted}>
-          Soon
-        </Text>
       </Pressable>
 
       <View>
-        <SectionLabel>{`Exercises (${w.exercises.length})`}</SectionLabel>
-        <View style={{ gap: space.xs }}>
+        <SectionHeader title={`Exercises (${w.exercises.length})`} />
+        <View>
           {w.exercises.map((e, i) => (
             <View key={e.id} style={styles.exRow}>
-              <Text variant="small" color={colors.textMuted} style={{ width: 22, fontWeight: '700' }}>
-                {String(i + 1).padStart(2, '0')}
+              <Text style={{ width: 24, fontFamily: fonts.display, fontSize: 22 }} color={colors.textMuted}>
+                {i + 1}
               </Text>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="bodyStrong">{e.name}</Text>
                 <Text variant="small" color={colors.textMuted} numberOfLines={1}>
-                  {e.sets} × {e.target} · logs {e.fields.map((f) => LOG_FIELDS[f].label.toLowerCase()).join(', ')}
+                  {e.sets} × {e.target}, logs {e.fields.map((f) => LOG_FIELDS[f].label.toLowerCase()).join(', ')}
                 </Text>
               </View>
               <Pressable
@@ -233,11 +229,17 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: colors.borderStrong,
   },
+  panel: {
+    gap: space.md,
+    padding: space.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+  },
   uploadIcon: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    backgroundColor: colors.accentSoft,
+    backgroundColor: 'rgba(199, 176, 140, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,11 +247,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    padding: space.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    paddingVertical: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   remove: {
     width: 32,
