@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SessionProvider } from '../auth/SessionProvider';
 import { AppStoreProvider } from '../state/AppStore';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -30,11 +31,13 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AppStoreProvider>
-          <ThemedApp fontsReady={loaded || !!error} />
-        </AppStoreProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <ThemeProvider>
+          <AppStoreProvider>
+            <ThemedApp fontsReady={loaded || !!error} />
+          </AppStoreProvider>
+        </ThemeProvider>
+      </SessionProvider>
     </SafeAreaProvider>
   );
 }

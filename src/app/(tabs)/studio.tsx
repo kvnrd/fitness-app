@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
+import { useSession } from '../../auth/SessionProvider';
 import { Button, Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey, Exercise, ExerciseKind, LOG_FIELDS, LogField } from '../../data/types';
 import { useAppStore } from '../../state/AppStore';
@@ -110,7 +112,14 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
   );
 }
 
+/** Guard: the editor below is never mounted unless the role is coach_verified. */
 export default function StudioScreen() {
+  const { isVerifiedCoach } = useSession();
+  if (!isVerifiedCoach) return <Redirect href="/" />;
+  return <StudioEditor />;
+}
+
+function StudioEditor() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { program, updateDay, removeExercise } = useAppStore();

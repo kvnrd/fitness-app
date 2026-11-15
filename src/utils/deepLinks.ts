@@ -1,0 +1,24 @@
+import { DAY_KEYS, DayKey } from '../data/types';
+
+/**
+ * Deep-link allowlist (scheme `fitnessapp`). Anything else resolves to null.
+ * `/studio` is allowed here but still role-guarded by the route itself.
+ */
+const STATIC_PATHS = new Set(['/', '/progress', '/studio']);
+
+export function safeDeepLinkPath(input: string): string | null {
+  let path = input.trim();
+  const m = /^([a-z][a-z0-9+.-]*):(.*)$/i.exec(path);
+  if (m) {
+    if (m[1].toLowerCase() !== 'fitnessapp') return null;
+    // fitnessapp://progress -> host is the first path segment
+    path = '/' + m[2].replace(/^\/*/, '');
+  }
+  path = path.split(/[?#]/)[0];
+  if (!path.startsWith('/')) path = `/${path}`;
+  if (path.length > 1) path = path.replace(/\/+$/, '');
+  if (STATIC_PATHS.has(path)) return path;
+  const w = /^\/workout\/([a-z]+)$/.exec(path);
+  if (w && (DAY_KEYS as string[]).includes(w[1])) return `/workout/${w[1] as DayKey}`;
+  return null;
+}
