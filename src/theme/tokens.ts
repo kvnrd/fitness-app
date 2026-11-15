@@ -77,6 +77,61 @@ export const effects: Record<ColorScheme, Effects> = {
   light: { grainOpacity: 0.05, glowAlpha: 0.2 },
 };
 
+// ───────────────────────── Background (Phase 1b: glow + grain + vignette) ─────────────────────────
+
+export type BgStrength = 'subtle' | 'medium';
+export const DEFAULT_BG_STRENGTH: BgStrength = 'medium';
+
+type Stop = { color: string; at: number };
+type Vignette = { rx: number; ry: number; cx: number; cy: number; stops: Stop[] };
+
+/** `--v2-bg-*` tokens. Glow colour is composed from the accent fill + alpha (see `composeGlow`). */
+export const background = {
+  glowAlpha: {
+    subtle: { dark: 0.12, light: 0.1 },
+    medium: { dark: 0.22, light: 0.2 },
+  } satisfies Record<BgStrength, Record<ColorScheme, number>>,
+  glow: {
+    layerTop: -160,
+    layerHeight: 520,
+    insetX: -80,
+    radiusX: 0.5,
+    radiusY: 0.5,
+    atX: 0.3,
+    atY: 0.45,
+    stop: 0.7,
+  },
+  grain: {
+    opacity: { dark: 0.066, light: 0.045 } satisfies Record<ColorScheme, number>,
+    /** Fallback when mixBlendMode is unreliable: no blend, slightly lower opacity. */
+    opacityNoBlend: { dark: 0.04, light: 0.03 } satisfies Record<ColorScheme, number>,
+    blend: { dark: 'screen', light: 'multiply' } as Record<ColorScheme, 'screen' | 'multiply'>,
+    /** Visual tile size, matches Paper `background-size: 180px`. */
+    tile: 180,
+    /** PNG resolution (assets/bg-grain-256.png). */
+    assetSize: 256,
+  },
+  vignette: {
+    dark: [
+      { rx: 1.2, ry: 0.8, cx: 0.5, cy: 0, stops: [{ color: 'rgba(255,255,255,0.035)', at: 0 }, { color: 'rgba(255,255,255,0)', at: 0.55 }] },
+      { rx: 1.4, ry: 1.0, cx: 0.5, cy: 0.4, stops: [{ color: 'rgba(0,0,0,0)', at: 0.6 }, { color: 'rgba(0,0,0,0.55)', at: 1 }] },
+    ],
+    light: [
+      { rx: 1.2, ry: 0.8, cx: 0.5, cy: 0, stops: [{ color: 'rgba(255,255,255,0.7)', at: 0 }, { color: 'rgba(255,255,255,0)', at: 0.6 }] },
+      { rx: 1.4, ry: 1.0, cx: 0.5, cy: 0.4, stops: [{ color: 'rgba(30,34,40,0)', at: 0.65 }, { color: 'rgba(30,34,40,0.10)', at: 1 }] },
+    ],
+  } as Record<ColorScheme, Vignette[]>,
+};
+
+/** Compose the glow colour from an accent hex (#RRGGBB) and alpha, e.g. rgba(217,192,138,0.22). */
+export function composeGlow(accentHex: string, alpha: number): string {
+  const h = accentHex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 // ───────────────────────── Accents ─────────────────────────
 
 export type Metal = readonly [string, string, string];

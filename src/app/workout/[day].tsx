@@ -8,6 +8,7 @@ import { WeekStrip } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
 
@@ -21,7 +22,8 @@ export default function WorkoutDayScreen() {
   const { ratio, done, total } = useDayProgress(day);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenBackground>
+    <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xs, paddingBottom: insets.bottom + 140 }]}>
         <View style={styles.topBar}>
           <Pressable
@@ -108,6 +110,7 @@ export default function WorkoutDayScreen() {
         </View>
       ) : null}
     </View>
+    </ScreenBackground>
   );
 }
 

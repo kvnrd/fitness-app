@@ -5,6 +5,7 @@ import { Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS } from '../../data/types';
 import { rowsFor, useAppStore } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { ThemeMode, radius, space } from '../../theme/tokens';
 
 /** Lightweight weekly summary; real history comes with the backend. */
@@ -32,8 +33,9 @@ export default function ProgressScreen() {
   const max = Math.max(1, ...perDay.map((p) => p.daySets));
 
   return (
+    <ScreenBackground>
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}
     >
       <Text variant="hero" accessibilityRole="header">
@@ -68,6 +70,7 @@ export default function ProgressScreen() {
         Check off sets on the Train tab and they add up here. Full history and personal records come once accounts are connected.
       </Text>
     </ScrollView>
+    </ScreenBackground>
   );
 }
 

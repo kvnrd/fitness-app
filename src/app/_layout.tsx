@@ -55,7 +55,7 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
+          contentStyle: { backgroundColor: 'transparent' },
           animation: 'slide_from_right',
         }}
       />

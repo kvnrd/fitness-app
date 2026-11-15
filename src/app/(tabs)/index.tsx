@@ -7,6 +7,7 @@ import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { space } from '../../theme/tokens';
 
 function plural(n: number, word: string) {
@@ -86,8 +87,9 @@ export default function TrainScreen() {
     .join('');
 
   return (
+    <ScreenBackground>
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
     >
       <View style={styles.header}>
@@ -115,6 +117,7 @@ export default function TrainScreen() {
         </View>
       </View>
     </ScrollView>
+    </ScreenBackground>
   );
 }
 

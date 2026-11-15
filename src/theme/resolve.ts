@@ -6,6 +6,9 @@ import {
   Metal,
   PrRoles,
   accents,
+  DEFAULT_BG_STRENGTH,
+  background,
+  composeGlow,
   effects,
   neutrals,
   prTokens,
@@ -34,6 +37,9 @@ export type ResolvedColors = {
   /** Alias of `accentInk` — the coach's voice uses the accent ink, not Brushed Gold. */
   coach: string;
   effects: Effects;
+  /** Phase 1b: composed glow colour (accent fill RGB, not accentInk) at medium strength. */
+  bgGlow: string;
+  bgGlowSubtle: string;
 } & PrRoles;
 
 /** Resolve the flat palette for a scheme + accent. Unknown accent keys fall back to the default. */
@@ -50,6 +56,8 @@ export function resolveColors(scheme: ColorScheme, accentKey: AccentKey): Resolv
     accentMetal: accentMetal ?? null,
     coach: roles.accentInk,
     effects: effects[scheme],
+    bgGlow: composeGlow(roles.accent, background.glowAlpha[DEFAULT_BG_STRENGTH][scheme]),
+    bgGlowSubtle: composeGlow(roles.accent, background.glowAlpha.subtle[scheme]),
     ...prTokens[scheme],
   };
 }

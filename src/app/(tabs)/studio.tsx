@@ -6,6 +6,7 @@ import { Button, Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey, Exercise, ExerciseKind, LOG_FIELDS, LogField } from '../../data/types';
 import { useAppStore } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { radius, space } from '../../theme/tokens';
 
 const DEFAULT_FIELDS: Record<ExerciseKind, LogField[]> = {
@@ -119,8 +120,9 @@ export default function StudioScreen() {
   const w = program.days[day];
 
   return (
+    <ScreenBackground>
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}
       keyboardShouldPersistTaps="handled"
     >
@@ -215,6 +217,7 @@ export default function StudioScreen() {
         />
       )}
     </ScrollView>
+    </ScreenBackground>
   );
 }
 
