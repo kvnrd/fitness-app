@@ -1,34 +1,31 @@
 /**
- * Session / role module. The ONLY place the app reads a role.
+ * Role types + helpers. The role SOURCE OF TRUTH is public.user_roles on the server, read by
+ * SessionProvider when Supabase is configured. Client state is a UI-gating cache only;
+ * RLS enforces access server-side. A client-set role or a JWT `app_role` claim is never trusted.
  *
- * CLIENT-SIDE STOPGAP (Phase 0): hiding Studio in the app is UI gating only.
- * The real server-side role check (signed claim / RLS) lands in Phase 2.
- * The app never writes a role in production: the role is not persisted to
- * AsyncStorage or any other client-writable storage, and there is no in-app toggle.
- *
- * Dev preview: in `__DEV__` builds only, set EXPO_PUBLIC_DEV_ROLE
- * (athlete | coach_pending | coach_verified) when starting Metro, e.g.
- *   EXPO_PUBLIC_DEV_ROLE=coach_verified npx expo start
- * The variable is ignored when `__DEV__` is false.
+ * Dev preview (Supabase NOT configured only, `__DEV__` only): set EXPO_PUBLIC_DEV_ROLE
+ * (athlete | coach_pending | coach_verified) when starting Metro. Ignored when configured.
  */
-export type Role = 'athlete' | 'coach_pending' | 'coach_verified';
+export type Role = 'athlete' | 'coach_pending' | 'coach_verified' | 'gym_admin' | 'platform_admin';
 
 export const DEFAULT_ROLE: Role = 'athlete';
 
-const ROLES: readonly Role[] = ['athlete', 'coach_pending', 'coach_verified'];
+const ROLES: readonly Role[] = ['athlete', 'coach_pending', 'coach_verified', 'gym_admin', 'platform_admin'];
 
 export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
 }
 
+/** Only coach_verified unlocks Studio. gym_admin / platform_admin do not. */
 export function isVerifiedCoach(role: Role): boolean {
   return role === 'coach_verified';
 }
 
-export function resolveRole(): Role {
+/** Unconfigured-prototype role: dev override in __DEV__, otherwise athlete. */
+export function resolveDevRole(): Role {
   if (__DEV__) {
     const dev = process.env.EXPO_PUBLIC_DEV_ROLE;
-    if (isRole(dev)) return dev;
+    if (dev === 'athlete' || dev === 'coach_pending' || dev === 'coach_verified') return dev;
   }
   return DEFAULT_ROLE;
 }

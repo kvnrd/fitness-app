@@ -1,0 +1,19 @@
+# Local Supabase CLI config. No secrets here.
+# A hosted Supabase project is created ONLY by Kevin (see docs/phase-2-backend.md); nothing in this
+# repo creates or deploys one. Keys, JWT secrets and OAuth client secrets never go in this file.
+project_id = "fitness-app"
+
+[api]
+# Only `public` is exposed. Never add `app` or `private` (RLS helpers / encryption keys).
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[auth]
+enable_signup = true
+# Email path is a 6-digit OTP; no passwords are used by the app.
+minimum_password_length = 12
+
+# Register after the migrations are applied (Kevin does this on the hosted project too):
+# [auth.hook.custom_access_token]
+# enabled = true
+# uri = "pg-functions://postgres/public/custom_access_token_hook"

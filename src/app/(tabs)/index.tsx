@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { todayKey } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
+import { useSession } from '../../auth/SessionProvider';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
@@ -79,6 +80,7 @@ export default function TrainScreen() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { program } = useAppStore();
+  const { isConfigured, isSignedIn, profile, signOut } = useSession();
   const today = todayKey();
   const initials = program.trainer.name
     .split(' ')
@@ -114,6 +116,50 @@ export default function TrainScreen() {
           ))}
         </View>
       </View>
+
+      {isConfigured && isSignedIn ? (
+        <View>
+          <SectionHeader title="Account" />
+          <Pressable
+            onPress={() => router.push('/consent')}
+            accessibilityRole="button"
+            accessibilityLabel="Your choices"
+            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Text variant="bodyStrong" style={{ flex: 1 }}>
+              Your choices
+            </Text>
+            <Text variant="small" color={colors.textMuted}>
+              Consent
+            </Text>
+          </Pressable>
+          {profile && !profile.is_minor ? (
+            <Pressable
+              onPress={() => router.push('/parent-link')}
+              accessibilityRole="button"
+              accessibilityLabel="Link requests"
+              style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+            >
+              <Text variant="bodyStrong" style={{ flex: 1 }}>
+                Link requests
+              </Text>
+              <Text variant="small" color={colors.textMuted}>
+                Parent or guardian
+              </Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => void signOut()}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Text variant="bodyStrong" style={{ flex: 1 }}>
+              Sign out
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

@@ -3,8 +3,11 @@ import { DAY_KEYS, DayKey } from '../data/types';
 /**
  * Deep-link allowlist (scheme `fitnessapp`). Anything else resolves to null.
  * `/studio` is allowed here but still role-guarded by the route itself.
+ * `/sign-in`, `/onboarding`, `/parent-link`, `/consent` are allowed only so the router can resolve them;
+ * the root layout mounts each one only in its own state (Stack.Protected), otherwise it lands on Train.
+ * They take no params and perform no action on open.
  */
-const STATIC_PATHS = new Set(['/', '/progress', '/studio']);
+const STATIC_PATHS = new Set(['/', '/progress', '/studio', '/sign-in', '/onboarding', '/parent-link', '/consent']);
 
 export function safeDeepLinkPath(input: string): string | null {
   let path = input.trim();
