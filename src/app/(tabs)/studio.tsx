@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey, Exercise, ExerciseKind, LOG_FIELDS, LogField } from '../../data/types';
 import { useAppStore } from '../../state/AppStore';
-import { colors, fonts, radius, space, type } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
+import { radius, space } from '../../theme/tokens';
 
 const DEFAULT_FIELDS: Record<ExerciseKind, LogField[]> = {
   strength: ['weight', 'reps'],
@@ -13,6 +14,7 @@ const DEFAULT_FIELDS: Record<ExerciseKind, LogField[]> = {
 };
 
 function Field({ label, ...props }: { label: string } & React.ComponentProps<typeof TextInput>) {
+  const { colors, type } = useTheme();
   return (
     <View style={{ gap: 6, flex: props.multiline ? undefined : 1 }}>
       <Text variant="label" color={colors.textMuted}>
@@ -20,15 +22,20 @@ function Field({ label, ...props }: { label: string } & React.ComponentProps<typ
       </Text>
       <TextInput
         placeholderTextColor={colors.textMuted}
-        selectionColor={colors.accent}
+        selectionColor={colors.accentInk}
         {...props}
-        style={[styles.input, props.multiline && { height: 88, textAlignVertical: 'top', paddingTop: 12 }]}
+        style={[
+          styles.input,
+          { ...type.body, color: colors.text, backgroundColor: colors.surfaceSunken, borderColor: colors.border },
+          props.multiline && { height: 88, textAlignVertical: 'top', paddingTop: 12 },
+        ]}
       />
     </View>
   );
 }
 
 function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
+  const { colors } = useTheme();
   const { addExercise } = useAppStore();
   const [kind, setKind] = useState<ExerciseKind>('strength');
   const [name, setName] = useState('');
@@ -41,7 +48,7 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
   const valid = name.trim().length > 0 && fields.length > 0 && Number(sets) > 0;
 
   return (
-    <View style={styles.panel}>
+    <View style={[styles.panel, { backgroundColor: colors.surface }]}>
       <View style={{ flexDirection: 'row', gap: space.xs }}>
         {(['strength', 'cardio'] as ExerciseKind[]).map((k) => (
           <Chip
@@ -104,6 +111,7 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
 }
 
 export default function StudioScreen() {
+  const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { program, updateDay, removeExercise } = useAppStore();
   const [day, setDay] = useState<DayKey>('mon');
@@ -111,7 +119,11 @@ export default function StudioScreen() {
   const w = program.days[day];
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={{ gap: 4 }}>
         <Text variant="hero" accessibilityRole="header">
           Your week
@@ -147,8 +159,8 @@ export default function StudioScreen() {
         </View>
       </View>
 
-      <Pressable style={styles.upload} accessibilityRole="button" accessibilityLabel="Upload walkthrough video">
-        <View style={styles.uploadIcon}>
+      <Pressable style={[styles.upload, { borderColor: colors.borderStrong }]} accessibilityRole="button" accessibilityLabel="Upload walkthrough video">
+        <View style={[styles.uploadIcon, { backgroundColor: colors.accentSoft }]}>
           <Ionicons name="cloud-upload-outline" size={22} color={colors.coach} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
@@ -163,8 +175,8 @@ export default function StudioScreen() {
         <SectionHeader title={`Exercises (${w.exercises.length})`} />
         <View>
           {w.exercises.map((e, i) => (
-            <View key={e.id} style={styles.exRow}>
-              <Text style={{ width: 24, fontFamily: fonts.display, fontSize: 22 }} color={colors.textMuted}>
+            <View key={e.id} style={[styles.exRow, { borderTopColor: colors.border }]}>
+              <Text style={{ width: 24, fontFamily: fonts.displayBold, fontSize: 22 }} color={colors.textMuted}>
                 {i + 1}
               </Text>
               <View style={{ flex: 1, gap: 2 }}>
@@ -178,7 +190,7 @@ export default function StudioScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${e.name}`}
                 hitSlop={8}
-                style={styles.remove}
+                style={[styles.remove, { backgroundColor: colors.surfaceRaised }]}
               >
                 <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
               </Pressable>
@@ -207,14 +219,10 @@ export default function StudioScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.xl, maxWidth: 720, width: '100%', alignSelf: 'center' },
+  content: { paddingHorizontal: space.lg, paddingBottom: space['4xl'], gap: space['2xl'], maxWidth: 720, width: '100%', alignSelf: 'center' },
   input: {
-    ...type.body,
-    color: colors.text,
-    backgroundColor: colors.surfaceSunken,
-    borderRadius: radius.sm,
+    borderRadius: radius.input,
     borderWidth: 1,
-    borderColor: colors.border,
     height: 46,
     paddingHorizontal: space.sm,
   },
@@ -224,22 +232,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
     padding: space.md,
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.borderStrong,
   },
   panel: {
     gap: space.md,
     padding: space.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    borderRadius: radius.card,
   },
   uploadIcon: {
     width: 44,
     height: 44,
-    borderRadius: radius.md,
-    backgroundColor: 'rgba(199, 176, 140, 0.12)',
+    borderRadius: radius.tile,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -249,7 +254,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
     paddingVertical: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
   },
   remove: {
     width: 32,
@@ -257,6 +261,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceRaised,
   },
 });

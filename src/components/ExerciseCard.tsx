@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { DayKey, Exercise, LOG_FIELDS, SetLog } from '../data/types';
 import { rowsFor, useAppStore } from '../state/AppStore';
-import { colors, fonts, radius, space } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
+import { radius, space } from '../theme/tokens';
 import { Text } from './ui';
 
 function lastLabel(exercise: Exercise, prev?: SetLog) {
@@ -16,6 +17,7 @@ function lastLabel(exercise: Exercise, prev?: SetLog) {
 
 /** One exercise as a ledger entry: name and target, coach's cue, then a row per set. */
 export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: Exercise; index: number }) {
+  const { colors, fonts } = useTheme();
   const { logs, previous, updateSet, toggleSetDone } = useAppStore();
   const [open, setOpen] = useState(index === 0);
   const rows = rowsFor(logs[day], exercise);
@@ -26,7 +28,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
   const unit = exercise.kind === 'cardio' ? (exercise.sets === 1 ? 'effort' : 'rounds') : 'sets';
 
   return (
-    <View style={styles.entry}>
+    <View style={[styles.entry, { borderTopColor: colors.border }]}>
       <Pressable
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"
@@ -34,7 +36,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
         accessibilityLabel={`${exercise.name}, ${done} of ${exercise.sets} ${unit} done`}
         style={styles.header}
       >
-        <Text style={styles.index} color={complete ? colors.text : colors.textMuted}>
+        <Text style={[styles.index, { fontFamily: fonts.displayBold }]} color={complete ? colors.accentInk : colors.textMuted}>
           {index + 1}
         </Text>
         <View style={{ flex: 1, gap: 2 }}>
@@ -46,7 +48,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
           </Text>
         </View>
         {complete ? (
-          <Ionicons name="checkmark-circle" size={22} color={colors.text} />
+          <Ionicons name="checkmark-circle" size={22} color={colors.accentInk} />
         ) : (
           <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
             {done}/{exercise.sets}
@@ -83,8 +85,8 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
             {rows.map((row, i) => {
               const prev = previous[exercise.id]?.[i];
               return (
-                <View key={i} style={[styles.row, styles.setRow, row.done && styles.setRowDone]}>
-                  <Text style={[styles.setNo, styles.colSet]} color={row.done ? colors.text : colors.textSecondary}>
+                <View key={i} style={[styles.row, styles.setRow, row.done && { backgroundColor: colors.accentSoft }]}>
+                  <Text style={[styles.setNo, styles.colSet, { fontFamily: fonts.displayBold }]} color={row.done ? colors.text : colors.textSecondary}>
                     {i + 1}
                   </Text>
                   {compact ? null : (
@@ -101,8 +103,12 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                         placeholderTextColor={colors.placeholder}
                         keyboardType={LOG_FIELDS[f].keyboard === 'numeric' ? 'decimal-pad' : 'numbers-and-punctuation'}
                         accessibilityLabel={`Set ${i + 1} ${LOG_FIELDS[f].label}`}
-                        selectionColor={colors.text}
-                        style={[styles.input, compact && { fontSize: 20 }]}
+                        selectionColor={colors.accentInk}
+                        style={[
+                          styles.input,
+                          { fontFamily: fonts.displayBold, color: colors.text, backgroundColor: colors.surface },
+                          compact && { fontSize: 20 },
+                        ]}
                       />
                     </View>
                   ))}
@@ -117,7 +123,13 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                     hitSlop={8}
                     style={styles.colCheck}
                   >
-                    <View style={[styles.check, row.done && styles.checkOn]}>
+                    <View
+                      style={[
+                        styles.check,
+                        { borderColor: colors.borderStrong },
+                        row.done && { backgroundColor: colors.accent, borderColor: colors.accent },
+                      ]}
+                    >
                       {row.done ? <Ionicons name="checkmark" size={18} color={colors.accentText} /> : null}
                     </View>
                   </Pressable>
@@ -139,24 +151,20 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
 }
 
 const styles = StyleSheet.create({
-  entry: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingVertical: space.md },
+  entry: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: space.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  index: { fontFamily: fonts.display, fontSize: 28, lineHeight: 30, width: 28 },
+  index: { fontSize: 28, lineHeight: 30, width: 28 },
   body: { gap: space.md, marginTop: space.md, paddingLeft: 28 + space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  setRow: { borderRadius: radius.sm, paddingVertical: 4 },
-  setRowDone: { backgroundColor: colors.accentSoft },
+  setRow: { borderRadius: radius.tile, paddingVertical: 4 },
   colSet: { width: 28, textAlign: 'center' },
-  setNo: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24 },
+  setNo: { fontSize: 20, lineHeight: 24 },
   colLast: { width: 58 },
   colField: { flex: 1, minWidth: 0 },
   colCheck: { width: 44, alignItems: 'center' },
   input: {
-    fontFamily: fonts.display,
     fontSize: 24,
-    color: colors.text,
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
+    borderRadius: radius.input,
     height: 46,
     textAlign: 'center',
     paddingHorizontal: 2,
@@ -167,11 +175,9 @@ const styles = StyleSheet.create({
   check: {
     width: 34,
     height: 34,
-    borderRadius: radius.sm,
+    borderRadius: radius.tile,
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.text, borderColor: colors.text },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
-import { colors, fonts } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -12,12 +12,13 @@ const icon =
   );
 
 export default function TabsLayout() {
+  const { colors, fonts } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.bg },
-        tabBarActiveTintColor: colors.text,
+        tabBarActiveTintColor: colors.accentInk,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.bg,

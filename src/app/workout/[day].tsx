@@ -8,9 +8,11 @@ import { WeekStrip } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
-import { colors, space } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
+import { space } from '../../theme/tokens';
 
 export default function WorkoutDayScreen() {
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{ day: string }>();
   const day = (DAY_KEYS.includes(params.day as DayKey) ? params.day : 'mon') as DayKey;
   const insets = useSafeAreaInsets();
@@ -57,7 +59,7 @@ export default function WorkoutDayScreen() {
             <SectionHeader title="Coach's notes" />
             {w.keyPoints.map((k, i) => (
               <View key={i} style={styles.note}>
-                <View style={styles.noteBar} />
+                <View style={[styles.noteBar, { backgroundColor: colors.coach }]} />
                 <Text variant="body" style={{ flex: 1 }}>
                   {k}
                 </Text>
@@ -91,7 +93,12 @@ export default function WorkoutDayScreen() {
       </ScrollView>
 
       {total > 0 ? (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
+        <View
+          style={[
+            styles.footer,
+            { paddingBottom: insets.bottom + space.md, backgroundColor: colors.bg, borderTopColor: colors.border },
+          ]}
+        >
           <ProgressBar ratio={ratio} />
           <Button
             label={ratio >= 1 ? 'Save workout' : `Finish workout (${done} of ${total} sets)`}
@@ -105,11 +112,11 @@ export default function WorkoutDayScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: space.lg, gap: space.xl, maxWidth: 640, width: '100%', alignSelf: 'center' },
+  content: { paddingHorizontal: space.lg, gap: space['2xl'], maxWidth: 640, width: '100%', alignSelf: 'center' },
   topBar: { flexDirection: 'row', alignItems: 'center' },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -6, minHeight: 44 },
   note: { flexDirection: 'row', gap: space.sm, paddingVertical: space.xs },
-  noteBar: { width: 2, borderRadius: 1, backgroundColor: colors.coach },
+  noteBar: { width: 2, borderRadius: 1 },
   footer: {
     position: 'absolute',
     left: 0,
@@ -118,8 +125,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
-    backgroundColor: colors.bg,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
   },
 });
