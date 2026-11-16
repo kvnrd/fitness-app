@@ -1,0 +1,306 @@
+-- Phase 4 tests (health screen, clearance, AI plan gates, body weight, coach redaction).
+-- Runs after rls.sql + phase2b.sql + phase3.sql. Users tests.u(91..110). Reuses tests.ok/eq/raises/
+-- blocked/rows/no_rows, tests.u, tests.dob, tests.ct, tests.wk, tests.signup3, tests.h, tests.accept_link,
+-- tests.privacy, tests.svc_write.
+--
+--  91 adult (all-no screen, AI ok)     92 adult (health off)
+--  93 adult (yes, then clearance)      94 adult (yes + clearance)
+--  95 minor                            96 parent of 95
+--  97 verified coach                   98 adult client of 97
+--  99 pending minor                    100 adult (injury-edit re-ask)
+--  101 outsider                        102 adult (first session)
+--  103 minor (body weight)             104 parent of 103
+
+select tests.logout();
+insert into auth.users (id, email) select tests.u(i), 'p4-' || i || '@example.invalid' from generate_series(91, 110) i;
+
+create function tests.p4_link(p_minor uuid, p_parent uuid) returns void language plpgsql as $$
+declare v_id uuid;
+begin
+  perform tests.login(p_minor);
+  perform public.link_parent(p_minor, p_parent);
+  select id into v_id from public.parent_links where minor_user_id = p_minor and parent_user_id = p_parent;
+  perform tests.login(p_parent);
+  perform tests.accept_link(v_id);
+  perform tests.logout();
+end $$;
+
+create function tests.p4_dual_health_ai(p_minor uuid, p_parent uuid) returns void language plpgsql as $$
+begin
+  perform tests.login(p_parent);
+  perform public.record_consent('health_data', 'health-v1', p_minor);
+  perform public.record_consent('ai_vendor', 'ai-B-v1', p_minor, tests.h('2'));
+  perform tests.login(p_minor);
+  perform public.record_consent('health_data', 'health-v1');
+  perform public.record_consent('ai_vendor', 'ai-B-v1', null, tests.h('2'));
+  perform tests.logout();
+end $$;
+
+-- Superuser/test helper: app.health_screen_status is not granted to service_role (app schema is not
+-- exposed). This wrapper lets tests read the status without opening the schema to clients.
+create function tests.p4_status(p_user uuid) returns text language sql security definer as $$
+  select app.health_screen_status(p_user)
+$$;
+
+select tests.ok('p4 signup: adults', (select bool_and((tests.signup3(tests.u(i), tests.dob(30)) ->> 'is_minor') = 'false')
+  from unnest(array[91,92,93,94,97,98,100,101,102]) i));
+select tests.ok('p4 signup: parents', (select bool_and((tests.signup3(tests.u(i), tests.dob(45)) ->> 'is_minor') = 'false')
+  from unnest(array[96,104]) i));
+select tests.ok('p4 signup: minors', (select bool_and((tests.signup3(tests.u(i), tests.dob(16)) ->> 'is_minor') = 'true')
+  from unnest(array[95,99,103]) i));
+
+select tests.login(null, 'service_role');
+select public.set_user_role(tests.u(97), 'coach_verified');
+select tests.logout();
+
+select tests.p4_link(tests.u(95), tests.u(96));
+select tests.p4_link(tests.u(103), tests.u(104));
+
+select tests.login(tests.u(91)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select tests.logout();
+select tests.login(tests.u(93)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select tests.logout();
+select tests.login(tests.u(94)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select tests.logout();
+select tests.login(tests.u(100)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select tests.logout();
+select tests.login(tests.u(102)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select tests.logout();
+select tests.login(tests.u(98)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('coach_sharing', 'coach-v1'); select tests.logout();
+select tests.p4_dual_health_ai(tests.u(95), tests.u(96));
+select tests.p4_dual_health_ai(tests.u(103), tests.u(104));
+
+select tests.login(null, 'service_role');
+insert into public.coach_relationships (coach_id, client_id, status) values (tests.u(97), tests.u(98), 'active');
+select tests.logout();
+
+-- =============================================================== 1. adult screen + clearance
+select tests.login(tests.u(91));
+select tests.eq('screen: missing before any submit', $q$select public.my_ai_plan_state() ->> 'health_screen_status'$q$, 'missing');
+select tests.eq('screen: cannot AI-plan yet', $q$select public.my_ai_plan_state() ->> 'can_ai_plan'$q$, 'false');
+select tests.eq('screen: all-no returns ok', $q$select public.submit_health_screen(false) ->> 'status'$q$, 'ok');
+select tests.eq('screen: can_ai_plan after all-no', $q$select public.my_ai_plan_state() ->> 'can_ai_plan'$q$, 'true');
+select tests.eq('screen: owner can read own derived row', $q$select any_yes::text from public.health_screen_state where user_id = tests.u(91)$q$, 'false');
+select tests.raises('screen: clearance refused when not needed', $q$select public.attest_health_clearance('clear-v1', tests.h('c'))$q$, 'clearance_not_needed');
+select tests.logout();
+
+select tests.login(tests.u(93));
+select tests.eq('screen: a yes without clearance needs clearance', $q$select public.submit_health_screen(true) ->> 'status'$q$, 'clearance_needed');
+select tests.eq('screen: can_ai_plan is false while clearance is outstanding', $q$select public.my_ai_plan_state() ->> 'can_ai_plan'$q$, 'false');
+select tests.eq('screen: my_onboarding_state exposes the same status', $q$select public.my_onboarding_state() ->> 'health_screen_status'$q$, 'clearance_needed');
+select tests.raises('screen: bad clearance hash refused', $q$select public.attest_health_clearance('clear-v1', 'nope')$q$, 'invalid_text_hash');
+select tests.eq('screen: attesting clearance flips the gate to ok', $q$select public.attest_health_clearance('clear-v1', tests.h('c')) ->> 'status'$q$, 'ok');
+select tests.ok('screen: clearance timestamp and self grantor are stored',
+  (select clearance_at is not null and clearance_grantor = 'self' from public.health_screen_state where user_id = tests.u(93)));
+select tests.eq('screen: resubmitting a yes clears the previous clearance', $q$select public.submit_health_screen(true) ->> 'status'$q$, 'clearance_needed');
+select tests.eq('screen: re-attest works', $q$select public.attest_health_clearance('clear-v1', tests.h('c')) ->> 'status'$q$, 'ok');
+select tests.logout();
+
+select tests.login(tests.u(94));
+select public.submit_health_screen(true);
+select public.attest_health_clearance('clear-v1', tests.h('c'));
+select tests.logout();
+
+select tests.login(tests.u(92));
+select tests.raises('screen: without health consent the submit is refused', $q$select public.submit_health_screen(false)$q$, 'consent_required');
+select tests.eq('screen: health off is reported', $q$select public.my_ai_plan_state() ->> 'health_consent'$q$, 'false');
+select tests.logout();
+
+select tests.login(null, 'anon');
+select tests.raises('screen: anon cannot submit', $q$select public.submit_health_screen(false)$q$, 'permission denied%');
+select tests.logout();
+
+-- =============================================================== 2. parent-together gate (16-17)
+select tests.login(tests.u(95));
+select tests.raises('teen: cannot self-submit the health screen', $q$select public.submit_health_screen(false)$q$, 'parent_required');
+select tests.eq('teen: status is missing until the parent files it', $q$select public.my_ai_plan_state() ->> 'health_screen_status'$q$, 'missing');
+select tests.raises('teen: cannot self-attest clearance', $q$select public.attest_health_clearance('clear-v1', tests.h('c'))$q$, 'parent_required');
+select tests.logout();
+
+select tests.login(tests.u(101));
+select tests.raises('teen: an unrelated adult cannot submit for the minor', format($q$select public.submit_health_screen(false, %L)$q$, tests.u(95)), 'forbidden');
+select tests.raises('teen: an unrelated adult cannot read the minor''s AI state', format($q$select public.my_ai_plan_state(%L)$q$, tests.u(95)), 'forbidden');
+select tests.logout();
+
+select tests.login(tests.u(96));
+select tests.eq('parent: all-no for the teen is ok', format($q$select public.submit_health_screen(false, %L) ->> 'status'$q$, tests.u(95)), 'ok');
+select tests.eq('parent: can read the teen''s AI state', format($q$select public.my_ai_plan_state(%L) ->> 'can_ai_plan'$q$, tests.u(95)), 'true');
+select tests.eq('parent: can read the derived row', format($q$select any_yes::text from public.health_screen_state where user_id = %L$q$, tests.u(95)), 'false');
+-- A yes from the parent requires the parent's clearance checkbox.
+select tests.eq('parent: a yes needs the parent''s clearance', format($q$select public.submit_health_screen(true, %L) ->> 'status'$q$, tests.u(95)), 'clearance_needed');
+select tests.eq('parent: attesting as the parent returns ok', format($q$select public.attest_health_clearance('clear-v1', tests.h('c'), %L) ->> 'status'$q$, tests.u(95)), 'ok');
+select tests.ok('parent: clearance grantor is parent',
+  (select clearance_grantor = 'parent' from public.health_screen_state where user_id = tests.u(95)));
+select tests.logout();
+
+select tests.login(tests.u(95));
+select tests.eq('teen: sees ok after the parent files screen + clearance', $q$select public.my_ai_plan_state() ->> 'can_ai_plan'$q$, 'true');
+select tests.logout();
+
+select tests.login(tests.u(99));
+select tests.raises('pending: an unlinked minor cannot be filed for (no parent)', $q$select public.submit_health_screen(false)$q$, 'forbidden');
+select tests.logout();
+
+-- =============================================================== 3. RLS: coaches never see the gate table
+select tests.login(tests.u(97));
+select tests.no_rows('rls: coach cannot read a client''s health_screen_state', format('select * from public.health_screen_state where user_id = %L', tests.u(91)));
+select tests.no_rows('rls: coach cannot read a minor''s health_screen_state', format('select * from public.health_screen_state where user_id = %L', tests.u(95)));
+select tests.blocked('rls: clients cannot insert health_screen_state', format($q$insert into public.health_screen_state (user_id, completed_at, reask_on, any_yes) values (%L, now(), current_date + 1, false)$q$, tests.u(97)));
+select tests.logout();
+
+select tests.login(tests.u(101));
+select tests.no_rows('rls: an outsider cannot read someone else''s screen state', format('select * from public.health_screen_state where user_id = %L', tests.u(91)));
+select tests.logout();
+
+-- =============================================================== 4. ai_plan_context gates
+select tests.login(null, 'service_role');
+select tests.raises('ai: health off (no consent) is consent_required', format('select * from public.ai_plan_context(%L)', tests.u(92)), 'consent_required');
+select tests.ok('ai: all-no adult context succeeds', exists (select 1 from public.ai_plan_context(tests.u(91)) where age_band = '18_plus' and health_ok));
+select tests.ok('ai: cleared-yes adult context succeeds', exists (select 1 from public.ai_plan_context(tests.u(94)) where health_ok));
+select tests.ok('ai: parent-filed teen context succeeds', exists (select 1 from public.ai_plan_context(tests.u(95)) where age_band = '16_17'));
+select tests.logout();
+
+-- 102 has consents but no screen yet.
+select tests.login(null, 'service_role');
+select tests.raises('ai: missing screen is health_screen_required', format('select * from public.ai_plan_context(%L)', tests.u(102)), 'health_screen_required');
+select tests.logout();
+select tests.login(tests.u(102));
+select public.submit_health_screen(true);
+select tests.eq('ai: status after a yes is clearance_needed', $q$select public.my_ai_plan_state() ->> 'health_screen_status'$q$, 'clearance_needed');
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.raises('ai: yes without clearance is clearance_required', format('select * from public.ai_plan_context(%L)', tests.u(102)), 'clearance_required');
+select tests.logout();
+select tests.login(tests.u(102));
+select public.attest_health_clearance('clear-v1', tests.h('c'));
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.ok('ai: context succeeds after clearance', exists (select 1 from public.ai_plan_context(tests.u(102)) where health_ok));
+select tests.logout();
+
+-- =============================================================== 5. 12-month re-ask + injury-edit re-ask
+select tests.login(tests.u(100));
+select public.submit_health_screen(false);
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.ok('reask: a fresh screen is current', tests.p4_status(tests.u(100)) = 'ok');
+-- Backdate the re-ask date to yesterday: the screen is due.
+update public.health_screen_state set reask_on = current_date - 1 where user_id = tests.u(100);
+select tests.eq('reask: a past reask_on is due', format($q$select tests.p4_status(%L)$q$, tests.u(100)), 'due');
+select tests.raises('reask: context refuses a due screen', format('select * from public.ai_plan_context(%L)', tests.u(100)), 'health_screen_required');
+select tests.logout();
+select tests.login(tests.u(100));
+select tests.eq('reask: resubmitting starts a new 12-month window', $q$select public.submit_health_screen(false) ->> 'status'$q$, 'ok');
+select tests.ok('reask: new reask_on is in the future', (select reask_on > current_date from public.health_screen_state where user_id = tests.u(100)));
+select tests.logout();
+
+-- First injury_category write does NOT trigger a re-ask; a later edit does.
+select tests.login(null, 'service_role');
+select public.health_register_key(tests.u(100), tests.wk(100), 'local-dev', 'local-dev:test');
+select public.health_write(tests.u(100), null, null, tests.ct('knee-1'), null, array['injury_category']);
+select tests.eq('reask: first category write leaves the screen current', format($q$select tests.p4_status(%L)$q$, tests.u(100)), 'ok');
+select public.health_write(tests.u(100), null, null, tests.ct('knee-2'), null, array['injury_category']);
+select tests.eq('reask: editing the category marks the screen due', format($q$select tests.p4_status(%L)$q$, tests.u(100)), 'due');
+select tests.raises('reask: context refuses after an injury edit', format('select * from public.ai_plan_context(%L)', tests.u(100)), 'health_screen_required');
+select tests.logout();
+select tests.login(tests.u(100));
+select public.submit_health_screen(false);
+select tests.logout();
+select tests.login(null, 'service_role');
+select public.health_write(tests.u(100), tests.ct('notes-1'), null, null, null, array['injury_notes']);
+select tests.eq('reask: first notes write leaves the screen current', format($q$select tests.p4_status(%L)$q$, tests.u(100)), 'ok');
+select public.health_write(tests.u(100), tests.ct('notes-2'), null, null, null, array['injury_notes']);
+select tests.eq('reask: editing notes marks the screen due', format($q$select tests.p4_status(%L)$q$, tests.u(100)), 'due');
+select tests.logout();
+
+-- Revoking health marks the screen due (and turns AI off).
+select tests.login(tests.u(91));
+select public.revoke_consent('health_data');
+select tests.eq('reask: revoking health marks the screen due', $q$select tests.p4_status(tests.u(91))$q$, 'due');
+select tests.eq('reask: AI consent is off after health is revoked', $q$select public.my_ai_plan_state() ->> 'ai_consent'$q$, 'false');
+-- Restore for later tests that may want u91? not needed.
+select tests.logout();
+
+-- =============================================================== 6. body_weight (minors allowed; weight_goal still not)
+select tests.login(null, 'service_role');
+select public.health_register_key(tests.u(103), tests.wk(103), 'local-dev', 'local-dev:test');
+select public.health_write(tests.u(103), null, null, null, null, array['body_weight'], tests.ct('bw-142'));
+select tests.ok('weight: 16-17 may store a current body_weight', exists (
+  select 1 from public.health_records where user_id = tests.u(103) and body_weight_ct = tests.ct('bw-142')));
+select tests.raises('weight: 16-17 still cannot store a weight_goal', format($q$select public.health_write(%L, null, null, null, tests.ct('wg'), array['weight_goal'])$q$, tests.u(103)), 'forbidden');
+select tests.eq('weight: health_read (self, via service) returns body_weight_ct', format($q$select (body_weight_ct = tests.ct('bw-142'))::text from public.health_read(%L)$q$, tests.u(103)), 'true');
+-- Parent may read the teen's body weight (they have health consent).
+select tests.ok('weight: parent can read the teen record including body_weight', exists (
+  select 1 from public.health_read(tests.u(104), tests.u(103)) where body_weight_ct = tests.ct('bw-142')));
+select tests.logout();
+
+select tests.login(tests.u(98)); /* adult client with health */
+select tests.logout();
+select tests.login(null, 'service_role');
+select public.health_register_key(tests.u(98), tests.wk(98), 'local-dev', 'local-dev:test');
+select public.health_write(tests.u(98), tests.ct('n'), tests.ct('screen-answers'), tests.ct('knee'), tests.ct('wg'), array['injury_notes','health_screen','injury_category','weight_goal','body_weight'], tests.ct('bw-180'));
+-- Coach can see the adult client but must NOT receive health_screen, weight_goal, or body_weight.
+select tests.ok('coach: adult health_read returns notes + category, never the screen or weights', exists (
+  select 1 from public.health_read(tests.u(97), tests.u(98))
+   where injury_notes_ct = tests.ct('n')
+     and injury_category_ct = tests.ct('knee')
+     and health_screen_ct is null
+     and weight_goal_ct is null
+     and body_weight_ct is null));
+-- Coach gets no row at all for a minor client, even with a relationship (none here; still empty).
+select tests.no_rows('coach: health_read of a minor returns no row', format('select * from public.health_read(%L, %L)', tests.u(97), tests.u(103)));
+select tests.logout();
+
+-- Parent can write the teen's health record (health_subject).
+select tests.login(null, 'service_role');
+select public.health_write(tests.u(104), null, tests.ct('teen-screen'), null, null, array['health_screen'], null, tests.u(103));
+select tests.ok('parent: can write the teen''s health_screen ciphertext', exists (
+  select 1 from public.health_records where user_id = tests.u(103) and health_screen_ct = tests.ct('teen-screen')));
+select tests.raises('parent: an outsider cannot write the teen''s record', format($q$select public.health_write(%L, tests.ct('x'), null, null, null, array['injury_notes'], null, %L)$q$, tests.u(101), tests.u(103)), 'forbidden');
+select tests.logout();
+
+-- =============================================================== 7. plan accept + first session + filter log
+select tests.login(tests.u(102));
+select public.mark_ai_plan_accepted();
+select tests.eq('session: plan_accepted is true', $q$select public.my_ai_plan_state() ->> 'plan_accepted'$q$, 'true');
+select tests.eq('session: first session starts false', $q$select public.my_ai_plan_state() ->> 'first_session_done'$q$, 'false');
+select public.mark_ai_first_session_done();
+select tests.eq('session: first session then true', $q$select public.my_ai_plan_state() ->> 'first_session_done'$q$, 'true');
+-- Idempotent.
+select public.mark_ai_first_session_done();
+select tests.ok('session: a second mark leaves the original timestamp', (select count(*) = 1 from public.ai_plan_sessions where user_id = tests.u(102) and first_session_completed_at is not null));
+select tests.logout();
+
+select tests.login(tests.u(92));
+select tests.raises('session: cannot accept a plan without consents + screen', $q$select public.mark_ai_plan_accepted()$q$, 'consent_required');
+select tests.raises('session: cannot mark first session with no accepted plan', $q$select public.mark_ai_first_session_done()$q$, 'forbidden');
+select tests.logout();
+
+select tests.login(null, 'service_role');
+select public.log_ai_plan_filtered(tests.u(102), 'eating_disorder');
+select tests.ok('filter-log: only the reason code is stored', exists (
+  select 1 from public.audit_log
+   where actor_id = tests.u(102) and action = 'ai_plan_filtered'
+     and metadata = '{"reason": "eating_disorder"}'::jsonb));
+select tests.raises('filter-log: unknown reason codes are refused', format($q$select public.log_ai_plan_filtered(%L, 'not_a_code')$q$, tests.u(102)), 'invalid_argument');
+select tests.logout();
+select tests.login(tests.u(102));
+select tests.raises('filter-log: clients cannot write the filter log', format($q$select public.log_ai_plan_filtered(%L, 'eating_disorder')$q$, tests.u(102)), 'permission denied%');
+select tests.logout();
+
+-- =============================================================== 8. shred clears the gate row; service-only health fns
+select tests.login(null, 'service_role');
+select tests.ok('shred: health_shred also drops health_screen_state', public.health_shred(tests.u(103)));
+select tests.ok('shred: state row is gone', not exists (select 1 from public.health_screen_state where user_id = tests.u(103)));
+select tests.ok('shred: ciphertext is gone', not exists (select 1 from public.health_records where user_id = tests.u(103)));
+select tests.logout();
+
+select tests.login(tests.u(91));
+select tests.raises('priv: clients cannot call health_write', format($q$select public.health_write(%L, null, null, null)$q$, tests.u(91)), 'permission denied%');
+select tests.raises('priv: clients cannot call ai_plan_context', format($q$select * from public.ai_plan_context(%L)$q$, tests.u(91)), 'permission denied%');
+select tests.blocked('priv: clients cannot write body_weight_ct directly', $q$update public.health_records set body_weight_ct = tests.ct('x')$q$);
+select tests.logout();
+
+select tests.ok('rls: every public/private table still has RLS forced', not exists (
+  select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname in ('public','private') and c.relkind = 'r' and not (c.relrowsecurity and c.relforcerowsecurity)));
+select tests.ok('priv: new service functions are not executable by clients', not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    and p.proname in ('health_prepare_write','health_register_key','health_write','health_read','health_shred',
+                      'ai_plan_context','log_ai_plan_filtered')));

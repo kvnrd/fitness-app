@@ -709,7 +709,8 @@ select tests.eq('state: a user without a profile gets null', 'select coalesce(pu
 select tests.login(tests.u(50));
 select tests.eq('state: adult shape and values', $q$select concat_ws('|', s ->> 'is_minor', s ->> 'linked', coalesce(s ->> 'invite_status', 'none'), s ->> 'setup_done', s ->> 'privacy_done', s ->> 'can_train', coalesce(s ->> 'parent_risk_done', 'n/a')) from (select public.my_onboarding_state() s) x$q$,
   'false|false|none|true|true|true|n/a');
-select tests.eq('state: exactly the eight documented keys', $q$select count(*)::text from jsonb_object_keys(public.my_onboarding_state())$q$, '8');
+select tests.eq('state: documented keys (8 original + health_screen_status + can_ai_plan)', $q$select count(*)::text from jsonb_object_keys(public.my_onboarding_state())$q$, '10');
+select tests.ok('state: Phase 4 keys are present', (select public.my_onboarding_state() ? 'health_screen_status' and public.my_onboarding_state() ? 'can_ai_plan'));
 select tests.login(tests.u(52));
 select tests.eq('state: pending minor', $q$select concat_ws('|', s ->> 'is_minor', s ->> 'linked', s ->> 'setup_done', s ->> 'privacy_done', s ->> 'can_train', s ->> 'parent_risk_done') from (select public.my_onboarding_state() s) x$q$,
   'true|false|false|false|false|false');
