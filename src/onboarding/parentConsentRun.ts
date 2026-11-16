@@ -2,7 +2,7 @@ import { acceptParentInvite } from './api';
 import { setConsent, type ConsentKind } from '../auth/consents';
 import { acceptLink } from '../auth/parentLinks';
 import {
-  HEALTH_POLICY, PRIVACY_POLICY, VERSIONS, legalTextHash, legalTexts, type ParentNames,
+  HEALTH_POLICY, PRIVACY_POLICY, TERMS, VERSIONS, legalTextHash, legalTexts, type ParentNames,
 } from '../legal/text';
 import { consentsToRecord, type PcState } from './parentConsent';
 
@@ -29,6 +29,7 @@ export async function confirmParentLink(args: {
   const common = {
     attestation: { version: attest.version, hash: attestHash },
     termsVersion: VERSIONS.terms,
+    termsHash: TERMS.hash,
     risk: { version: risk.version, hash: riskHash },
     privacyVersion: PRIVACY_POLICY.version,
     privacyHash: PRIVACY_POLICY.hash,

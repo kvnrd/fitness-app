@@ -27,7 +27,7 @@ begin
   return r;
 end $$;
 create function tests.accept_inv(p_token text) returns boolean language sql as $$
-  select public.accept_parent_invite(p_token, 'attest-v1', tests.h('a'), 'terms-v1', 'risk-v1', tests.h('c'), 'privacy-v1', tests.h('d')) $$;
+  select public.accept_parent_invite(p_token, 'attest-v1', tests.h('a'), 'terms-v1', tests.h('e'), 'risk-v1', tests.h('c'), 'privacy-v1', tests.h('d')) $$;
 create function tests.privacy(p_health boolean, p_ai boolean) returns jsonb language sql as $$
   select public.submit_privacy_safety(p_health, 'health-v2', tests.h('1'), p_ai, 'ai-B-v2', tests.h('2'), 'risk-v2', tests.h('3'), tests.h('4')) $$;
 create function tests.setup_json(p_extra jsonb default '{}') returns jsonb language sql stable as $$
@@ -274,10 +274,12 @@ select tests.ok('invite: tokens are distinct', (select count(distinct token) = c
 
 -- accept: failures (all the same generic false), arguments, rate limit
 select tests.login(tests.u(71));
-select tests.raises('accept: missing attestation refused', format($q$select public.accept_parent_invite(%L, null, %L, 'terms-v1', 'risk-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('c')), 'attestation_required');
-select tests.raises('accept: missing parent risk acknowledgement refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', null, null)$q$, tests.tok(tests.u(54)), tests.h('a')), 'attestation_required');
-select tests.raises('accept: malformed risk hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', 'risk-v1', 'zz')$q$, tests.tok(tests.u(54)), tests.h('a')), 'attestation_required');
-select tests.raises('accept: missing terms version refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, '', 'risk-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('c')), 'attestation_required');
+select tests.raises('accept: missing attestation refused', format($q$select public.accept_parent_invite(%L, null, %L, 'terms-v1', %L, 'risk-v1', %L, 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('e'), tests.h('c'), tests.h('d')), 'attestation_required');
+select tests.raises('accept: missing parent risk acknowledgement refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', %L, null, null, 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('e'), tests.h('d')), 'attestation_required');
+select tests.raises('accept: malformed risk hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', %L, 'risk-v1', 'zz', 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('e'), tests.h('d')), 'attestation_required');
+select tests.raises('accept: missing terms version refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, '', %L, 'risk-v1', %L, 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('e'), tests.h('c'), tests.h('d')), 'attestation_required');
+select tests.raises('accept: missing terms hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', null, 'risk-v1', %L, 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('c'), tests.h('d')), 'attestation_required');
+select tests.raises('accept: malformed terms hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', 'zz', 'risk-v1', %L, 'privacy-v1', %L)$q$, tests.tok(tests.u(54)), tests.h('a'), tests.h('c'), tests.h('d')), 'attestation_required');
 select tests.eq('accept: unknown token -> generic false', format('select tests.accept_inv(%L)::text', repeat('0', 64)), 'false');
 select tests.eq('accept: malformed token -> the same generic false', $q$select tests.accept_inv('not-a-token')::text$q$, 'false');
 select tests.eq('accept: null token -> the same generic false', 'select tests.accept_inv(null)::text', 'false');
@@ -357,8 +359,8 @@ select tests.ok('link: the 1-argument accept_parent_link is gone', not exists (s
   where n.nspname = 'public' and p.proname = 'accept_parent_link' and p.pronargs = 1));
 select tests.login(tests.u(58)); select public.link_parent(tests.u(58), tests.u(59));
 select tests.login(tests.u(59));
-select tests.raises('link: accept without attestation refused', $q$select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(58)), null, null, 'terms-v1', 'risk-v1', null)$q$, 'attestation_required');
-select tests.raises('link: accept without the parent risk acknowledgement refused', format($q$select public.accept_parent_link((select id from public.parent_links where minor_user_id = %L), 'attest-v1', %L, 'terms-v1', null, null)$q$, tests.u(58), tests.h('a')), 'attestation_required');
+select tests.raises('link: accept without attestation refused', $q$select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(58)), null, null, 'terms-v1', null, 'risk-v1', null, 'privacy-v1', null)$q$, 'attestation_required');
+select tests.raises('link: accept without the parent risk acknowledgement refused', format($q$select public.accept_parent_link((select id from public.parent_links where minor_user_id = %L), 'attest-v1', %L, 'terms-v1', %L, null, null, 'privacy-v1', %L)$q$, tests.u(58), tests.h('a'), tests.h('e'), tests.h('d')), 'attestation_required');
 select tests.logout();
 select tests.ok('link: refused accepts leave the link pending', (select status = 'pending' from public.parent_links where minor_user_id = tests.u(58)));
 select tests.login(tests.u(71));
@@ -794,9 +796,9 @@ select tests.ok('hash: the parent''s accept paths logged a privacy_policy event 
   exists (select 1 from public.consent_events where user_id = tests.u(55) and kind = 'privacy_policy' and policy_version = 'privacy-v1' and policy_doc_hash = tests.h('d') and actor_user_id = tests.u(55))
   and exists (select 1 from public.consent_events where user_id = tests.u(59) and kind = 'privacy_policy' and policy_doc_hash = tests.h('d')));
 select tests.login(tests.u(71));
-select tests.raises('hash: accept_parent_invite without privacy version/hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', 'risk-v1', %L)$q$, repeat('a', 64), tests.h('a'), tests.h('c')), 'attestation_required');
-select tests.raises('hash: accept_parent_invite with a malformed privacy hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', 'risk-v1', %L, 'privacy-v1', 'zz')$q$, repeat('a', 64), tests.h('a'), tests.h('c')), 'attestation_required');
-select tests.raises('hash: accept_parent_link without privacy version/hash refused', format($q$select public.accept_parent_link(gen_random_uuid(), 'attest-v1', %L, 'terms-v1', 'risk-v1', %L)$q$, tests.h('a'), tests.h('c')), 'attestation_required');
+select tests.raises('hash: accept_parent_invite without privacy version/hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', %L, 'risk-v1', %L, null, null)$q$, repeat('a', 64), tests.h('a'), tests.h('e'), tests.h('c')), 'attestation_required');
+select tests.raises('hash: accept_parent_invite with a malformed privacy hash refused', format($q$select public.accept_parent_invite(%L, 'attest-v1', %L, 'terms-v1', %L, 'risk-v1', %L, 'privacy-v1', 'zz')$q$, repeat('a', 64), tests.h('a'), tests.h('e'), tests.h('c')), 'attestation_required');
+select tests.raises('hash: accept_parent_link without privacy version/hash refused', format($q$select public.accept_parent_link(gen_random_uuid(), 'attest-v1', %L, 'terms-v1', %L, 'risk-v1', %L, null, null)$q$, tests.h('a'), tests.h('e'), tests.h('c')), 'attestation_required');
 select tests.raises('hash: record_consent cannot record privacy_policy', $q$select public.record_consent('privacy_policy', 'v1')$q$, 'invalid_consent_kind');
 select tests.raises('hash: revoke_consent cannot revoke privacy_policy', $q$select public.revoke_consent('privacy_policy')$q$, 'invalid_consent_kind');
 select tests.logout();

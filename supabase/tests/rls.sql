@@ -70,7 +70,7 @@ end $$;
 
 -- Phase 3: a parent link can only be accepted with the attestation + terms + risk arguments.
 create function tests.accept_link(p_link uuid) returns void language sql as $$
-  select public.accept_parent_link(p_link, 'attest-v1', repeat('a', 64), 'terms-v1', 'risk-v1', repeat('c', 64), 'privacy-v1', repeat('d', 64)) $$;
+  select public.accept_parent_link(p_link, 'attest-v1', repeat('a', 64), 'terms-v1', repeat('e', 64), 'risk-v1', repeat('c', 64), 'privacy-v1', repeat('d', 64)) $$;
 
 -- =============================================================== fixtures (superuser)
 select tests.logout();

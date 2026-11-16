@@ -304,3 +304,53 @@ select tests.ok('priv: new service functions are not executable by clients', not
   where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'EXECUTE')
     and p.proname in ('health_prepare_write','health_register_key','health_write','health_read','health_shred',
                       'ai_plan_context','log_ai_plan_filtered')));
+
+-- ------------------------------------------------------------------ parent-accept terms hash, subject, consent context
+-- Users 105 (pending minor) + 106 (parent).
+
+select tests.logout();
+select tests.login(tests.u(105));
+select public.complete_signup((current_date - interval '16 years 3 months')::date, null, null, null, null, 'terms-v1', null, 'privacy-v1', tests.h('d'));
+select tests.ok('legal: 105 is a pending minor', (select is_minor from public.profiles where id = tests.u(105)));
+select public.create_parent_invite('parent105@example.invalid');
+select tests.logout();
+select tests.login(tests.u(106));
+select public.complete_signup(tests.dob(30), null, null, null, null, 'terms-v1', null, 'privacy-v1', tests.h('d'));
+select tests.logout();
+select tests.login(null, 'service_role');
+insert into tests.tokens select c.invite_id, c.parent_email, c.token, i.minor_user_id
+  from public.claim_parent_invites_to_send() c join public.parent_invites i on i.id = c.invite_id
+ where i.minor_user_id = tests.u(105);
+select tests.ok('legal: a token was claimed for 105', tests.tok(tests.u(105)) is not null);
+select tests.logout();
+
+select tests.login(tests.u(106));
+-- cf-connecting-ip wins over a spoofed first XFF hop. Same header preference as trainer-code rate limits.
+select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.10","x-forwarded-for":"1.2.3.4, 198.51.100.9","x-device-id":"dev-legal-106","x-app-version":"4.0.0"}', true);
+select tests.ok('legal: parent invite accepted with terms hash', tests.accept_inv(tests.tok(tests.u(105))));
+-- last-XFF-hop fallback when no cf / x-real-ip; app version is trimmed to 32 chars
+select set_config('request.headers', '{"x-forwarded-for":"1.2.3.4, 198.51.100.20","x-app-version":"4.0.1-too-long-app-version-string-is-trimmed-here"}', true);
+select public.accept_terms('terms-v1', tests.h('e'));
+select set_config('request.headers', '', true);
+select tests.logout();
+
+select tests.ok('legal: parent terms row stores the hash and references the teen', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(106) and kind = 'terms' and granted and text_hash = tests.h('e')
+     and subject_user_id = tests.u(105) and actor_user_id = tests.u(106)));
+select tests.ok('legal: parent privacy row references the teen', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(106) and kind = 'privacy_policy' and granted
+     and subject_user_id = tests.u(105) and policy_doc_hash = tests.h('d')));
+select tests.ok('legal: terms row hashed cf-connecting-ip, not the first XFF hop', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(106) and kind = 'terms' and subject_user_id = tests.u(105)
+     and ip_hash = private.pepper_hash('ip', '203.0.113.10')
+     and device_hash = private.pepper_hash('device', 'dev-legal-106')
+     and app_version = '4.0.0'));
+select tests.ok('legal: accept_terms uses last XFF hop and trims app version', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(106) and kind = 'terms' and text_hash = tests.h('e') and subject_user_id is null
+     and ip_hash = private.pepper_hash('ip', '198.51.100.20')
+     and app_version = '4.0.1-too-long-app-version-strin'));
+

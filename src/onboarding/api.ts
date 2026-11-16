@@ -81,6 +81,7 @@ export type AcceptInviteArgs = {
   token: string;
   attestation: { version: string; hash: string };
   termsVersion: string;
+  termsHash: string;
   risk: { version: string; hash: string };
   privacyVersion?: string | null;
   privacyHash?: string | null;
@@ -95,6 +96,7 @@ export async function acceptParentInvite(a: AcceptInviteArgs): Promise<boolean> 
       p_attestation_version: a.attestation.version,
       p_attestation_hash: a.attestation.hash,
       p_terms_version: a.termsVersion,
+      p_terms_hash: a.termsHash,
       p_risk_version: a.risk.version,
       p_risk_hash: a.risk.hash,
       p_privacy_version: a.privacyVersion ?? null,
