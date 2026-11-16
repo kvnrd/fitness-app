@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
-import { COACH_REQUEST_NOTE } from '../copy';
+import { Checkbox } from '../ui/Checkbox';
+import { COACH_ATTEST_GENERAL_BULLETS, COACH_ATTEST_GENERAL_INTRO, COACH_ATTEST_MINORS_BULLETS, COACH_ATTEST_MINORS_INTRO } from '../../legal/text.ts';
 import { TextField } from '../ui/Field';
 import { FooterHint, OnbScreen } from '../ui/OnbScreen';
 import { OnbSub, OnbTitle } from '../ui/OnbText';
@@ -31,9 +32,15 @@ export type RoleProps = {
   onRequestCoach: () => void;
   onSkip: () => void;
   onBack?: () => void;
+  /** General coach attestation. Unchecked by default; required to request access. */
+  attestGeneral: boolean;
+  onAttestGeneral: (v: boolean) => void;
+  /** Optional 16-17 box. Gates minor clients only after NSOPW + training are also on file. */
+  attestMinors: boolean;
+  onAttestMinors: (v: boolean) => void;
 };
 
-/** Setup · Step 4 of 8 (adults only). Skip = athlete. [ATTORNEY] adult attestation wording is chrome under the coach CTA. */
+/** Setup · Step 4 of 8 (adults only). Skip = athlete. Two Counsel attestation checkboxes on the coach path, both off by default. */
 export function RoleScreen(p: RoleProps) {
   const { colors, fonts } = useTheme();
   const coach = p.role === 'coach';
@@ -43,13 +50,8 @@ export function RoleScreen(p: RoleProps) {
       onSkip={p.onSkip}
       footer={
         <>
-          <PrimaryCta label={coach ? 'Request coach access' : 'Continue'} busy={p.busy} onPress={coach ? p.onRequestCoach : p.onContinue} />
-          {coach ? (
-            <>
-              <FooterHint>Usually reviewed within 1 business day</FooterHint>
-              <FooterHint>{COACH_REQUEST_NOTE}</FooterHint>
-            </>
-          ) : null}
+          <PrimaryCta label={coach ? 'Request coach access' : 'Continue'} busy={p.busy} disabled={coach && !p.attestGeneral} onPress={coach ? p.onRequestCoach : p.onContinue} />
+          {coach ? <FooterHint>Usually reviewed within 1 business day</FooterHint> : null}
         </>
       }
     >
@@ -122,6 +124,20 @@ export function RoleScreen(p: RoleProps) {
                   We verify every coach before Studio unlocks. Until then you can train as normal.
                 </Text>
               </View>
+              <AttestBox
+                checked={p.attestGeneral}
+                onChange={p.onAttestGeneral}
+                intro={COACH_ATTEST_GENERAL_INTRO}
+                bullets={COACH_ATTEST_GENERAL_BULLETS}
+                label={COACH_ATTEST_GENERAL_INTRO}
+              />
+              <AttestBox
+                checked={p.attestMinors}
+                onChange={p.onAttestMinors}
+                intro={COACH_ATTEST_MINORS_INTRO}
+                bullets={COACH_ATTEST_MINORS_BULLETS}
+                label={COACH_ATTEST_MINORS_INTRO}
+              />
             </View>
           ) : null}
         </OptionCard>
@@ -132,5 +148,26 @@ export function RoleScreen(p: RoleProps) {
         </Text>
       ) : null}
     </OnbScreen>
+  );
+}
+
+function AttestBox({
+  checked, onChange, intro, bullets, label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  intro: string;
+  bullets: readonly string[];
+  label: string;
+}) {
+  const { colors, fonts } = useTheme();
+  const body = { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textSecondary };
+  return (
+    <Checkbox checked={checked} onChange={onChange} label={label}>
+      <Text style={body}>
+        {intro}
+        {bullets.map((b) => `\n- ${b}`).join('')}
+      </Text>
+    </Checkbox>
   );
 }

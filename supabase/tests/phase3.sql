@@ -10,6 +10,7 @@
 --   62 minor (expiry + day-14 purge)                  63 adult WITHOUT a risk acknowledgement
 --   64..68 adults (trainer-code limits)               69 auth user without a profile
 --   70 second coach                                   71 adult spare
+--   76 general-only coach applicant                    77 coach applicant with minors box
 -- Test-only constants are NOT secrets.
 
 select tests.logout();
@@ -970,4 +971,71 @@ select tests.logout();
 select tests.login(tests.u(72));
 select tests.raises('weight: an authenticated client cannot call health_write at all', format($q$select public.health_write(%L, null, null, null, tests.ct('w'), array['weight_goal'])$q$, tests.u(72)), 'permission denied%');
 select tests.blocked('weight: nor read the column directly', $q$select weight_goal_ct from public.health_records$q$);
+select tests.logout();
+
+-- =============================================================== coach attestations (Counsel §2)
+create function tests.can_coach_minors(p_coach uuid) returns boolean
+  language sql stable security definer set search_path = public, pg_temp as $$
+  select app.can_coach_minors(p_coach);
+$$;
+
+select tests.signup3(tests.u(76), tests.dob(30));
+select tests.signup3(tests.u(77), tests.dob(30));
+select tests.login(tests.u(76));
+select tests.raises('attest: general hash is required', $q$select public.apply_for_coach(true, 'coach-attest-v1', null)$q$, 'attestation_required');
+select tests.raises('attest: malformed general hash is refused', $q$select public.apply_for_coach(true, 'coach-attest-v1', 'nope')$q$, 'attestation_required');
+select tests.raises('attest: minors box without version/hash is refused', $q$select public.apply_for_coach(true, 'coach-attest-v1', tests.h('e'), true, null, null)$q$, 'attestation_required');
+select public.apply_for_coach(true, 'coach-attest-general-v1', tests.h('e'));
+select tests.ok('attest: general-only apply writes one general event and no minors event',
+  (select count(*) = 1 from public.coach_attestation_events where coach_id = tests.u(76) and kind = 'general' and policy_version = 'coach-attest-general-v1' and text_hash = tests.h('e'))
+  and not exists (select 1 from public.coach_attestation_events where coach_id = tests.u(76) and kind = 'minors')
+  and exists (select 1 from public.coach_applications where applicant_id = tests.u(76) and attestation_hash = tests.h('e') and minors_attested_at is null));
+select tests.logout();
+
+select tests.login(tests.u(77));
+select public.apply_for_coach(true, 'coach-attest-general-v1', tests.h('e'), true, 'coach-attest-minors-v1', tests.h('8'), 'NSCA-CPT', 'NSCA', current_date + 365);
+select tests.ok('attest: minors box logs a separate event and stamps clearance attest (not NSOPW or training)',
+  exists (select 1 from public.coach_attestation_events where coach_id = tests.u(77) and kind = 'general' and text_hash = tests.h('e'))
+  and exists (select 1 from public.coach_attestation_events where coach_id = tests.u(77) and kind = 'minors' and policy_version = 'coach-attest-minors-v1' and text_hash = tests.h('8'))
+  and exists (select 1 from public.coach_minor_clearance where coach_id = tests.u(77) and minors_attested_at is not null and minors_hash = tests.h('8') and nsopw_status = 'not_started' and training_completed_at is null));
+select tests.eq('attest: minors box alone does not allow minor clients', format('select tests.can_coach_minors(%L)::text', tests.u(77)), 'false');
+select tests.raises('attest: client cannot record an NSOPW result', format($q$select public.set_coach_nsopw(%L, 'passed', 'x')$q$, tests.u(77)), 'permission denied%');
+select tests.raises('attest: client cannot record training', format($q$select public.set_coach_minor_training(%L, 'x')$q$, tests.u(77)), 'permission denied%');
+select tests.logout();
+
+-- 77 is only coach_pending; promote to verified via service so we can test the relationship trigger.
+select tests.login(null, 'service_role');
+select public.set_user_role(tests.u(77), 'coach_verified');
+select tests.raises('attest: a relationship to a minor is refused without NSOPW and training',
+  format($q$insert into public.coach_relationships (coach_id, client_id, status, started_at) values (%L, %L, 'active', now())$q$, tests.u(77), tests.u(54)),
+  'minors_coaching_not_allowed');
+select public.set_coach_nsopw(tests.u(77), 'passed', 'nsopw-test-77');
+select tests.raises('attest: NSOPW without training is still refused',
+  format($q$insert into public.coach_relationships (coach_id, client_id, status, started_at) values (%L, %L, 'active', now())$q$, tests.u(77), tests.u(54)),
+  'minors_coaching_not_allowed');
+select public.set_coach_minor_training(tests.u(77), 'training-test-77');
+select tests.eq('attest: minors box + NSOPW passed + training allows minor clients', format('select tests.can_coach_minors(%L)::text', tests.u(77)), 'true');
+insert into public.coach_relationships (coach_id, client_id, status, started_at) values (tests.u(77), tests.u(54), 'active', now());
+select tests.ok('attest: relationship to a linked minor is stored once clearance is complete',
+  exists (select 1 from public.coach_relationships where coach_id = tests.u(77) and client_id = tests.u(54) and status = 'active'));
+-- failed NSOPW revokes the ability even with training + box still on file
+select public.set_coach_nsopw(tests.u(77), 'failed', 'nsopw-fail-77');
+select tests.eq('attest: a failed NSOPW result blocks minor clients', format('select tests.can_coach_minors(%L)::text', tests.u(77)), 'false');
+select tests.raises('attest: a new minor link is refused after a failed NSOPW',
+  format($q$insert into public.coach_relationships (coach_id, client_id, status, started_at) values (%L, %L, 'active', now())$q$, tests.u(77), tests.u(58)),
+  'minors_coaching_not_allowed');
+insert into public.coach_relationships (coach_id, client_id, status, started_at)
+values (tests.u(76), tests.u(57), 'active', now());
+select tests.ok('attest: general-only coach can still take an adult client',
+  exists (select 1 from public.coach_relationships where coach_id = tests.u(76) and client_id = tests.u(57) and status = 'active'));
+select tests.logout();
+
+-- later minors box for a coach who applied without it
+select tests.login(tests.u(76));
+select public.record_coach_minors_attestation('coach-attest-minors-v1', tests.h('8'));
+select tests.ok('attest: record_coach_minors_attestation writes the minors event on an existing applicant',
+  exists (select 1 from public.coach_attestation_events where coach_id = tests.u(76) and kind = 'minors' and text_hash = tests.h('8')));
+select tests.logout();
+select tests.login(tests.u(50));
+select tests.raises('attest: an athlete cannot record the minors box', $q$select public.record_coach_minors_attestation('coach-attest-minors-v1', tests.h('8'))$q$, 'forbidden');
 select tests.logout();

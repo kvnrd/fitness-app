@@ -38,7 +38,7 @@ import { WelcomeScreen } from '../screens/Welcome';
 const noop = () => {};
 
 const role = (o: Partial<RoleProps> = {}): ReactElement => (
-  <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} {...o} />
+  <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} attestGeneral={false} onAttestGeneral={noop} attestMinors={false} onAttestMinors={noop} {...o} />
 );
 const picked = toggleStyle(toggleStyle(toggleStyle(EMPTY_SELECTION, 'hybrid'), 'hyrox'), 'bodybuilding');
 const editedGym = toggleItem(toggleItem(toggleItem(presetGym('full'), 'smith_machine'), 'pec_deck'), 'trx');

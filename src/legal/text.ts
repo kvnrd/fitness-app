@@ -58,6 +58,8 @@ export const VERSIONS = {
   parentHealth: 'health-parent-2026-11-15-draft',
   parentCoach: 'coach-parent-2026-11-15-draft',
   aiNeedsHealth: 'ai-needs-health-2026-11-16-draft',
+  coachAttestGeneral: 'coach-attest-general-2026-11-16-draft',
+  coachAttestMinors: 'coach-attest-minors-2026-11-16-draft',
 } as const;
 
 // ───────────────────────────── Policies (Counsel v0.2 DRAFT) ─────────────────────────────
@@ -229,6 +231,33 @@ export function adultRiskCard() {
   };
 }
 
+/** Coach general attestation (Counsel phase3-build-answers.md §2). [Company] and [Coach Terms] stay as placeholders. [ATTORNEY] */
+export const COACH_ATTEST_GENERAL_INTRO = 'I confirm that:';
+export const COACH_ATTEST_GENERAL_BULLETS = [
+  "I'm 18 or older, and everything in my application is true.",
+  "I'm an independent coach, not an employee of [Company]. I sell my 1:1 coaching myself, as the seller of record, through my own Stripe account, and I handle my own refunds, chargebacks, and taxes.",
+  "I won't give medical advice, diagnose or treat injuries or conditions, or call myself a doctor, physical therapist, or dietitian unless I'm licensed as one.",
+  "I'll see a client's info only if they share it with me. I'll never ask for a 16–17 client's health info, and I'll see an adult's health answers only if they choose to share them.",
+  "I'll keep client info confidential, use it only to coach that client, and not copy it out of [App]. If the client, their parent, or [Company] asks, I'll delete any notes or copies I kept outside [App] and confirm when it's done.",
+  'I agree to the [Coach Terms] and the [App] Terms of Service.',
+] as const;
+export const COACH_ATTEST_GENERAL = fill(
+  [COACH_ATTEST_GENERAL_INTRO, ...COACH_ATTEST_GENERAL_BULLETS.map((b) => `- ${b}`)].join('\n'),
+);
+
+/** 16-17 box. Optional; gates minor clients only together with NSOPW + training. [ATTORNEY] */
+export const COACH_ATTEST_MINORS_INTRO = 'I want to coach 16–17-year-olds, and I agree that:';
+export const COACH_ATTEST_MINORS_BULLETS = [
+  '[Company] will run a National Sex Offender Public Website (NSOPW) search on me before approving me, and I\'ll complete Texas child-abuse reporting training first.',
+  "If I believe a child is being abused or neglected, I'll report it as Texas law requires (Texas Family Code chapter 261), and also use [App]'s report tools.",
+  "I'll talk with minor clients only by text in [App] chat, which their parent can read and which is filtered and reviewed. I won't message between 10 pm and 7 am, never contact a minor client outside [App], and won't try to get around the filters.",
+  "Live sessions with minors happen only in [App], with their parent invited, and I'll never record them.",
+  "I'll never see or ask for a minor client's health info, photos, or videos, and I won't give them weight-loss, calorie, body-size, bulking, or supplement advice.",
+] as const;
+export const COACH_ATTEST_MINORS = fill(
+  [COACH_ATTEST_MINORS_INTRO, ...COACH_ATTEST_MINORS_BULLETS.map((b) => `- ${b}`)].join('\n'),
+);
+
 // ───────────── Versions + hashes for each exact text shown ─────────────
 
 export type LegalText = { version: string; text: string };
@@ -250,6 +279,8 @@ export const legalTexts = {
   parentHealth: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.parentHealth, text: parentHealthText(n) }),
   parentAi: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.aiParent, text: parentAiText(n) }),
   parentCoach: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.parentCoach, text: parentCoachText(n) }),
+  coachAttestGeneral: (): LegalText => ({ version: VERSIONS.coachAttestGeneral, text: COACH_ATTEST_GENERAL }),
+  coachAttestMinors: (): LegalText => ({ version: VERSIONS.coachAttestMinors, text: COACH_ATTEST_MINORS }),
 } as const;
 
 /** SHA-256 hex of the exact text shown. */

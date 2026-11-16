@@ -1,6 +1,7 @@
 import { supabase } from '../auth/supabase';
 import type { WeightGoal } from './deviceSetupStore';
 import type { SetupPayload } from './setupPayload';
+import { legalTextHash, legalTexts } from '../legal/text.ts';
 
 /**
  * Client wrappers for the Phase 3 RPCs (supabase/migrations/20261116000*.sql). Every call uses NAMED args.
@@ -187,14 +188,20 @@ export async function uploadWeightGoal(goal: WeightGoal): Promise<boolean> {
   }
 }
 
-/** Version id recorded with the coach application's adult attestation. [ATTORNEY] placeholder until Counsel words it. */
-export const COACH_ADULT_ATTESTATION_VERSION = 'coach-adult-attest-2026-11-15-draft';
-
-/** apply_for_coach(p_attest_adult, p_attestation_version): the existing 2b function. Any failure is generic (false). */
-export async function applyForCoach(): Promise<boolean> {
+/** apply_for_coach: general box is always required; the 16-17 box is optional and separately hashed. Any failure is generic (false). */
+export async function applyForCoach(opts: { minors: boolean }): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await supabase.rpc('apply_for_coach', { p_attest_adult: true, p_attestation_version: COACH_ADULT_ATTESTATION_VERSION });
+    const general = legalTexts.coachAttestGeneral();
+    const minors = legalTexts.coachAttestMinors();
+    const { error } = await supabase.rpc('apply_for_coach', {
+      p_attest_adult: true,
+      p_attestation_version: general.version,
+      p_attestation_hash: await legalTextHash(general),
+      p_minors_attest: opts.minors,
+      p_minors_version: opts.minors ? minors.version : null,
+      p_minors_hash: opts.minors ? await legalTextHash(minors) : null,
+    });
     return !error;
   } catch {
     return false;

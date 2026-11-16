@@ -99,9 +99,9 @@ select tests.raises('coach 18+: service cannot make a minor coach_pending', form
 select tests.logout();
 select tests.raises('coach 18+: even a direct table write is refused', format($q$update public.user_roles set role = 'coach_verified' where user_id = %L$q$, tests.u(23)), 'coach_must_be_adult');
 select tests.login(tests.u(21));
-select tests.raises('coach 18+: a minor cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
+select tests.raises('coach 18+: a minor cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64))$q$, 'forbidden');
 select tests.login(tests.u(20));
-select tests.raises('coach 18+: attestation version required', $q$select public.apply_for_coach(true, '')$q$, 'attestation_required');
+select tests.raises('coach 18+: attestation version required', $q$select public.apply_for_coach(true, '', repeat('a', 64))$q$, 'attestation_required');
 select tests.logout();
 
 -- =============================================================== parent link for u21, then dual consents (Q2)

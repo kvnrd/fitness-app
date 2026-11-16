@@ -14,7 +14,7 @@ Status: built and tested **locally only** on branch `phase-3-onboarding` (off `m
 | 2 of 8 | Create (email) | `create` | Name, email, password (12–128, no composition rules), only the Terms checkbox |
 | 3 of 8 | Verify | `verify` | 6-digit email OTP, 60 s resend |
 | – | Waiting for a parent (pending 16–17) | `waiting-parent` | Counsel's pending copy; can fix/resend the parent email |
-| 4 of 8 | Role | `setup/role` | Adults only. Coach → `apply_for_coach`. Optional trainer code under "I'm training". Pending teens skip it (server sets athlete) |
+| 4 of 8 | Role | `setup/role` | Adults only. Coach → two attestation boxes, then `apply_for_coach`. Optional trainer code under "I'm training". Pending teens skip it (server sets athlete) |
 | 5 of 8 | Goal | `setup/goal` | Adults: lose/gain/maintain + weights (device only) + pace. Linked teens: Counsel's minor-safe list. Held for pending teens |
 | 6 of 8 | Training style + follow-ups | `setup/style`, `setup/followups` | Pending teens: device only |
 | 7 of 8 | Your gym (equipment) | `setup/equipment` | Pending teens: device only |
@@ -96,7 +96,7 @@ The age band used for routing comes from the server (`screen_age` returns `band`
 - Invite-sent copy says "We sent a link", but the email sender isn't built and the invite is only queued after the teen's account exists.
 - Verify copy says "If an account can be created, we sent a 6-digit code…" (avoids confirming an account exists) instead of Paper's "We sent…".
 - The "AI planning needs health info" explanation uses Counsel's wording (phase3-build-answers.md §1, Nov 16, 2026) for the adult, teen and parent versions. Title and buttons kept. The explanation is not a consent; "Turn on health info" flips the visible health switch, and the normal health consent row is logged on Continue (version + hash). AI still needs its own tap. [ATTORNEY]
-- Coach request note ("By requesting access you confirm you're an adult applying as a coach.") and its attestation version are placeholders [COUNSEL].
+- Coach application: two Counsel checkboxes (phase3-build-answers.md §2, Nov 16, 2026), both off by default, each logged as its own row (version + SHA-256 + timestamp). The general box is required to apply. The 16–17 box is optional; a coach may take a minor client only when that box, an NSOPW result of passed, and a youth-safety training record are all on file (`app.can_coach_minors`, enforced on `coach_relationships`). [Company] and [Coach Terms] stay as placeholders. No insurance requirement. The deletion line is enforceable only when the Coach Terms say the same. [ATTORNEY]
 - The coach invite code field on the Role screen is not sent anywhere (no server function takes it yet). Keep or drop?
 - Weight goal is never shown to coaches (own reads only).
 - Parent `privacy_policy` acceptance is filed under the parent's own user id.

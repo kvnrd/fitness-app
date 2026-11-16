@@ -253,16 +253,16 @@ select tests.raises('roles: client cannot create trainer codes', $q$select publi
 
 -- apply_for_coach + admin review
 select tests.login(tests.u(8));
-select tests.raises('coach apply: 18+ attestation required', $q$select public.apply_for_coach(false, 'coach-attest-v1')$q$, 'attestation_required');
-select public.apply_for_coach(true, 'coach-attest-v1', 'NSCA-CPT', 'NSCA', current_date + 365);
+select tests.raises('coach apply: 18+ attestation required', $q$select public.apply_for_coach(false, 'coach-attest-v1', repeat('a', 64))$q$, 'attestation_required');
+select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64), false, null, null, 'NSCA-CPT', 'NSCA', current_date + 365);
 select tests.eq('coach apply: role becomes coach_pending (definer only)', 'select role from public.user_roles where user_id = tests.u(8)', 'coach_pending');
 select tests.rows('coach apply: applicant reads own application', 'select * from public.coach_applications', 1);
-select tests.raises('coach apply: pending cannot re-apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
+select tests.raises('coach apply: pending cannot re-apply', $q$select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64))$q$, 'forbidden');
 select tests.no_rows('coach apply: studio gate unmet while pending', 'select 1 where app.is_verified_coach()');
 select tests.login(tests.u(2));
 select tests.no_rows('coach apply: B cannot read D application', 'select * from public.coach_applications');
 select tests.login(tests.u(5));
-select tests.raises('coach apply: minors cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
+select tests.raises('coach apply: minors cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64))$q$, 'forbidden');
 select tests.login(tests.u(8));
 select tests.raises('coach apply: applicant cannot self-approve', format($q$select public.review_coach_application((select id from public.coach_applications where applicant_id = %L), true)$q$, tests.u(8)), 'forbidden');
 select tests.logout();
@@ -400,6 +400,9 @@ select tests.svc_write(tests.u(5), 'shoulder impingement', 'none');
 select tests.eq('minor: owner reads own health once onboarded', format('select (injury_notes_ct = tests.ct(%L))::text from public.health_read(%L)', 'shoulder impingement', tests.u(5)), 'true');
 -- coach hidden from minors' health by default, even with relationship + consent
 select tests.logout();
+-- u3 was verified via set_user_role (no application). Stamp minor-client clearance so the relationship is allowed.
+insert into public.coach_minor_clearance (coach_id, minors_attested_at, minors_version, minors_hash, nsopw_status, nsopw_ref, nsopw_checked_at, training_completed_at, training_ref)
+values (tests.u(3), now(), 'coach-minors-test', repeat('b', 64), 'passed', 'test-nsopw', now(), now(), 'test-training');
 insert into public.coach_relationships (coach_id, client_id, status, started_at) values (tests.u(3), tests.u(5), 'active', now());
 select tests.login(tests.u(6));
 select public.record_consent('coach_sharing', 'v1', tests.u(5));
