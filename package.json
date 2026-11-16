@@ -42,7 +42,9 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "export:web": "expo export --platform web",
-    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
+    "test:unit": "node --test \"tests/unit/*.test.ts\"",
+    "policies": "node scripts/bundle-policies.mjs"
   },
   "private": true
 }

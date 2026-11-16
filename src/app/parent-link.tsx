@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { acceptLink, isUuid, listPendingLinks, PendingLink, requestLinkByParentId } from '../auth/parentLinks';
+import { isUuid, listPendingLinks, PendingLink, requestLinkByParentId } from '../auth/parentLinks';
 import { useSession } from '../auth/SessionProvider';
 import { Button, Text } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
@@ -63,15 +63,8 @@ export default function ParentLinkScreen() {
     }
   }
 
-  async function onAccept(id: string) {
-    if (busy) return;
-    setBusy(true);
-    setMessage(null);
-    const ok = await acceptLink(id);
-    setBusy(false);
-    setMessage(ok ? 'Accepted.' : "We couldn't accept that request. Please try again.");
-    await reload();
-    await refreshRole();
+  function onAccept(id: string) {
+    router.push({ pathname: '/parent-consent', params: { link: id } });
   }
 
   async function onCheckAgain() {
@@ -164,7 +157,7 @@ export default function ParentLinkScreen() {
                 <Text variant="small" color={colors.textMuted}>
                   {`Request received ${new Date(l.created_at).toLocaleDateString()}`}
                 </Text>
-                <Button label="Accept" disabled={busy} onPress={() => onAccept(l.id)} />
+                <Button label="Review and confirm" disabled={busy} onPress={() => onAccept(l.id)} />
               </View>
             ))}
           </View>

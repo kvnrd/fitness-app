@@ -10,7 +10,7 @@ returns jsonb language plpgsql as $$
 declare r jsonb;
 begin
   perform tests.login(p_user);
-  r := public.complete_signup(p_dob, null, p_lower, p_upper, p_src);
+  r := public.complete_signup(p_dob, null, p_lower, p_upper, p_src, 'terms-v1', null, 'privacy-v1', repeat('d', 64));
   perform tests.logout();
   return r;
 end $$;
@@ -99,21 +99,23 @@ select tests.raises('coach 18+: service cannot make a minor coach_pending', form
 select tests.logout();
 select tests.raises('coach 18+: even a direct table write is refused', format($q$update public.user_roles set role = 'coach_verified' where user_id = %L$q$, tests.u(23)), 'coach_must_be_adult');
 select tests.login(tests.u(21));
-select tests.raises('coach 18+: a minor cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
+select tests.raises('coach 18+: a minor cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64))$q$, 'forbidden');
 select tests.login(tests.u(20));
-select tests.raises('coach 18+: attestation version required', $q$select public.apply_for_coach(true, '')$q$, 'attestation_required');
+select tests.raises('coach 18+: attestation version required', $q$select public.apply_for_coach(true, '', repeat('a', 64))$q$, 'attestation_required');
 select tests.logout();
 
 -- =============================================================== parent link for u21, then dual consents (Q2)
 select tests.login(tests.u(21)); select public.link_parent(tests.u(21), tests.u(22));
-select tests.login(tests.u(22)); select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(21)));
+select tests.login(tests.u(22)); select tests.accept_link((select id from public.parent_links where minor_user_id = tests.u(21)));
 select tests.login(tests.u(21));
 select tests.raises('dual: teen AI switch locked until parent agrees', $q$select public.record_consent('ai_vendor', 'ai-B-v1')$q$, 'parent_consent_required');
 select tests.login(tests.u(22));
+select public.record_consent('health_data', 'health-v1', tests.u(21));
 select public.record_consent('ai_vendor', 'ai-B-parent-v1', tests.u(21), repeat('a', 64));
 select tests.eq('dual: parent alone does not turn it on', $q$select app.has_consent(tests.u(21), 'ai_vendor')::text$q$, 'false');
 select tests.login(tests.u(21));
 select tests.raises('consent: malformed text hash rejected', $q$select public.record_consent('ai_vendor', 'ai-B-v1', null, 'not-a-hash')$q$, 'invalid_text_hash');
+select public.record_consent('health_data', 'health-v1');
 select public.record_consent('ai_vendor', 'ai-B-v1', null, repeat('b', 64));
 select tests.eq('dual: teen + parent = on', $q$select app.has_consent(tests.u(21), 'ai_vendor')::text$q$, 'true');
 select tests.eq('consent: text hash + grantor stored on the event', $q$select count(*)::text from public.consent_events where user_id = tests.u(21) and kind = 'ai_vendor' and granted and text_hash is not null and grantor in ('self','parent')$q$, '2');
@@ -130,6 +132,7 @@ select tests.raises('dual: teen switch is locked again after parent revokes', $q
 select tests.raises('dual: teen cannot grant on the parent''s behalf', format($q$select public.record_consent('ai_vendor', 'v1', %L)$q$, tests.u(21)), 'parent_consent_required');
 select tests.login(tests.u(20));
 select tests.raises('dual: an unrelated adult cannot grant for the teen', format($q$select public.record_consent('ai_vendor', 'v1', %L)$q$, tests.u(21)), 'forbidden');
+select public.record_consent('health_data', 'health-v1');
 select public.record_consent('ai_vendor', 'ai-B-v1');
 select tests.eq('adult: own grant is enough', $q$select app.has_consent(tests.u(20), 'ai_vendor')::text$q$, 'true');
 -- health + AI for the teen (both parties) for the photo / purchase / AI tests below
@@ -143,11 +146,11 @@ select tests.logout();
 
 -- former parent's grant does not count for a new parent (u24 minor; u22 then u20)
 select tests.login(tests.u(24)); select public.link_parent(tests.u(24), tests.u(22));
-select tests.login(tests.u(22)); select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(24)));
+select tests.login(tests.u(22)); select tests.accept_link((select id from public.parent_links where minor_user_id = tests.u(24)));
 select public.record_consent('coach_sharing', 'v1', tests.u(24));
 select public.revoke_parent_link((select id from public.parent_links where minor_user_id = tests.u(24)));
 select tests.login(tests.u(24)); select public.link_parent(tests.u(24), tests.u(20));
-select tests.login(tests.u(20)); select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(24) and status = 'pending'));
+select tests.login(tests.u(20)); select tests.accept_link((select id from public.parent_links where minor_user_id = tests.u(24) and status = 'pending'));
 select tests.login(tests.u(24));
 select tests.raises('dual: a former parent''s grant does not unlock the teen', $q$select public.record_consent('coach_sharing', 'v1')$q$, 'parent_consent_required');
 select tests.logout();
@@ -198,7 +201,7 @@ select tests.ok('pending: u28', (tests.signup(tests.u(28), tests.dob(16)) ->> 'i
 select tests.ok('pending: u29', (tests.signup(tests.u(29), tests.dob(17)) ->> 'is_minor') = 'true');
 -- u29 had a link accepted and later revoked: not "pending", never auto-purged
 select tests.login(tests.u(29)); select public.link_parent(tests.u(29), tests.u(22));
-select tests.login(tests.u(22)); select public.accept_parent_link((select id from public.parent_links where minor_user_id = tests.u(29)));
+select tests.login(tests.u(22)); select tests.accept_link((select id from public.parent_links where minor_user_id = tests.u(29)));
 select public.revoke_parent_link((select id from public.parent_links where minor_user_id = tests.u(29)));
 select tests.logout();
 update public.profiles set created_at = now() - interval '15 days' where id in (tests.u(26), tests.u(27), tests.u(29));
@@ -239,12 +242,13 @@ select tests.login(tests.u(31)); select public.revoke_consent('health_data');
 select tests.login(tests.u(20));
 select tests.svc_write(tests.u(20), 'recent', 'screen');
 select tests.login(tests.u(20)); select public.revoke_consent('health_data');
-select tests.login(tests.u(32)); select public.record_consent('ai_vendor', 'ai-B-v1'); select public.revoke_consent('ai_vendor');
+select tests.login(tests.u(32)); select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1'); select public.revoke_consent('ai_vendor');
 select tests.logout();
 update public.consents set revoked_at = now() - interval '30 days' where user_id = tests.u(31) and kind = 'health_data';
 -- account deletion: consent history survives with a retention date
 delete from auth.users where id = tests.u(32);
-select tests.ok('retention: consent history outlives the deleted account', (select count(*) = 2 from public.consent_events where user_id = tests.u(32)));
+-- 5 events: the signup 'terms' + 'privacy_policy' acceptances (Phase 3), the health grant, the ai_vendor grant and revoke
+select tests.ok('retention: consent history outlives the deleted account', (select count(*) = 5 from public.consent_events where user_id = tests.u(32)));
 select tests.ok('retention: adult consent history kept 4 years after deletion', (select bool_and(retain_until between now() + interval '4 years' - interval '1 minute' and now() + interval '4 years' + interval '1 minute') from public.consent_events where user_id = tests.u(32)));
 insert into public.consent_events (user_id, kind, grantor, granted, policy_version, actor_user_id) values (tests.u(28), 'ai_vendor', 'self', true, 'v1', tests.u(28));
 select public.set_litigation_hold(tests.u(28), false) from (select tests.login(null, 'service_role')) x;
@@ -287,17 +291,16 @@ select tests.ok('retention: coach access audit purged after 2 years only',
 select tests.ok('ai: u34 adult', (tests.signup(tests.u(34), tests.dob(30)) ->> 'is_minor') = 'false');
 select tests.login(null, 'service_role');
 select tests.raises('ai: no ai_vendor consent -> refused', format('select * from public.ai_plan_context(%L)', tests.u(34)), 'consent_required');
-select tests.login(tests.u(34)); select public.record_consent('ai_vendor', 'ai-B-v1');
-select tests.login(null, 'service_role');
-select tests.eq('ai: without health consent no injury data is returned', format('select (age_band = %L and not health_ok and wrapped_key is null and injury_category_ct is null)::text from public.ai_plan_context(%L)', '18_plus', tests.u(34)), 'true');
-select tests.login(tests.u(34)); select public.record_consent('health_data', 'health-v1');
+select tests.login(tests.u(34));
+select tests.raises('ai: AI cannot be granted without health (Counsel phase4-review #2)', $q$select public.record_consent('ai_vendor', 'ai-B-v1')$q$, 'health_required');
+select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1');
 select tests.svc_write(tests.u(34), 'free text that must never reach the AI', 'screen');
 select tests.eq('ai: with health consent only the encrypted category + wrapped key come back', format('select (health_ok and injury_category_ct = tests.ct(%L) and wrapped_key is not null)::text from public.ai_plan_context(%L)', 'knee', tests.u(34)), 'true');
 select tests.ok('ai: context exposes no name/email/user id/notes/photo/location columns', not exists (
   select 1 from pg_proc p, unnest(p.proargnames) a(n) where p.proname = 'ai_plan_context'
     and a.n not in ('p_actor','age_band','health_ok','wrapped_key','key_provider','kms_key_ref','injury_category_ct')));
 select tests.eq('ai: linked minor with teen + parent opt-in gets 16_17 context', format('select age_band from public.ai_plan_context(%L)', tests.u(21)), '16_17');
-select tests.login(tests.u(20)); select public.record_consent('ai_vendor', 'ai-B-parent-v1', tests.u(24));
+select tests.login(tests.u(20)); select public.record_consent('health_data', 'health-v1', tests.u(24)); select public.record_consent('ai_vendor', 'ai-B-parent-v1', tests.u(24));
 select tests.login(null, 'service_role');
 select tests.raises('ai: minor with only the parent''s opt-in refused', format('select * from public.ai_plan_context(%L)', tests.u(24)), 'consent_required');
 select tests.raises('ai: unlinked (pending) minor refused', format('select * from public.ai_plan_context(%L)', tests.u(23)), 'forbidden');

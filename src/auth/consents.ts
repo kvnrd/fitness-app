@@ -46,7 +46,7 @@ export type SetResult = 'ok' | 'parent_required' | 'error';
 export async function setConsent(
   kind: ConsentKind,
   granted: boolean,
-  opts: { forUser?: string; version: string; shownText: string },
+  opts: { forUser?: string; version: string; shownText: string; /** SHA-256 of the bundled policy document shown (health + AI record the health policy hash). */ policyDocHash?: string },
 ): Promise<SetResult> {
   if (!supabase) return 'error';
   try {
@@ -57,6 +57,7 @@ export async function setConsent(
         p_policy_version: opts.version,
         p_for_user: opts.forUser ?? null,
         p_text_hash: hash.toLowerCase(),
+        p_policy_doc_hash: opts.policyDocHash ?? null,
       });
       if (!error) return 'ok';
       return /parent_consent_required/.test(error.message ?? '') ? 'parent_required' : 'error';

@@ -1,4 +1,4 @@
-import { TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
 /**
  * v2 theme tokens — Carbon / Concrete neutrals, 7 accents, Brushed Gold for PRs.

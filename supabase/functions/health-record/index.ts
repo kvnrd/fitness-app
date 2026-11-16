@@ -1,5 +1,7 @@
 // POST /functions/v1/health-record
-//   {"action":"write","injury_notes"?:string|null,"health_screen"?:string|null,"injury_category"?:string|null}
+//   {"action":"write","injury_notes"?:string|null,"health_screen"?:string|null,"injury_category"?:string|null,
+//    "weight_goal"?:string|null}   weight_goal = JSON string {current,target,unit,pace} (adults only).
+//   Partial update: an omitted field keeps its stored value; an explicit null clears it.
 //   {"action":"read","user_id"?:uuid}   (user_id = a client, for a coach; default = self)
 // The only place health plaintext exists: in this function's memory, encrypted/decrypted with a
 // per-user data key that KMS unwraps. Logs nothing about the request content.
