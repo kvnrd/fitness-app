@@ -79,6 +79,12 @@ insert into auth.users (id, email) select tests.u(i), 'user' || i || '@example.i
 -- live in the database at all (Phase 2b: KMS envelope encryption).
 insert into private.encryption_keys (name, key) values
   ('trainer_code_pepper', 'test-only-pepper-not-a-secret-00000001');
+
+-- DEV FALLBACK ONLY (test fixture). Production uses an edge secret or KMS HMAC, not this table,
+-- and not private.encryption_keys / the trainer-code pepper.
+insert into private.consent_meta_dev_pepper (version, pepper, is_dev_fallback, note)
+values ('dev-v1', 'test-only-consent-meta-pepper-00000001', true,
+        'DEV FALLBACK ONLY. Test fixture, not for production.');
 select tests.raises('kms: a health key can no longer be stored in the database',
   $q$insert into private.encryption_keys (name, key) values ('health_v1', 'test-only-health-key-not-a-secret-0001')$q$, '%encryption_keys_no_health_keys_chk%');
 

@@ -345,14 +345,18 @@ select tests.ok('legal: parent privacy row references the teen', exists (
 select tests.ok('legal: terms row hashed cf-connecting-ip, not the first XFF hop', exists (
   select 1 from public.consent_events
    where user_id = tests.u(106) and kind = 'terms' and subject_user_id = tests.u(105)
-     and ip_hash = private.pepper_hash('ip', '203.0.113.10')
-     and device_hash = private.pepper_hash('device', 'dev-legal-106')
-     and app_version = '4.0.0'));
+     and ip_hash = private.consent_meta_hash('ip', '203.0.113.10')
+     and device_hash = private.consent_meta_hash('device', 'dev-legal-106')
+     and app_version = '4.0.0'
+     and meta_pepper_version = 'dev-v1'));
 select tests.ok('legal: accept_terms uses last XFF hop and trims app version', exists (
   select 1 from public.consent_events
    where user_id = tests.u(106) and kind = 'terms' and text_hash = tests.h('e') and subject_user_id is null
-     and ip_hash = private.pepper_hash('ip', '198.51.100.20')
-     and app_version = '4.0.1-too-long-app-version-strin'));
+     and ip_hash = private.consent_meta_hash('ip', '198.51.100.20')
+     and app_version = '4.0.1-too-long-app-version-strin'
+     and meta_pepper_version = 'dev-v1'));
+select tests.ok('legal: consent-meta hash is not the trainer-code pepper hash',
+  private.consent_meta_hash('ip', '203.0.113.10') is distinct from private.pepper_hash('ip', '203.0.113.10'));
 
 -- ------------------------------------------------------------------ store-signal revocation (never raises an age)
 select tests.logout();
@@ -390,3 +394,98 @@ select tests.raises('revoked: anon cannot report', $q$select public.report_store
 select tests.ok('revoked: authenticated can execute the RPC and anon cannot',
   has_function_privilege('authenticated', 'public.report_store_signal_revoked()', 'EXECUTE')
   and not has_function_privilege('anon', 'public.report_store_signal_revoked()', 'EXECUTE'));
+
+
+-- ------------------------------------------------------------------ legal_text_versions + dedicated consent-meta pepper
+select tests.ok('legal-text: bundled terms, privacy and health-policy rows were seeded',
+  (select count(*) from public.legal_text_versions where kind in ('terms','privacy_policy','health_policy')) = 3);
+select tests.ok('legal-text: every archived sha256 matches the stored full text',
+  not exists (
+    select 1 from public.legal_text_versions
+     where sha256 <> encode(extensions.digest(convert_to(full_text, 'UTF8'), 'sha256'), 'hex')));
+select tests.ok('legal-text: seeded in-app health-with-AI and attestations are present',
+  (select count(*) from public.legal_text_versions
+    where kind in ('health_with_ai','ai_adult','ai_teen','parent_attest','coach_attest_general','coach_attest_minors')) = 6);
+select tests.ok('legal-text: retention schedule covers the archive and does not auto-purge it',
+  exists (select 1 from public.retention_policies
+           where record_type = 'legal_text_versions' and status = 'kept_no_period'));
+select tests.ok('legal-text: put is a no-op when the same text is re-seeded', true);
+select private.put_legal_text_version(
+  'terms', 'v0.1-draft',
+  (select sha256 from public.legal_text_versions where kind = 'terms' and version = 'v0.1-draft'),
+  (select full_text from public.legal_text_versions where kind = 'terms' and version = 'v0.1-draft'));
+select tests.raises('legal-text: a kind+version cannot change its hash',
+  $q$select private.put_legal_text_version('terms','v0.1-draft','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','not the body')$q$,
+  '%legal_text_version_%');
+select tests.raises('legal-text: updates are rejected (append-only)',
+  $q$update public.legal_text_versions set full_text = 'changed' where kind = 'terms'$q$,
+  '%legal_text_versions_append_only%');
+select tests.raises('legal-text: deletes are rejected (append-only)',
+  $q$delete from public.legal_text_versions where kind = 'terms'$q$,
+  '%legal_text_versions_append_only%');
+
+select tests.login(tests.u(109));
+select tests.ok('legal-text: authenticated can read archived texts',
+  exists (select 1 from public.legal_text_versions where kind = 'terms'));
+select tests.blocked('legal-text: authenticated cannot insert',
+  $q$insert into public.legal_text_versions (kind, version, sha256, full_text)
+     values ('x','v1','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','hi')$q$);
+select tests.blocked('legal-text: authenticated cannot update',
+  $q$update public.legal_text_versions set first_shown_at = now()$q$);
+select tests.blocked('legal-text: authenticated cannot delete',
+  $q$delete from public.legal_text_versions$q$);
+select tests.no_rows('legal-text: authenticated cannot read the dev-fallback pepper',
+  'select * from private.consent_meta_dev_pepper');
+select tests.logout();
+
+select tests.ok('legal-text: clients cannot execute put or the pepper helpers',
+  not has_function_privilege('authenticated', 'private.put_legal_text_version(text,text,text,text)', 'EXECUTE')
+  and not has_function_privilege('authenticated', 'private.consent_meta_hash(text,text)', 'EXECUTE')
+  and not has_function_privilege('authenticated', 'private.consent_meta_config()', 'EXECUTE')
+  and not has_function_privilege('anon', 'private.put_legal_text_version(text,text,text,text)', 'EXECUTE'));
+
+-- consent_meta_pepper is not in encryption_keys and is not the trainer-code pepper
+select tests.ok('pepper: consent_meta_pepper is not stored in encryption_keys',
+  not exists (select 1 from private.encryption_keys where name ilike '%consent%'));
+select tests.ok('pepper: the dev-fallback table is labeled as such',
+  (select is_dev_fallback and note ilike '%DEV FALLBACK%' from private.consent_meta_dev_pepper where version = 'dev-v1'));
+
+-- Missing pepper: null hashes, alert with user id only, no IP in the audit event.
+select tests.login(tests.u(109));
+select public.complete_signup(tests.dob(30), null, null, null, null, 'terms-v1', null, 'privacy-v1', tests.h('d'));
+select tests.logout();
+delete from private.consent_meta_dev_pepper;
+select tests.login(tests.u(109));
+select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.99","x-device-id":"dev-missing-pepper"}', true);
+select public.accept_terms('terms-v-missing', tests.h('f'));
+select set_config('request.headers', '', true);
+select tests.logout();
+select tests.ok('pepper: missing pepper leaves hashes and version null', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(109) and kind = 'terms' and text_hash = tests.h('f')
+     and ip_hash is null and device_hash is null and meta_pepper_version is null));
+select tests.ok('pepper: missing pepper raises an audit event with the user id only', exists (
+  select 1 from public.audit_log
+   where action = 'consent_meta_pepper_missing' and actor_id = tests.u(109) and target_user_id = tests.u(109)
+     and metadata = jsonb_build_object('user_id', tests.u(109))
+     and metadata::text not ilike '%203.0.113%'
+     and metadata::text not ilike '%cf-connecting%'
+     and metadata::text not ilike '%x-forwarded%'));
+-- Restore the test fixture so a later file (none today) would still have a pepper.
+insert into private.consent_meta_dev_pepper (version, pepper, is_dev_fallback, note)
+values ('dev-v1', 'test-only-consent-meta-pepper-00000001', true,
+        'DEV FALLBACK ONLY. Test fixture, not for production.');
+
+-- No raw IP landed in consent rows, audit metadata, or the pepper table.
+select tests.ok('pepper: no raw IP in consent_events hash columns',
+  not exists (select 1 from public.consent_events
+               where coalesce(ip_hash,'') ~ '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
+                  or coalesce(device_hash,'') ~ '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
+                  or coalesce(ip_hash,'') like '%203.0.113%'
+                  or coalesce(ip_hash,'') like '%198.51.100%'));
+select tests.ok('pepper: no raw IP in audit_log metadata',
+  not exists (select 1 from public.audit_log
+               where metadata::text like '%203.0.113%'
+                  or metadata::text like '%198.51.100%'
+                  or metadata::text like '%cf-connecting-ip%'
+                  or metadata::text like '%x-forwarded-for%'));

@@ -42,3 +42,17 @@ begin
   end loop;
   return decode(substr(v, 1, n * 2), 'hex');
 end $$;
+
+-- TEST ONLY — NOT a real HMAC and NOT for production. PGlite has no pgcrypto hmac().
+-- This is a deterministic key-dependent digest so consent-meta tests can run here.
+-- CI (postgres:17 + postgresql-contrib) and production use real pgcrypto hmac().
+-- Tests compare hashes only through private.consent_meta_hash, never a hardcoded digest,
+-- so the stub and real hmac can differ.
+create or replace function extensions.hmac(data bytea, key bytea, type text) returns bytea
+language plpgsql immutable as $$
+begin
+  if type = 'sha256' then
+    return sha256(key || convert_to(':', 'UTF8') || data);
+  end if;
+  raise exception 'unsupported hmac type';
+end $$;
