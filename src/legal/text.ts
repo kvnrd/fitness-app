@@ -57,7 +57,9 @@ export const VERSIONS = {
   parentAttest: 'parent-attest-2026-11-15-draft',
   parentHealth: 'health-parent-2026-11-15-draft',
   parentCoach: 'coach-parent-2026-11-15-draft',
-  aiNeedsHealth: 'ai-needs-health-2026-11-15-draft',
+  aiNeedsHealth: 'ai-needs-health-2026-11-16-draft',
+  coachAttestGeneral: 'coach-attest-general-2026-11-16-draft',
+  coachAttestMinors: 'coach-attest-minors-2026-11-16-draft',
 } as const;
 
 // ───────────────────────────── Policies (Counsel v0.2 DRAFT) ─────────────────────────────
@@ -115,17 +117,26 @@ export const HEALTH_TEXT_WITH_AI = `${HEALTH_TEXT} ${HEALTH_AI_SENTENCE}`;
 export const AI_TEEN_LINE = 'Your parent must also agree before this turns on, and either of you can turn it off.';
 
 /**
- * AI planning needs the health switch. [COUNSEL] to confirm: UI chrome, not Counsel copy.
- * Shown when the user taps AI while health is off. No auto-enable: only the explicit "Turn on health info" tap.
+ * "AI planning needs health info" explanation (Counsel phase3-build-answers.md §1, Nov 16, 2026).
+ * Title and buttons kept. The explanation itself is not a consent. "Turn on health info" flips the
+ * same visible health switch; the normal health consent row is logged on submit (version + hash).
+ * AI still needs its own tap. [ATTORNEY]
  */
-export const AI_NEEDS_HEALTH_TITLE = 'AI planning needs health info'; // [COUNSEL]
+export const AI_NEEDS_HEALTH_TITLE = 'AI planning needs health info'; // [ATTORNEY]
 export const AI_NEEDS_HEALTH_BODY =
-  'AI planning uses your injury category from your health info, so "Save my health info" has to be on first. You can turn it on now, or leave AI off.'; // [COUNSEL]
-export const AI_NEEDS_HEALTH_ACTION = 'Turn on health info'; // [COUNSEL]
-export const AI_NEEDS_HEALTH_DISMISS = 'Not now'; // [COUNSEL]
-/** Parent-voice version of the same explanation (UI chrome). */ // [COUNSEL]
-export const parentAiNeedsHealthBody = (n: ParentNames = {}): string =>
-  `AI planning uses an injury category from ${poss(teenOf(n))} health info, so the health box has to be on first. You can turn it on now, or leave AI off.`;
+  'AI planning checks your health-screen answers and uses any injury you add to avoid or swap exercises, so "Save my health info" has to be on first. From your health info, Anthropic, our AI provider, receives only an injury category, never your notes, measurements, name, or email. You can turn health info on now, or leave AI off.'; // [ATTORNEY]
+/** Teen (16-17): adult text, then this sentence. */ // [ATTORNEY]
+export const AI_NEEDS_HEALTH_TEEN_LINE = 'Your parent must also agree to both.';
+export const AI_NEEDS_HEALTH_BODY_TEEN = `${AI_NEEDS_HEALTH_BODY} ${AI_NEEDS_HEALTH_TEEN_LINE}`;
+export const AI_NEEDS_HEALTH_ACTION = 'Turn on health info'; // [ATTORNEY]
+export const AI_NEEDS_HEALTH_DISMISS = 'Not now'; // [ATTORNEY]
+export const aiNeedsHealthBody = (audience: 'adult' | 'teen'): string =>
+  audience === 'teen' ? AI_NEEDS_HEALTH_BODY_TEEN : AI_NEEDS_HEALTH_BODY;
+/** Parent-voice version. ${teen} is the teen's first name, or "your teen". */ // [ATTORNEY]
+export const parentAiNeedsHealthBody = (n: ParentNames = {}): string => {
+  const teen = teenOf(n);
+  return `AI planning checks ${teen}'s health-screen answers and uses any injury ${teen} adds to avoid or swap exercises, so the health box has to be on first. From that health info, Anthropic, our AI provider, receives only an injury category, never ${teen}'s notes, measurements, name, or email. You can turn it on now, or leave AI off.`;
+};
 
 /** Safety-notice card, adult and teen (Counsel phase3-review #2, incl. emergency stop signs). The UI uppercases the headings. */ // [ATTORNEY]
 export const RISK_HEADING_NOT_MEDICAL = 'This is not medical advice';
@@ -220,6 +231,31 @@ export function adultRiskCard() {
   };
 }
 
+/** Coach general attestation (Counsel phase3-build-answers.md §2). [Company] and [Coach Terms] stay as placeholders. [ATTORNEY] */
+export const COACH_ATTEST_GENERAL_INTRO = 'I confirm that:';
+const COACH_ATTEST_GENERAL_BULLETS_RAW = [
+  "I'm 18 or older, and everything in my application is true.",
+  "I'm an independent coach, not an employee of [Company]. I sell my 1:1 coaching myself, as the seller of record, through my own Stripe account, and I handle my own refunds, chargebacks, and taxes.",
+  "I won't give medical advice, diagnose or treat injuries or conditions, or call myself a doctor, physical therapist, or dietitian unless I'm licensed as one.",
+  "I'll see a client's info only if they share it with me. I'll never ask for a 16–17 client's health info, and I'll see an adult's health answers only if they choose to share them.",
+  "I'll keep client info confidential, use it only to coach that client, and not copy it out of [App]. If the client, their parent, or [Company] asks, I'll delete any notes or copies I kept outside [App] and confirm when it's done.",
+  'I agree to the [Coach Terms] and the [App] Terms of Service.',
+] as const;
+export const COACH_ATTEST_GENERAL_BULLETS = COACH_ATTEST_GENERAL_BULLETS_RAW.map(fill);
+export const COACH_ATTEST_GENERAL = [COACH_ATTEST_GENERAL_INTRO, ...COACH_ATTEST_GENERAL_BULLETS.map((b) => `- ${b}`)].join('\n');
+
+/** 16-17 box. Optional; gates minor clients only together with NSOPW + training. [ATTORNEY] */
+export const COACH_ATTEST_MINORS_INTRO = 'I want to coach 16–17-year-olds, and I agree that:';
+const COACH_ATTEST_MINORS_BULLETS_RAW = [
+  '[Company] will run a National Sex Offender Public Website (NSOPW) search on me before approving me, and I\'ll complete Texas child-abuse reporting training first.',
+  "If I believe a child is being abused or neglected, I'll report it as Texas law requires (Texas Family Code chapter 261), and also use [App]'s report tools.",
+  "I'll talk with minor clients only by text in [App] chat, which their parent can read and which is filtered and reviewed. I won't message between 10 pm and 7 am, never contact a minor client outside [App], and won't try to get around the filters.",
+  "Live sessions with minors happen only in [App], with their parent invited, and I'll never record them.",
+  "I'll never see or ask for a minor client's health info, photos, or videos, and I won't give them weight-loss, calorie, body-size, bulking, or supplement advice.",
+] as const;
+export const COACH_ATTEST_MINORS_BULLETS = COACH_ATTEST_MINORS_BULLETS_RAW.map(fill);
+export const COACH_ATTEST_MINORS = [COACH_ATTEST_MINORS_INTRO, ...COACH_ATTEST_MINORS_BULLETS.map((b) => `- ${b}`)].join('\n');
+
 // ───────────── Versions + hashes for each exact text shown ─────────────
 
 export type LegalText = { version: string; text: string };
@@ -241,6 +277,8 @@ export const legalTexts = {
   parentHealth: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.parentHealth, text: parentHealthText(n) }),
   parentAi: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.aiParent, text: parentAiText(n) }),
   parentCoach: (n: ParentNames = {}): LegalText => ({ version: VERSIONS.parentCoach, text: parentCoachText(n) }),
+  coachAttestGeneral: (): LegalText => ({ version: VERSIONS.coachAttestGeneral, text: COACH_ATTEST_GENERAL }),
+  coachAttestMinors: (): LegalText => ({ version: VERSIONS.coachAttestMinors, text: COACH_ATTEST_MINORS }),
 } as const;
 
 /** SHA-256 hex of the exact text shown. */

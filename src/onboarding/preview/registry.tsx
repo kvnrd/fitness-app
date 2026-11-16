@@ -38,7 +38,7 @@ import { WelcomeScreen } from '../screens/Welcome';
 const noop = () => {};
 
 const role = (o: Partial<RoleProps> = {}): ReactElement => (
-  <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} {...o} />
+  <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} attestGeneral={false} onAttestGeneral={noop} attestMinors={false} onAttestMinors={noop} {...o} />
 );
 const picked = toggleStyle(toggleStyle(toggleStyle(EMPTY_SELECTION, 'hybrid'), 'hyrox'), 'bodybuilding');
 const editedGym = toggleItem(toggleItem(toggleItem(presetGym('full'), 'smith_machine'), 'pec_deck'), 'trx');
@@ -135,9 +135,9 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   ),
   'prefs': () => <PrefsScreen prefs={defaultPrefs()} onChange={noop} onFinish={noop} onSkip={noop} onBack={noop} />,
   // ───── Waiting for a parent ─────
-  'waiting-parent': () => <WaitingParentScreen inviteStatus="sent" email="" onEmail={noop} emailValid={false} showInvite={false} onToggleInvite={noop} onResend={noop} onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />,
+  'waiting-parent': () => <WaitingParentScreen inviteStatus="sent" deadlineText="Your parent has until November 16, 2026 to approve." email="" onEmail={noop} emailValid={false} showInvite={false} onToggleInvite={noop} onResend={noop} onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />,
   'waiting-parent-resend': () => (
-    <WaitingParentScreen inviteStatus="expired" email="parent@example.com" onEmail={noop} emailValid showInvite onToggleInvite={noop} onResend={noop} resendNote="If that address can receive it, the new invite is on its way." onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />
+    <WaitingParentScreen inviteStatus="expired" deadlineText="Your parent has until November 16, 2026 to approve." email="parent@example.com" onEmail={noop} emailValid showInvite onToggleInvite={noop} onResend={noop} resendNote="If that address can receive it, the new invite is on its way." onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />
   ),
   // ───── Privacy & safety ─────
   'privacy-adult': () => <PrivacySafetyScreen state={initPs('adult')} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
@@ -147,6 +147,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'privacy-teen': () => <PrivacySafetyScreen state={initPs('teen')} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   'privacy-teen-ready': () => <PrivacySafetyScreen state={psSetRisk(initPs('teen'), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   'privacy-teen-granted': () => <PrivacySafetyScreen state={psSetRisk(initPs('teen', teenGrants), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
+  'privacy-teen-needs-health': () => <PrivacySafetyScreen state={psSetAi(initPs('teen', teenGrants), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   // ───── Parent consent ─────
   'parent-consent': () => <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={initPc()} onChange={noop} onConfirm={noop} />,
   'parent-consent-ready': () => (

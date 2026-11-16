@@ -25,6 +25,8 @@ export type WaitingProps = {
   onSetupStyle: () => void;
   onCheckAgain: () => void;
   onSignOut: () => void;
+  /** Counsel: "Your parent has until [date] to approve." Null if created_at is unknown. */
+  deadlineText?: string | null;
 };
 
 /** Pending 16-17. Body is Counsel's pending copy VERBATIM (PENDING_BODY); the title is UI chrome. [ATTORNEY] */
@@ -48,6 +50,11 @@ export function WaitingParentScreen(p: WaitingProps) {
           {PENDING_BODY}
         </Text>
       </View>
+      {p.deadlineText ? (
+        <Text color={colors.text} style={{ fontFamily: fonts.bodyMedium, fontSize: 16, lineHeight: 22 }}>
+          {p.deadlineText}
+        </Text>
+      ) : null}
       <Text accessibilityLiveRegion="polite" color={colors.textSecondary} style={{ fontFamily: fonts.bodyMedium, fontSize: 14, lineHeight: 20 }}>
         {inviteStatusText(p.inviteStatus)}
       </Text>

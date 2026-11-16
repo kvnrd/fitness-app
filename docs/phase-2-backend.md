@@ -248,14 +248,18 @@ Anthropic
 
 Deploy and schedule
 7. Apply the migrations, then `supabase functions deploy health-record ai-plan`.
-8. Schedule `run_retention_purge()` daily. It needs the service-role claim. With pg_cron:
+8. Schedule `run_retention_purge()` daily. It needs the service-role claim. Also schedule `purge_pending_minors()` hourly so a pending 16–17 account is deleted close to day 14 (from `profiles.created_at`), not held until the next daily run (~day 15). The Phase 3 migration `20261116000800_phase3_day14_hourly_purge.sql` creates the hourly pg_cron job when the extension is available; if it is not, attach both jobs in the operator runner:
    ```sql
+   select cron.schedule('purge-pending-minors-hourly', '15 * * * *', $$
+     select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+     select public.purge_pending_minors();
+   $$);
    select cron.schedule('retention-purge', '17 9 * * *', $$
      select set_config('request.jwt.claims', '{"role":"service_role"}', true);
      select public.run_retention_purge();
    $$);
    ```
-   Alternatively, use a scheduled function that calls the RPC with the service role. Check the first run in `audit_log` (`retention_purge`). Days 3 and 7 parent reminders come from `claim_pending_minor_reminders()`, but no sender is built yet.
+   Alternatively, use a scheduled function that calls the RPCs with the service role. Check the first run in `audit_log` (`retention_purge`). Days 3 and 7 parent reminders come from `claim_pending_minor_reminders()`, but no sender is built yet.
 9. On hosted Supabase, check that `complete_signup` and the purge job can delete from `auth.users`. If they can't, move that delete into a function that uses the Auth admin API.
 10. Edge Functions have no CORS headers yet, so the web app can't call them. Add CORS before you build a web AI or health screen.
 

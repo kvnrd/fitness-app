@@ -8,7 +8,6 @@ export const TRAINER_CODE_RETRY = 'Something went wrong. Please try again.';
 export const TRAINER_CODE_OK = 'Code applied.';
 export const GENERIC_FAILURE = 'Something went wrong. Please try again.';
 export const COACH_REQUEST_FAILED = "We couldn't send that request. Please try again.";
-export const COACH_REQUEST_NOTE = 'By requesting access you confirm you’re an adult applying as a coach.'; // [COUNSEL] adult attestation wording for apply_for_coach
 export const CONSENT_LINK_FAILED = "We couldn't link that account. Check the link and try again."; // generic, never says why
 export const PARENT_SIGNIN_TITLE = 'Sign in to continue';
 export const PARENT_SIGNIN_BODY = 'Sign in or create an account with your own details. You’ll come back here to review and confirm.';

@@ -48,6 +48,8 @@ export function SetupFlow({ param }: { param?: string }) {
   const [codeOpen, setCodeOpen] = useState(false);
   const [trainerCode, setTrainerCode] = useState('');
   const [codeMessage, setCodeMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [attestGeneral, setAttestGeneral] = useState(false);
+  const [attestMinors, setAttestMinors] = useState(false);
   // weight goal (adults, on device)
   const [currentText, setCurrentText] = useState('');
   const [target, setTarget] = useState<number | null>(null);
@@ -210,7 +212,8 @@ export function SetupFlow({ param }: { param?: string }) {
             if (busy) return;
             setBusy(true);
             setMessage(null);
-            const ok = await applyForCoach();
+            if (!attestGeneral) { setBusy(false); return; }
+            const ok = await applyForCoach({ minors: attestMinors });
             if (!alive.current) return;
             if (!ok) {
               setBusy(false);
@@ -221,6 +224,10 @@ export function SetupFlow({ param }: { param?: string }) {
             setRole('athlete'); // they continue setup as an athlete until approved
             setStep(nextStep(mode, 'role', opts));
           }}
+          attestGeneral={attestGeneral}
+          onAttestGeneral={setAttestGeneral}
+          attestMinors={attestMinors}
+          onAttestMinors={setAttestMinors}
           onSkip={() => void advance('role', draft)}
           onBack={backFor('role')}
         />
