@@ -6,11 +6,12 @@ import { FullHeightContext } from '../onboarding/ui/previewMode';
 import { CARBON_BG, useTheme } from '../theme/ThemeProvider';
 
 /**
- * Screenshot harness. NEVER in production: active only when `__DEV__ && EXPO_PUBLIC_SCREEN_PREVIEW === '1'`,
- * otherwise it redirects home. Not in the deep-link allowlist. Params: screen=<id>, scheme=dark|light, full=1 (render at full content height so a screenshot can capture the whole document; the measured height is written to <body data-full-height>).
+ * Screenshot harness. NEVER in a store build: active only when `EXPO_PUBLIC_SCREEN_PREVIEW === '1'`,
+ * otherwise it redirects home. The flag is a build-time env var, so a normal production export
+ * (which does not set it) still redirects. A `--dev` static export is not required. Not in the deep-link allowlist. Params: screen=<id>, scheme=dark|light, full=1 (render at full content height so a screenshot can capture the whole document; the measured height is written to <body data-full-height>).
  * Renders presentational screens with mock props from onboarding/preview/registry.tsx.
  */
-const ENABLED = __DEV__ && process.env.EXPO_PUBLIC_SCREEN_PREVIEW === '1';
+const ENABLED = process.env.EXPO_PUBLIC_SCREEN_PREVIEW === '1';
 
 export default function DevPreviewRoute() {
   if (!ENABLED) return <Redirect href="/" />;
@@ -39,5 +40,5 @@ function Preview() {
   const render = typeof screen === 'string' ? PREVIEW_SCREENS[screen] : undefined;
   if (resolvedScheme !== want) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
   if (!render) return <Redirect href="/" />;
-  return grow ? <FullHeightContext.Provider value><View style={{ minHeight: 844 }}>{render()}</View></FullHeightContext.Provider> : render();
+  return grow ? <FullHeightContext.Provider value><View nativeID="preview-full" style={{ minHeight: 844 }}>{render()}</View></FullHeightContext.Provider> : render();
 }
