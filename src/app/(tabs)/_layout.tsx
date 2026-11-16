@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSession } from '../../auth/SessionProvider';
 import { useTheme } from '../../theme/ThemeProvider';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -13,6 +14,7 @@ const icon =
 
 export default function TabsLayout() {
   const { colors, fonts } = useTheme();
+  const { isVerifiedCoach } = useSession();
   return (
     <Tabs
       screenOptions={{
@@ -31,7 +33,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Train', tabBarIcon: icon('barbell-outline', 'barbell') }} />
       <Tabs.Screen name="progress" options={{ title: 'Progress', tabBarIcon: icon('stats-chart-outline', 'stats-chart') }} />
-      <Tabs.Screen name="studio" options={{ title: 'Studio', tabBarIcon: icon('create-outline', 'create') }} />
+      <Tabs.Screen name="studio" options={{ href: isVerifiedCoach ? undefined : null, title: 'Studio', tabBarIcon: icon('create-outline', 'create') }} />
     </Tabs>
   );
 }

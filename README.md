@@ -23,6 +23,8 @@ npx expo start        # press i / a / w for iOS, Android, web
 npm run typecheck
 ```
 
+Security notes and setup: [docs/SECURITY.md](docs/SECURITY.md).
+
 ## Design
 
 The design direction is "Iron & Chalk": a true-black base, chalk white text, oxide for anything the coach says, and logged numbers set in Big Shoulders Display like stamped plates. The full rationale is in [docs/design.md](docs/design.md), and the tokens are in `src/theme/tokens.ts`.
