@@ -1,70 +1,58 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { completeSignup, toIsoDate } from '../auth/onboarding';
+import { getStoreAgeSignal } from '../age/storeAgeSignal';
+import { useAgeGate } from '../auth/AgeGateProvider';
+import { completeSignup, DateParts, toIsoDate } from '../auth/onboarding';
 import { useSession } from '../auth/SessionProvider';
 import { Button, Text } from '../components/ui';
+import { DobFields } from '../components/DobFields';
 import { useTheme } from '../theme/ThemeProvider';
 import { radius, space } from '../theme/tokens';
 
-const INELIGIBLE_NOTICE = "Sorry, you can't use this app.";
-
 /**
- * Age gate, shown when Supabase is configured, the user is signed in and has no profile yet.
+ * Signed in, no profile yet. Normally the date of birth was already taken on the neutral age screen
+ * before sign-in (held in memory), so this only asks for an optional display name. If the app was
+ * restarted in between, or the person used "I already have an account" with Apple/Google and has no
+ * profile, the same neutral date field is shown here.
  *
- * COPY: plain information, not legal advice. Wording is a draft for Counsel to review.
- * The age is computed ONLY on the server (complete_signup). The client never shows or stores it.
+ * The server decides eligibility. Not eligible: the server deletes this auth user and its email in the
+ * same request, the device gets the no-personal-data flag, and only the generic notice is shown.
  */
 export default function OnboardingScreen() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
-  const { refreshRole, signOut, setNotice } = useSession();
-  const [year, setYear] = useState('');
-  const [month, setMonth] = useState('');
-  const [day, setDay] = useState('');
+  const { refreshRole, signOut } = useSession();
+  const { getPending, setPending, markIneligible } = useAgeGate();
+  const pending = getPending();
+  const [dob, setDob] = useState<DateParts>({ year: '', month: '', day: '' });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const iso = toIsoDate({ year, month, day });
+  const iso = pending?.birthDateIso ?? toIsoDate(dob);
 
   async function submit() {
     if (!iso || busy) return;
     setBusy(true);
     setMessage(null);
-    const r = await completeSignup(iso, name);
+    const store = pending ? pending.store : await getStoreAgeSignal();
+    const r = await completeSignup(iso, name, store);
     if (r.ok) {
+      setPending(null); // the date of birth is no longer needed anywhere
       await refreshRole(); // loads profile + onboarded; the root gate then moves us on
       setBusy(false);
       return;
     }
     if (r.kind === 'ineligible') {
-      // under_13_not_permitted / under_minimum_age: generic message, no age, no reason, sign out.
-      // The server keeps no profile in either case.
-      // NOTE: signing out is NOT enough for under-13. The Auth user (and its email) still exists, and
-      // the client cannot delete it. The server must then call public.close_under_13_account(user).
-      // complete_signup's raise rolls the transaction back, so the DB itself has no record to trigger
-      // on: this needs an Edge Function in front of the RPC. See docs/phase-2-backend.md.
-      setNotice(INELIGIBLE_NOTICE);
-      setBusy(false);
+      await markIneligible();
       await signOut();
+      setBusy(false);
       return;
     }
     setBusy(false);
     setMessage('Something went wrong. Please check your details and try again.');
   }
-
-  const field = {
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.input,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    color: colors.text,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    textAlign: 'center',
-  } as const;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -73,58 +61,13 @@ export default function OnboardingScreen() {
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xl, paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.xl, gap: space.md }}
       >
         <Text variant="title">Before you start</Text>
-        <Text color={colors.textMuted}>
-          We ask for your date of birth to check that you can use this app. It is used for that check and for deciding whether a parent or guardian must be involved.
-        </Text>
 
-        <View style={{ gap: space.xs }}>
-          <Text variant="small" color={colors.textMuted}>
-            • You must be at least 16 to use this app.
-          </Text>
-          <Text variant="small" color={colors.textMuted}>
-            • People under 13 cannot create an account (US children's privacy law, COPPA).
-          </Text>
-          <Text variant="small" color={colors.textMuted}>
-            • If you are 16 or 17 you are a minor. A parent or guardian must be the contracting party before your account is fully active.
-          </Text>
-        </View>
-
-        <Text variant="bodyStrong">Date of birth</Text>
-        <View style={{ flexDirection: 'row', gap: space.sm }}>
-          <TextInput
-            value={year}
-            onChangeText={(v) => setYear(v.replace(/\D/g, '').slice(0, 4))}
-            placeholder="YYYY"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
-            maxLength={4}
-            autoComplete="off"
-            style={[field, { flex: 2 }]}
-            accessibilityLabel="Birth year"
-          />
-          <TextInput
-            value={month}
-            onChangeText={(v) => setMonth(v.replace(/\D/g, '').slice(0, 2))}
-            placeholder="MM"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
-            maxLength={2}
-            autoComplete="off"
-            style={[field, { flex: 1 }]}
-            accessibilityLabel="Birth month"
-          />
-          <TextInput
-            value={day}
-            onChangeText={(v) => setDay(v.replace(/\D/g, '').slice(0, 2))}
-            placeholder="DD"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
-            maxLength={2}
-            autoComplete="off"
-            style={[field, { flex: 1 }]}
-            accessibilityLabel="Birth day"
-          />
-        </View>
+        {pending ? null : (
+          <>
+            <Text variant="bodyStrong">Date of birth</Text>
+            <DobFields value={dob} onChange={setDob} />
+          </>
+        )}
 
         <Text variant="bodyStrong">Display name (optional)</Text>
         <TextInput
@@ -133,7 +76,16 @@ export default function OnboardingScreen() {
           placeholder="What should we call you?"
           placeholderTextColor={colors.textMuted}
           autoCapitalize="words"
-          style={[field, { textAlign: 'left' }]}
+          style={{
+            borderWidth: 1,
+            borderColor: colors.borderStrong,
+            borderRadius: radius.input,
+            paddingHorizontal: space.md,
+            paddingVertical: space.sm,
+            color: colors.text,
+            fontFamily: fonts.body,
+            fontSize: 16,
+          }}
           accessibilityLabel="Display name, optional"
         />
 

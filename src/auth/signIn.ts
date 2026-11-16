@@ -19,12 +19,17 @@ const NOT_AVAILABLE = 'Sign-in is not available right now.';
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
 export const isPlausibleEmail = (v: string) => EMAIL_RE.test(v.trim());
 
-/** Sends a 6-digit code. Same response whether or not the email is known (shouldCreateUser stays server-policy). */
-export async function requestEmailCode(email: string): Promise<AuthResult> {
+/**
+ * Sends a 6-digit code. Same response whether or not the email is known.
+ * `createUser` is true only after the neutral age screen passed on this device (Counsel C6: no email
+ * or auth account before the date of birth). "I already have an account" sends false, so an unknown
+ * email creates nothing.
+ */
+export async function requestEmailCode(email: string, createUser: boolean): Promise<AuthResult> {
   if (!supabase) return { ok: false, message: NOT_AVAILABLE };
   if (!isPlausibleEmail(email)) return { ok: false, message: 'Enter a valid email address.' };
   try {
-    await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase() });
+    await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: createUser } });
   } catch {
     // swallow: do not distinguish outcomes
   }
