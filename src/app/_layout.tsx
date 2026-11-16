@@ -13,6 +13,7 @@ import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { loadConsents } from '../auth/consents';
+import { AgeGateProvider, useAgeGate } from '../auth/AgeGateProvider';
 import { SessionProvider, useSession } from '../auth/SessionProvider';
 import { AppStoreProvider } from '../state/AppStore';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
@@ -33,11 +34,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <ThemeProvider>
-          <AppStoreProvider>
-            <ThemedApp fontsReady={loaded || !!error} />
-          </AppStoreProvider>
-        </ThemeProvider>
+        <AgeGateProvider>
+          <ThemeProvider>
+            <AppStoreProvider>
+              <ThemedApp fontsReady={loaded || !!error} />
+            </AppStoreProvider>
+          </ThemeProvider>
+        </AgeGateProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );
@@ -67,12 +70,17 @@ function ConsentFirstRun() {
 function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   const { colors, resolvedScheme, hydrated } = useTheme();
   const { isConfigured, isSignedIn, isLoading, profile, isOnboarded } = useSession();
-  const ready = fontsReady && hydrated && !isLoading;
+  const age = useAgeGate();
+  const ready = fontsReady && hydrated && !isLoading && (!isConfigured || age.hydrated);
   // Gate only when Supabase is configured; the unconfigured prototype is never locked.
-  const needsSignIn = isConfigured && !isSignedIn;
-  const needsProfile = isConfigured && isSignedIn && !profile; // age gate
+  // Not-eligible device flag: only the generic notice, unless an existing account is already signed in.
+  const notEligible = isConfigured && age.blocked && !(isSignedIn && !!profile);
+  // Counsel C6: the neutral date-of-birth screen comes BEFORE sign-in (no email, no account yet).
+  const needsAge = isConfigured && !notEligible && !isSignedIn && !age.hasPending && !age.existingAccount;
+  const needsSignIn = isConfigured && !notEligible && !isSignedIn && !needsAge;
+  const needsProfile = isConfigured && !notEligible && isSignedIn && !profile;
   const needsParent = isConfigured && isSignedIn && !!profile && profile.is_minor && !isOnboarded;
-  const inApp = !needsSignIn && !needsProfile && !needsParent;
+  const inApp = !notEligible && !needsAge && !needsSignIn && !needsProfile && !needsParent;
   // Parent-link: blocked minors, plus any adult (to accept requests). Onboarded minors never need it.
   const showParentLink = isConfigured && isSignedIn && !!profile && (needsParent || !profile.is_minor);
   // Consent is reachable by any onboarded signed-in user; it is never a lock.
@@ -94,6 +102,12 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           animation: 'slide_from_right',
         }}
       >
+        <Stack.Protected guard={notEligible}>
+          <Stack.Screen name="not-eligible" />
+        </Stack.Protected>
+        <Stack.Protected guard={needsAge}>
+          <Stack.Screen name="age" />
+        </Stack.Protected>
         <Stack.Protected guard={needsSignIn}>
           <Stack.Screen name="sign-in" />
         </Stack.Protected>

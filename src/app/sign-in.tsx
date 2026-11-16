@@ -15,6 +15,7 @@ import {
   signInWithGoogleIdToken,
   verifyEmailCode,
 } from '../auth/signIn';
+import { useAgeGate } from '../auth/AgeGateProvider';
 import { useSession } from '../auth/SessionProvider';
 import { Button, Text } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
@@ -26,6 +27,7 @@ export default function SignInScreen() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { isConfigured, isSignedIn, notice, setNotice } = useSession();
+  const { hasPending, setPending, setExistingAccount } = useAgeGate();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
@@ -91,7 +93,16 @@ export default function SignInScreen() {
             <Button
               label="Email me a code"
               disabled={busy || !email.trim()}
-              onPress={() => run(() => requestEmailCode(email), () => setCodeSent(true))}
+              onPress={() => run(() => requestEmailCode(email, hasPending), () => setCodeSent(true))}
+            />
+            <Button
+              label="Back"
+              variant="secondary"
+              disabled={busy}
+              onPress={() => {
+                setPending(null); // drop the in-memory date of birth
+                setExistingAccount(false);
+              }}
             />
           </>
         ) : (

@@ -1,0 +1,10 @@
+{
+  "name": "fitness-app-server-functions",
+  "private": true,
+  "type": "module",
+  "description": "Supabase Edge Functions (Deno). Shared logic is plain TypeScript, unit-tested with Node's test runner. Not part of the Expo app.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

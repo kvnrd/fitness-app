@@ -1,17 +1,20 @@
+import type { StoreAgeSignal } from '../age/storeAgeSignal';
 import { supabase } from './supabase';
 
 /**
- * Age gate. Calls public.complete_signup(p_birth_date, p_display_name).
+ * Creates the profile. Calls public.complete_signup(p_birth_date, p_display_name, store bounds...).
  *
- * - The server computes the age and decides. The client never computes or echoes an age.
- * - The birth date lives only in component state and this one RPC argument. It is never logged or
- *   persisted on the device. No Apple Declared Age Range / Google Play Age Signals payload is read or stored.
+ * - The server combines the DOB with the store age signal (lowest age wins) and keeps only an age
+ *   band + adult_on date. The client never computes or echoes an age.
+ * - The birth date lives only in memory (AgeGateProvider / component state) and this RPC argument.
+ *   It is never logged or persisted. Only the store signal's derived bounds are sent, never its payload.
+ * - Not eligible: the server deletes this auth user (and its email) in the same request.
  * - Errors are collapsed to three outcomes so the UI cannot leak which rule fired or whether
  *   another account exists.
  */
 export type SignupResult =
   | { ok: true }
-  | { ok: false; kind: 'ineligible' } // under_13_not_permitted or under_minimum_age
+  | { ok: false; kind: 'ineligible' } // server answered { eligible: false } (any reason)
   | { ok: false; kind: 'retry' };
 
 export type DateParts = { year: string; month: string; day: string };
@@ -28,20 +31,19 @@ export function toIsoDate({ year, month, day }: DateParts): string | null {
   return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-export async function completeSignup(birthDateIso: string, displayName: string): Promise<SignupResult> {
+export async function completeSignup(birthDateIso: string, displayName: string, store: StoreAgeSignal | null): Promise<SignupResult> {
   if (!supabase) return { ok: false, kind: 'retry' };
   try {
-    const { error } = await supabase.rpc('complete_signup', {
+    const { data, error } = await supabase.rpc('complete_signup', {
       p_birth_date: birthDateIso,
       p_display_name: displayName.trim() || null,
+      p_store_lower: store?.lower ?? null,
+      p_store_upper: store?.upper ?? null,
+      p_store_source: store?.source ?? null,
     });
-    if (!error) return { ok: true };
-    const text = `${error.message ?? ''}`;
-    if (text.includes('under_13_not_permitted') || text.includes('under_minimum_age')) {
-      return { ok: false, kind: 'ineligible' };
-    }
     // already_signed_up, invalid_*, network, anything else: generic. Never say whether an account exists.
-    return { ok: false, kind: 'retry' };
+    if (error || !data || typeof data !== 'object') return { ok: false, kind: 'retry' };
+    return (data as { eligible?: unknown }).eligible === true ? { ok: true } : { ok: false, kind: 'ineligible' };
   } catch {
     return { ok: false, kind: 'retry' };
   }
