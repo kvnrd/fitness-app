@@ -1,0 +1,174 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAiPlan } from '../../ai/useAiPlan';
+import { todayKey } from '../../components/WeekStrip';
+import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
+import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
+import { WORKOUTS_LOCKED_NOTICE } from '../../onboarding/copy';
+import { useAppStore, useDayProgress } from '../../state/AppStore';
+import { useTheme } from '../../theme/ThemeProvider';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { AiNotice } from '../../components/AiNotice';
+import { space } from '../../theme/tokens';
+
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
+
+function Today({ day }: { day: DayKey }) {
+  const { colors } = useTheme();
+  const { program, locked } = useAppStore();
+  const w = program.days[day];
+  const { ratio, done, total } = useDayProgress(day);
+  const action = w.rest ? 'View recovery plan' : ratio >= 1 ? 'Review workout' : ratio > 0 ? 'Continue workout' : 'Start workout';
+
+  return (
+    <View style={{ gap: space.lg }}>
+      <View style={{ gap: space.xs }}>
+        <Text variant="stamp" accessibilityRole="header">
+          {DAY_LABELS[day].long}
+        </Text>
+        <Text variant="title">{w.title}</Text>
+        <Text variant="body" color={colors.textSecondary}>
+          {w.rest
+            ? 'Rest day. Walk and mobility only.'
+            : `${w.durationMin} min, ${plural(w.exercises.length, 'exercise')}${done > 0 ? `, ${done} of ${total} sets logged` : ''}`}
+        </Text>
+      </View>
+      <Button label={action} disabled={locked} onPress={() => router.push(`/workout/${day}`)} />
+      {total > 0 ? <ProgressBar ratio={ratio} /> : null}
+    </View>
+  );
+}
+
+function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
+  const { colors, fonts } = useTheme();
+  const { program } = useAppStore();
+  const w = program.days[day];
+  const { ratio } = useDayProgress(day);
+  const complete = ratio >= 1;
+  return (
+    <Pressable
+      onPress={() => router.push(`/workout/${day}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`${DAY_LABELS[day].long}${isToday ? ', today' : ''}: ${w.title}${complete ? ', completed' : ''}`}
+      style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+    >
+      <Text style={[styles.dayName, { fontFamily: fonts.displayBold }]} color={isToday ? colors.text : colors.textMuted}>
+        {DAY_LABELS[day].short}
+      </Text>
+      <Text variant="bodyStrong" color={w.rest ? colors.textSecondary : colors.text} style={{ flex: 1 }} numberOfLines={1}>
+        {w.title}
+      </Text>
+      <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
+        {w.rest ? 'Rest' : `${w.durationMin} min`}
+      </Text>
+      <View
+        style={[
+          styles.status,
+          { borderColor: colors.borderStrong },
+          complete && { backgroundColor: colors.accent, borderColor: colors.accent },
+          !complete && ratio > 0 && { borderColor: colors.textSecondary },
+        ]}
+      >
+        {complete ? <Ionicons name="checkmark" size={12} color={colors.accentText} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+export default function TrainScreen() {
+  const { colors, fonts } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { program, locked } = useAppStore();
+  const { start, notice, state } = useAiPlan();
+  const today = todayKey();
+  const initials = program.trainer.name
+    .split(' ')
+    .map((p) => p[0])
+    .join('');
+  const hasAi = !!state?.planAccepted || program.aiGenerated;
+
+  return (
+    <ScreenBackground>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: 'transparent' }}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
+    >
+      <View style={styles.header}>
+        <View style={{ flex: 1 }}>
+          <Text variant="small" color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, letterSpacing: 0.8, textTransform: 'uppercase' }}>Your plan</Text>
+          <Text variant="title">{program.trainer.programName}</Text>
+          <Text variant="small" color={colors.textSecondary}>
+            {program.weekLabel}
+            {program.trainer.name ? <> with <Text variant="small" color={colors.coach}>{program.trainer.name}</Text></> : null}
+          </Text>
+        </View>
+        {hasAi ? (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: colors.borderStrong }}>
+            <Text color={colors.textSecondary} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+              AI plan
+            </Text>
+          </View>
+        ) : program.trainer.name ? (
+          <View style={[styles.avatar, { borderColor: colors.coach }]} accessibilityLabel={`Coach ${program.trainer.name}`}>
+            <Text variant="small" color={colors.coach} style={{ fontFamily: fonts.bodySemi }}>
+              {initials}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {locked ? (
+        <View accessibilityLiveRegion="polite" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: space.md, backgroundColor: colors.surface }}>
+          <Text variant="small" color={colors.textSecondary}>
+            {WORKOUTS_LOCKED_NOTICE}
+          </Text>
+        </View>
+      ) : null}
+
+      {hasAi && notice === 'banner' ? <AiNotice /> : null}
+
+      {!hasAi ? (
+        <Button label="Build an AI plan" onPress={start} />
+      ) : null}
+
+      <Today day={today} />
+
+      <View>
+        <SectionHeader title="This week" />
+        <View>
+          {DAY_KEYS.map((d) => (
+            <DayRow key={d} day={d} isToday={d === today} />
+          ))}
+        </View>
+      </View>
+      {hasAi && notice === 'footer' ? <AiNotice variant="footer" /> : null}
+    </ScrollView>
+    </ScreenBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { paddingHorizontal: space.lg, paddingBottom: space['4xl'], gap: space['4xl'], maxWidth: 640, width: '100%', alignSelf: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingVertical: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  dayName: { fontSize: 20, lineHeight: 24, width: 44 },
+  status: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+});

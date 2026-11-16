@@ -5,6 +5,8 @@ import { Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS } from '../../data/types';
 import { rowsFor, useAppStore } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useAiPlan } from '../../ai/useAiPlan';
+import { AiNotice } from '../../components/AiNotice';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { ThemeMode, radius, space } from '../../theme/tokens';
 
@@ -13,6 +15,7 @@ export default function ProgressScreen() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { program, logs } = useAppStore();
+  const { notice } = useAiPlan();
 
   let sets = 0;
   let volume = 0;
@@ -69,6 +72,7 @@ export default function ProgressScreen() {
       <Text variant="small" color={colors.textMuted}>
         Check off sets on the Train tab and they add up here. Full history and personal records come once accounts are connected.
       </Text>
+          {notice === 'footer' ? <AiNotice variant="footer" /> : null}
     </ScrollView>
     </ScreenBackground>
   );

@@ -29,6 +29,19 @@ import { ParentHelpScreen } from '../screens/ParentHelp';
 import { SignInScreen } from '../screens/SignIn';
 import { VerifyScreen } from '../screens/Verify';
 import { WelcomeScreen } from '../screens/Welcome';
+import { emptyHealthAnswers, setHealthAnswer, type HealthAnswers } from '../../ai/healthScreen';
+import type { QuizState } from '../../ai/quiz';
+import { SAMPLE_PLAN, SAMPLE_QUIZ, SAMPLE_REST, SAMPLE_SWAP_NOTE } from '../../ai/screens/samplePlan';
+import { HealthScreen } from '../../ai/screens/HealthScreen';
+import { HealthClearanceScreen } from '../../ai/screens/HealthClearance';
+import { HealthSwitchScreen } from '../../ai/screens/HealthSwitch';
+import { AiQuizScreen } from '../../ai/screens/AiQuiz';
+import { AiGeneratingScreen } from '../../ai/screens/AiGenerating';
+import { AiPreviewScreen } from '../../ai/screens/AiPreview';
+import { AiBlockedScreen } from '../../ai/screens/AiBlocked';
+import { HomeAiScreen } from '../../ai/screens/HomeAi';
+import { TrainAiScreen } from '../../ai/screens/TrainAi';
+import { ProfileScreen } from '../../ai/screens/ProfileScreen';
 
 /**
  * Screen preview registry (dev only; used by app/dev-preview.tsx for screenshots). id → render function with
@@ -36,6 +49,16 @@ import { WelcomeScreen } from '../screens/Welcome';
  * read real state, never call the server.
  */
 const noop = () => {};
+
+const allNo = (): HealthAnswers => {
+  let a = emptyHealthAnswers();
+  for (let i = 0; i < a.length; i++) a = setHealthAnswer(a, i, false);
+  return a;
+};
+const yesAt = (i: number): HealthAnswers => setHealthAnswer(allNo(), i, true);
+const adultQuiz: QuizState = { ...SAMPLE_QUIZ, goals: ['build_strength', 'lose_fat'] };
+const teenQuiz: QuizState = { ...SAMPLE_QUIZ, goals: ['build_strength', 'build_muscle'] };
+
 
 const role = (o: Partial<RoleProps> = {}): ReactElement => (
   <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} attestGeneral={false} onAttestGeneral={noop} attestMinors={false} onAttestMinors={noop} {...o} />
@@ -157,6 +180,23 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
     <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetRisk(setAttest(setCoach(pcSetAi(pcSetHealth(initPc(), true), true), true), true), true)} onChange={noop} onConfirm={noop} />
   ),
   'parent-consent-needs-health': () => <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetAi(initPc(), true)} onChange={noop} onConfirm={noop} />,
+  // ───── Phase 4: health screen, quiz, plan (ids keep historical Paper stems; the UI never says PAR-Q+) ─────
+  parq: () => <HealthScreen answers={allNo()} onAnswer={noop} onContinue={noop} onBack={noop} />,
+  'parq-yes': () => <HealthScreen answers={yesAt(5)} onAnswer={noop} onContinue={noop} onBack={noop} />,
+  'parq-clearance': () => <HealthClearanceScreen confirmed={false} onConfirmed={noop} onContinue={noop} onBack={noop} />,
+  'parq-parent': () => <HealthScreen answers={allNo()} teenName="Alex" onAnswer={noop} onContinue={noop} onBack={noop} />,
+  'parq-parent-clearance': () => <HealthClearanceScreen confirmed={false} teenName="Alex" onConfirmed={noop} onContinue={noop} onBack={noop} />,
+  'health-switch': () => <HealthSwitchScreen onTurnOn={noop} onNotNow={noop} onBack={noop} />,
+  'health-switch-teen': () => <HealthSwitchScreen teenName="Alex" onTurnOn={noop} onNotNow={noop} onBack={noop} />,
+  quiz: () => <AiQuizScreen state={{ ...adultQuiz }} teen={false} onChange={noop} onGenerate={noop} onBack={noop} />,
+  'quiz-teen': () => <AiQuizScreen state={{ ...teenQuiz }} teen onChange={noop} onGenerate={noop} onBack={noop} />,
+  generating: () => <AiGeneratingScreen injuryLabel="Knee" onCancel={noop} />,
+  preview: () => <AiPreviewScreen title="Hybrid Strength" plan={SAMPLE_PLAN} injuryLabel="Knee" swapNote={SAMPLE_SWAP_NOTE} restNote={SAMPLE_REST} onStart={noop} onBack={noop} />,
+  blocked: () => <AiBlockedScreen onGenerateAgain={noop} onChangeGoal={noop} />,
+  'home-ai': () => <HomeAiScreen hasPlan notice="footer" />,
+  'home-ai-teen': () => <HomeAiScreen teen hasPlan showWeight={false} notice="footer" />,
+  'train-ai': () => <TrainAiScreen notice="footer" />,
+  'profile-teen': () => <ProfileScreen showWeight weightLabel="142 lb" notice="footer" />,
   // ───── Plan notice ─────
   'plan-notice': () => <PlanNoticePreview />,
 };

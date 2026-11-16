@@ -31,8 +31,10 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.bodyMedium },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Train', tabBarIcon: icon('barbell-outline', 'barbell') }} />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
+      <Tabs.Screen name="train" options={{ title: 'Train', tabBarIcon: icon('barbell-outline', 'barbell') }} />
       <Tabs.Screen name="progress" options={{ title: 'Progress', tabBarIcon: icon('stats-chart-outline', 'stats-chart') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person-outline', 'person') }} />
       <Tabs.Screen name="studio" options={{ href: isVerifiedCoach ? undefined : null, title: 'Studio', tabBarIcon: icon('create-outline', 'create') }} />
     </Tabs>
   );

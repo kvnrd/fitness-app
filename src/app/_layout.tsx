@@ -149,12 +149,13 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={pendingMinor || needsSetup}>
           <Stack.Screen name="setup/[step]" />
         </Stack.Protected>
-        <Stack.Protected guard={needsPrivacy}>
-          <Stack.Screen name="privacy-safety" options={{ gestureEnabled: false }} />
+        <Stack.Protected guard={needsPrivacy || inApp}>
+          <Stack.Screen name="privacy-safety" options={needsPrivacy ? { gestureEnabled: false } : undefined} />
         </Stack.Protected>
         <Stack.Protected guard={inApp}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workout/[day]" />
+          <Stack.Screen name="ai" />
         </Stack.Protected>
         <Stack.Protected guard={showConsent}>
           <Stack.Screen name="consent" />
