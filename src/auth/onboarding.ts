@@ -1,5 +1,7 @@
 import type { StoreAgeSignal } from '../age/storeAgeSignal';
 import type { DateParts } from '../onboarding/dob.ts';
+import { PRIVACY_POLICY } from '../legal/text';
+import { createParentInvite } from '../onboarding/api';
 import { supabase } from './supabase';
 
 /**
@@ -14,13 +16,19 @@ import { supabase } from './supabase';
  *   another account exists.
  */
 export type SignupResult =
-  | { ok: true }
+  | { ok: true; isMinor: boolean }
   | { ok: false; kind: 'ineligible' } // server answered { eligible: false } (any reason)
   | { ok: false; kind: 'retry' };
 
 // DOB validation lives in onboarding/dob (single implementation); re-exported for existing importers.
 export type { DateParts };
 export { toIsoDate } from '../onboarding/dob.ts';
+
+/**
+ * [ATTORNEY] TODO: no Terms document exists yet. Until one is bundled, signup records this placeholder id with a
+ * null hash (the Terms checkbox text itself is legalTexts.terms()). Replace with the Terms doc version + hash.
+ */
+export const TERMS_PLACEHOLDER_VERSION = 'terms-placeholder-v0';
 
 export async function completeSignup(birthDateIso: string, displayName: string, store: StoreAgeSignal | null): Promise<SignupResult> {
   if (!supabase) return { ok: false, kind: 'retry' };
@@ -31,11 +39,27 @@ export async function completeSignup(birthDateIso: string, displayName: string, 
       p_store_lower: store?.lower ?? null,
       p_store_upper: store?.upper ?? null,
       p_store_source: store?.source ?? null,
+      p_terms_version: TERMS_PLACEHOLDER_VERSION,
+      p_terms_hash: null,
+      p_privacy_version: PRIVACY_POLICY.version,
+      p_privacy_hash: PRIVACY_POLICY.hash,
     });
     // already_signed_up, invalid_*, network, anything else: generic. Never say whether an account exists.
     if (error || !data || typeof data !== 'object') return { ok: false, kind: 'retry' };
-    return (data as { eligible?: unknown }).eligible === true ? { ok: true } : { ok: false, kind: 'ineligible' };
+    const d = data as { eligible?: unknown; is_minor?: unknown };
+    return d.eligible === true ? { ok: true, isMinor: d.is_minor === true } : { ok: false, kind: 'ineligible' };
   } catch {
     return { ok: false, kind: 'retry' };
   }
+}
+
+/**
+ * After a session exists (any method): complete_signup, then for a 16-17 account create_parent_invite with the
+ * parent email held in memory. The caller clears DOB + parent email from memory afterwards. A failed invite is
+ * not fatal here: the pending-parent screen can send it again.
+ */
+export async function finishSignup(args: { birthDateIso: string; displayName: string; store: StoreAgeSignal | null; parentEmail: string }): Promise<SignupResult> {
+  const r = await completeSignup(args.birthDateIso, args.displayName, args.store);
+  if (r.ok && r.isMinor && args.parentEmail) await createParentInvite(args.parentEmail);
+  return r;
 }

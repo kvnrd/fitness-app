@@ -43,10 +43,32 @@ export async function requestLinkByParentId(minorId: string, parentId: string): 
   }
 }
 
-export async function acceptLink(linkId: string): Promise<boolean> {
+export type AcceptLinkArgs = {
+  linkId: string;
+  attestation: { version: string; hash: string };
+  termsVersion: string;
+  risk: { version: string; hash: string };
+  privacyVersion?: string | null;
+  privacyHash?: string | null;
+};
+
+/**
+ * accept_parent_link now requires the parent's attestation and parent risk acknowledgement (no path links
+ * without them). The screen that collects them is the parent-consent screen (UI job B).
+ */
+export async function acceptLink(a: AcceptLinkArgs): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await supabase.rpc('accept_parent_link', { p_link_id: linkId });
+    const { error } = await supabase.rpc('accept_parent_link', {
+      p_link_id: a.linkId,
+      p_attestation_version: a.attestation.version,
+      p_attestation_hash: a.attestation.hash,
+      p_terms_version: a.termsVersion,
+      p_risk_version: a.risk.version,
+      p_risk_hash: a.risk.hash,
+      p_privacy_version: a.privacyVersion ?? null,
+      p_privacy_hash: a.privacyHash ?? null,
+    });
     return !error;
   } catch {
     return false;

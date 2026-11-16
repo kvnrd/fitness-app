@@ -14,7 +14,9 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { loadConsents } from '../auth/consents';
 import { AgeGateProvider, useAgeGate } from '../auth/AgeGateProvider';
+import { GoogleAuthBridge } from '../auth/providers';
 import { SessionProvider, useSession } from '../auth/SessionProvider';
+import { isGoogleConfigured } from '../auth/signIn';
 import { AppStoreProvider } from '../state/AppStore';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -69,20 +71,26 @@ function ConsentFirstRun() {
 
 function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   const { colors, resolvedScheme, hydrated } = useTheme();
-  const { isConfigured, isSignedIn, isLoading, profile, isOnboarded } = useSession();
+  const { isConfigured, isSignedIn, isLoading, profile, onboarding } = useSession();
   const age = useAgeGate();
   const ready = fontsReady && hydrated && !isLoading && (!isConfigured || age.hydrated);
   // Gate only when Supabase is configured; the unconfigured prototype is never locked.
+  // Order: not-eligible flag → signed out → signed in without a complete account → pending minor →
+  // setup → privacy & safety → app. my_onboarding_state failing leaves `onboarding` null (fail closed).
   // Not-eligible device flag: only the generic notice, unless an existing account is already signed in.
   const notEligible = isConfigured && age.blocked && !(isSignedIn && !!profile);
-  // Counsel C6: the neutral date-of-birth screen comes BEFORE sign-in (no email, no account yet).
-  const needsAge = isConfigured && !notEligible && !isSignedIn && !age.hasPending && !age.existingAccount;
-  const needsSignIn = isConfigured && !notEligible && !isSignedIn && !needsAge;
-  const needsProfile = isConfigured && !notEligible && isSignedIn && !profile;
-  const needsParent = isConfigured && isSignedIn && !!profile && profile.is_minor && !isOnboarded;
-  const inApp = !notEligible && !needsAge && !needsSignIn && !needsProfile && !needsParent;
-  // Parent-link: blocked minors, plus any adult (to accept requests). Onboarded minors never need it.
-  const showParentLink = isConfigured && isSignedIn && !!profile && (needsParent || !profile.is_minor);
+  const signedOut = isConfigured && !notEligible && !isSignedIn;
+  // No profile yet, or a profile whose state could not be read: the "finishing signup" / retry screen.
+  const needsProfile = isConfigured && !notEligible && isSignedIn && (!profile || !onboarding);
+  const gated = isConfigured && isSignedIn && !!profile && !!onboarding;
+  const pendingMinor = gated && onboarding.is_minor && !onboarding.linked;
+  const needsSetup = gated && !pendingMinor && !onboarding.setup_done;
+  const needsPrivacy = gated && !pendingMinor && onboarding.setup_done && !onboarding.privacy_done;
+  const inApp = !isConfigured || (gated && !pendingMinor && onboarding.setup_done && onboarding.privacy_done);
+  // Parent-link: pending minors (to see their requests) plus any adult (to accept requests).
+  const showParentLink = isConfigured && isSignedIn && !!profile && (pendingMinor || !profile.is_minor);
+  // Parent-consent (invite token deep link) is for signed-in adults only.
+  const showParentConsent = isConfigured && isSignedIn && !!profile && !profile.is_minor;
   // Consent is reachable by any onboarded signed-in user; it is never a lock.
   const showConsent = isConfigured && isSignedIn && inApp;
 
@@ -102,20 +110,31 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           animation: 'slide_from_right',
         }}
       >
-        {/* Public policy text: outside every guard so it opens signed out, signed in, and from the not-eligible state. [ATTORNEY] drafts */}
-        <Stack.Screen name="legal/privacy" />
-        <Stack.Screen name="legal/health-privacy" />
         <Stack.Protected guard={notEligible}>
-          <Stack.Screen name="not-eligible" />
+          <Stack.Screen name="not-eligible" options={{ gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={needsAge}>
+        <Stack.Protected guard={signedOut}>
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="method" />
           <Stack.Screen name="age" />
-        </Stack.Protected>
-        <Stack.Protected guard={needsSignIn}>
+          <Stack.Screen name="parent-help" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="invite-parent" />
+          <Stack.Screen name="invite-sent" />
+          <Stack.Screen name="create" />
+          <Stack.Screen name="verify" />
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
         <Stack.Protected guard={needsProfile}>
-          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={pendingMinor}>
+          <Stack.Screen name="waiting-parent" options={{ gestureEnabled: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={pendingMinor || needsSetup}>
+          <Stack.Screen name="setup/[step]" />
+        </Stack.Protected>
+        <Stack.Protected guard={needsPrivacy}>
+          <Stack.Screen name="privacy-safety" options={{ gestureEnabled: false }} />
         </Stack.Protected>
         <Stack.Protected guard={inApp}>
           <Stack.Screen name="(tabs)" />
@@ -127,8 +146,19 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={showParentLink}>
           <Stack.Screen name="parent-link" />
         </Stack.Protected>
+        <Stack.Protected guard={showParentConsent}>
+          <Stack.Screen name="parent-consent" />
+        </Stack.Protected>
+        {/* Unguarded routes come last so the first available screen is always the state's own. */}
+        {/* Public policy text: outside every guard so it opens signed out, signed in, and from the not-eligible state. [ATTORNEY] drafts */}
+        <Stack.Screen name="legal/privacy" />
+        <Stack.Screen name="legal/health-privacy" />
+        <Stack.Screen name="legal/terms" />
+        {/* Dev-only screen preview: always registered outside guards, but the route redirects home unless __DEV__ && EXPO_PUBLIC_SCREEN_PREVIEW === '1'. */}
+        <Stack.Screen name="dev-preview" />
       </Stack>
       {showConsent ? <ConsentFirstRun /> : null}
+      {isGoogleConfigured ? <GoogleAuthBridge /> : null}
     </View>
   );
 }

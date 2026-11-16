@@ -1,103 +1,106 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { getStoreAgeSignal } from '../age/storeAgeSignal';
 import { useAgeGate } from '../auth/AgeGateProvider';
-import { completeSignup, DateParts, toIsoDate } from '../auth/onboarding';
+import { finishSignup, SignupResult } from '../auth/onboarding';
 import { useSession } from '../auth/SessionProvider';
-import { Button, Text } from '../components/ui';
-import { DobFields } from '../components/DobFields';
+import { Text } from '../components/ui';
+import { DateParts, toIsoDate } from '../onboarding/dob';
+import { DobScreen } from '../onboarding/screens/Dob';
+import { OnbScreen } from '../onboarding/ui/OnbScreen';
+import { OnbSub, OnbTitle } from '../onboarding/ui/OnbText';
+import { PrimaryCta } from '../onboarding/ui/PrimaryCta';
+import { SecondaryButton } from '../onboarding/ui/SecondaryButton';
 import { useTheme } from '../theme/ThemeProvider';
-import { radius, space } from '../theme/tokens';
 
 /**
- * Signed in, no profile yet. Normally the date of birth was already taken on the neutral age screen
- * before sign-in (held in memory), so this only asks for an optional display name. If the app was
- * restarted in between, or the person used "I already have an account" with Apple/Google and has no
- * profile, the same neutral date field is shown here.
+ * Signed in but not (yet) a complete account. Mounted by the root gate when there is no profile, or when a
+ * profile exists but my_onboarding_state() failed (fails closed: never the app).
  *
- * The server decides eligibility. Not eligible: the server deletes this auth user and its email in the
- * same request, the device gets the no-personal-data flag, and only the generic notice is shown.
+ * - Normal path: the DOB answer is already in memory (Method → DOB), so complete_signup runs automatically
+ *   (terms + privacy versions/hashes, display name, store bounds); for 16-17 create_parent_invite follows with
+ *   the parent email from memory; then DOB + parent email are dropped from memory.
+ * - "I already have an account" with Apple/Google but no profile, or an app restart mid-flow: no DOB in
+ *   memory, so the same neutral date entry is shown here.
+ * - Ineligible answer: the server deleted the auth user; device flag + sign out (Phase 2b behaviour).
  */
-export default function OnboardingScreen() {
-  const { colors, fonts } = useTheme();
-  const insets = useSafeAreaInsets();
-  const { refreshRole, signOut } = useSession();
-  const { getPending, setPending, markIneligible } = useAgeGate();
-  const pending = getPending();
+export default function OnboardingRoute() {
+  const { profile, refreshRole, signOut } = useSession();
+  const age = useAgeGate();
+  const { colors } = useTheme();
   const [dob, setDob] = useState<DateParts>({ year: '', month: '', day: '' });
-  const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const started = useRef(false);
 
-  const iso = pending?.birthDateIso ?? toIsoDate(dob);
-
-  async function submit() {
-    if (!iso || busy) return;
+  async function run(birthDateIso: string, store: Awaited<ReturnType<typeof getStoreAgeSignal>>) {
     setBusy(true);
-    setMessage(null);
-    const store = pending ? pending.store : await getStoreAgeSignal();
-    const r = await completeSignup(iso, name, store);
+    setFailed(false);
+    const r: SignupResult = await finishSignup({ birthDateIso, displayName: age.signupName, store, parentEmail: age.parentEmail });
     if (r.ok) {
-      setPending(null); // the date of birth is no longer needed anywhere
-      await refreshRole(); // loads profile + onboarded; the root gate then moves us on
-      setBusy(false);
-      return;
-    }
-    if (r.kind === 'ineligible') {
-      await markIneligible();
+      age.clearSignupMemory(); // the date of birth and the parent email are no longer needed anywhere
+      await refreshRole(); // loads profile + onboarding state; the root gate then moves on
+    } else if (r.kind === 'ineligible') {
+      await age.markIneligible();
       await signOut();
-      setBusy(false);
-      return;
+    } else {
+      setFailed(true);
     }
     setBusy(false);
-    setMessage('Something went wrong. Please check your details and try again.');
+  }
+
+  const pending = age.getPending();
+  useEffect(() => {
+    if (profile || !pending || started.current) return;
+    started.current = true;
+    void run(pending.birthDateIso, pending.store);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, pending]);
+
+  // A profile exists but its onboarding state could not be read: fail closed with a retry.
+  if (profile) {
+    return (
+      <OnbScreen centerContent>
+        <OnbTitle>We couldn’t load your account</OnbTitle>
+        <OnbSub>Check your connection and try again.</OnbSub>
+        <PrimaryCta label="Try again" busy={busy} onPress={async () => { setBusy(true); await refreshRole(); setBusy(false); }} />
+        <SecondaryButton label="Sign out" onPress={() => void signOut()} />
+      </OnbScreen>
+    );
+  }
+
+  if (!pending) {
+    const iso = toIsoDate(dob);
+    return (
+      <DobScreen
+        value={dob}
+        onChange={setDob}
+        valid={!!iso}
+        busy={busy}
+        message={failed ? 'Something went wrong. Please try again.' : null}
+        onContinue={async () => {
+          if (!iso || busy) return;
+          await run(iso, await getStoreAgeSignal());
+        }}
+      />
+    );
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xl, paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.xl, gap: space.md }}
-      >
-        <Text variant="title">Before you start</Text>
-
-        {pending ? null : (
-          <>
-            <Text variant="bodyStrong">Date of birth</Text>
-            <DobFields value={dob} onChange={setDob} />
-          </>
-        )}
-
-        <Text variant="bodyStrong">Display name (optional)</Text>
-        <TextInput
-          value={name}
-          onChangeText={(v) => setName(v.slice(0, 80))}
-          placeholder="What should we call you?"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="words"
-          style={{
-            borderWidth: 1,
-            borderColor: colors.borderStrong,
-            borderRadius: radius.input,
-            paddingHorizontal: space.md,
-            paddingVertical: space.sm,
-            color: colors.text,
-            fontFamily: fonts.body,
-            fontSize: 16,
-          }}
-          accessibilityLabel="Display name, optional"
-        />
-
-        {message ? (
-          <Text variant="small" color={colors.danger} accessibilityLiveRegion="polite">
-            {message}
-          </Text>
-        ) : null}
-
-        <Button label="Continue" disabled={busy || !iso} onPress={submit} />
-        <Button label="Sign out" variant="secondary" disabled={busy} onPress={() => void signOut()} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <OnbScreen centerContent>
+      {failed ? (
+        <>
+          <OnbTitle>Something went wrong</OnbTitle>
+          <OnbSub>We couldn’t finish setting up your account. Please try again.</OnbSub>
+          <PrimaryCta label="Try again" busy={busy} onPress={() => void run(pending.birthDateIso, pending.store)} />
+          <SecondaryButton label="Sign out" onPress={() => void signOut()} />
+        </>
+      ) : (
+        <View style={{ gap: 16, alignItems: 'flex-start' }} accessibilityLiveRegion="polite">
+          <ActivityIndicator color={colors.accentInk} />
+          <Text>Setting up your account…</Text>
+        </View>
+      )}
+    </OnbScreen>
   );
 }

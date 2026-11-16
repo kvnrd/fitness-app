@@ -34,13 +34,16 @@ export async function writeIneligibleFlag(): Promise<void> {
   }
 }
 
-export type PendingAge = { birthDateIso: string; store: StoreAgeSignal | null };
+export type AgeBand = '16_17' | '18_plus';
 
-export type ScreenResult = 'eligible' | 'ineligible' | 'retry';
+/** Memory only. `band` comes from the server's screen_age answer (never computed on the client). */
+export type PendingAge = { birthDateIso: string; store: StoreAgeSignal | null; band: AgeBand | null };
 
-/** Calls public.screen_age (anon). The server stores nothing about the person; only yes/no comes back. */
-export async function screenAge(p: PendingAge): Promise<ScreenResult> {
-  if (!supabase) return 'retry';
+export type ScreenResult = { kind: 'eligible'; band: AgeBand } | { kind: 'ineligible' } | { kind: 'retry' };
+
+/** Calls public.screen_age (anon). The server stores nothing about the person; only yes/no + band come back. */
+export async function screenAge(p: Pick<PendingAge, 'birthDateIso' | 'store'>): Promise<ScreenResult> {
+  if (!supabase) return { kind: 'retry' };
   try {
     const { data, error } = await supabase.rpc('screen_age', {
       p_birth_date: p.birthDateIso,
@@ -48,9 +51,12 @@ export async function screenAge(p: PendingAge): Promise<ScreenResult> {
       p_store_upper: p.store?.upper ?? null,
       p_store_source: p.store?.source ?? null,
     });
-    if (error || !data || typeof data !== 'object') return 'retry';
-    return (data as { eligible?: unknown }).eligible === true ? 'eligible' : 'ineligible';
+    if (error || !data || typeof data !== 'object') return { kind: 'retry' };
+    const d = data as { eligible?: unknown; band?: unknown };
+    if (d.eligible !== true) return { kind: 'ineligible' };
+    // Fail closed: an eligible answer without a known band is not trusted.
+    return d.band === '16_17' || d.band === '18_plus' ? { kind: 'eligible', band: d.band } : { kind: 'retry' };
   } catch {
-    return 'retry';
+    return { kind: 'retry' };
   }
 }

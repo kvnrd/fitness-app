@@ -14,6 +14,7 @@ export type AuthResult = { ok: true } | { ok: false; message: string };
 
 const GENERIC_FAIL = 'Could not sign in. Please try again.';
 const GENERIC_CODE_FAIL = 'That code did not work. Check it or request a new one.';
+const GENERIC_SIGNUP_FAIL = 'We couldn’t create the account. Check your details and try again.';
 const NOT_AVAILABLE = 'Sign-in is not available right now.';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
@@ -47,6 +48,50 @@ export async function verifyEmailCode(email: string, code: string): Promise<Auth
   } catch {
     return { ok: false, message: GENERIC_CODE_FAIL };
   }
+}
+
+export const PASSWORD_MIN = 12;
+export const PASSWORD_MAX = 128;
+
+/**
+ * Email sign-up (Create screen). Generic on every outcome: with email confirmation on, Supabase answers the
+ * same way for a new and an existing address, and we never add a hint of our own ("If an account exists,
+ * we've sent a code"). Only local shape checks produce a specific message.
+ */
+export async function signUpWithEmail(email: string, password: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: NOT_AVAILABLE };
+  if (!isPlausibleEmail(email)) return { ok: false, message: 'Enter a valid email address.' };
+  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) return { ok: false, message: GENERIC_SIGNUP_FAIL };
+  try {
+    const { error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
+    return error ? { ok: false, message: GENERIC_SIGNUP_FAIL } : { ok: true };
+  } catch {
+    return { ok: false, message: GENERIC_SIGNUP_FAIL };
+  }
+}
+
+/** Signup confirmation code (6 digits). Success creates the session. */
+export async function verifySignupCode(email: string, code: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: NOT_AVAILABLE };
+  const token = code.replace(/\s/g, '');
+  if (!/^\d{6}$/.test(token)) return { ok: false, message: 'Enter the 6-digit code.' };
+  try {
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: 'signup' });
+    return error ? { ok: false, message: GENERIC_CODE_FAIL } : { ok: true };
+  } catch {
+    return { ok: false, message: GENERIC_CODE_FAIL };
+  }
+}
+
+/** Resend the signup code. Always reports ok so it cannot be used to probe for accounts. */
+export async function resendSignupCode(email: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: NOT_AVAILABLE };
+  try {
+    await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
+  } catch {
+    // swallow
+  }
+  return { ok: true };
 }
 
 export async function isAppleSignInAvailable(): Promise<boolean> {

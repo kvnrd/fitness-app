@@ -243,3 +243,26 @@ export const legalTexts = {
 /** SHA-256 hex of the exact text shown. */
 export const legalTextHash = (t: LegalText): Promise<string> => sha256Hex(t.text);
 export { sha256Hex };
+
+// ───────────────────────────── Phase 3 account flow copy (UI job A) ─────────────────────────────
+// Source: paper/onb.py + paper/onb_dob.py (curly apostrophes as in the Paper renders). Neutral: no age, no cutoff. [ATTORNEY]
+export const DOB_TITLE = 'When were you born?'; // [ATTORNEY]
+export const DOB_SUB = 'We use this to set up your account.'; // [ATTORNEY]
+export const DOB_PRIVACY_NOTE = 'We don’t save your date of birth. We only keep a general age range.'; // [ATTORNEY]
+export const DOB_HINT_OFF = 'Enter month, day and year to continue'; // [ATTORNEY]
+export const PARENT_HELP_TITLE = 'A parent or guardian needs to help'; // [ATTORNEY]
+export const PARENT_HELP_SUB = 'They have to link to your account and agree before it’s fully active.'; // [ATTORNEY]
+export const PARENT_HELP_BULLETS = [
+  'You can create a limited account and sign in.',
+  'Purchases stay off until they link.',
+  'If they don’t link within 14 days, we’ll delete the account. We’ll remind you on day 3 and day 7.',
+  'They’ll be able to see your training and privacy choices. We’ll tell you if they change a setting.',
+] as const; // [ATTORNEY]
+export const INVITE_TITLE = 'Invite a parent or guardian'; // [ATTORNEY]
+export const INVITE_SUB = 'We’ll email them a link to review and confirm. We use their email only to send this invite.'; // [ATTORNEY]
+export const INVITE_LABEL = 'Parent or guardian email'; // [ATTORNEY]
+export const INVITE_HINT_OFF = 'Enter their email to send the invite'; // [ATTORNEY]
+export const INVITE_SENT_TITLE = 'Invite sent'; // [ATTORNEY]
+export const INVITE_SENT_BODY_AFTER_EMAIL = '. Next, create your account with Apple, Google or email so they can link to it.'; // [ATTORNEY]
+export const INVITE_SENT_NOTE =
+  'Your account stays limited until they accept — no purchases, and no workout or health data yet. If they don’t link within 14 days, we’ll delete the account and this invite. We’ll remind you on day 3 and day 7.'; // [ATTORNEY]

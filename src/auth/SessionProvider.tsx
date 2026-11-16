@@ -1,6 +1,8 @@
 import type { Session as AuthSession, User } from '@supabase/supabase-js';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_ROLE, isRole, isVerifiedCoach, resolveDevRole, Role } from './session';
+import { deviceSetupStore } from '../onboarding/deviceStorage';
+import { myOnboardingState, type OnboardingState } from '../onboarding/api';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 export type Profile = { id: string; display_name: string | null; is_minor: boolean };
@@ -21,6 +23,12 @@ type Session = {
    * UI gating only: RLS / app.is_minor_onboarded enforce this on the server.
    */
   isOnboarded: boolean;
+  /**
+   * my_onboarding_state() for the signed-in user, or null (no session, no profile, or the call failed).
+   * With a profile and a null state the root gate fails closed (retry screen, never the app).
+   * Unconfigured prototype: a "done" state. UI gating only: RLS / functions enforce.
+   */
+  onboarding: OnboardingState | null;
   /** One-shot message for the sign-in screen (e.g. after an ineligible age result). */
   notice: string | null;
   setNotice: (message: string | null) => void;
@@ -31,23 +39,16 @@ type Session = {
 
 const SessionContext = createContext<Session | null>(null);
 
-/** Adults are onboarded; minors only with an active contracting-party parent link. Fails closed. */
-async function computeOnboarded(uid: string, profile: Profile | null): Promise<boolean> {
-  if (!supabase || !profile) return false;
-  if (!profile.is_minor) return true;
-  try {
-    const { data, error } = await supabase
-      .from('parent_links')
-      .select('id')
-      .eq('minor_user_id', uid)
-      .eq('status', 'active')
-      .eq('is_contracting_party', true)
-      .limit(1);
-    return !error && Array.isArray(data) && data.length > 0;
-  } catch {
-    return false;
-  }
-}
+const PROTOTYPE_STATE: OnboardingState = {
+  is_minor: false,
+  linked: false,
+  invite_status: null,
+  setup_done: true,
+  privacy_done: true,
+  can_train: true,
+  parent_risk_done: null,
+  health_reask_due: false,
+};
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const configured = isSupabaseConfigured() && supabase !== null;
@@ -55,7 +56,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(configured ? DEFAULT_ROLE : resolveDevRole());
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(configured);
-  const [onboarded, setOnboarded] = useState(false);
+  const [onbState, setOnbState] = useState<OnboardingState | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // Which user's server state has loaded at least once. A new user starts in the loading state (no
   // flash of the onboarding screen) but a later refresh does not blank the UI.
@@ -77,13 +78,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setRole(!r.error && isRole(r.data?.role) ? r.data.role : DEFAULT_ROLE);
       const prof = !p.error && p.data ? (p.data as Profile) : null;
       setProfile(prof);
-      const ok = await computeOnboarded(uid, prof);
-      if (latestUser.current === uid) setOnboarded(ok);
+      // Fail closed: no profile or a failed call leaves the state null.
+      const st = prof ? await myOnboardingState() : null;
+      if (latestUser.current === uid) setOnbState(st);
     } catch {
       if (latestUser.current === uid) {
         setRole(DEFAULT_ROLE);
         setProfile(null);
-        setOnboarded(false);
+        setOnbState(null);
       }
     } finally {
       if (latestUser.current === uid) setLoadedUser(uid);
@@ -115,17 +117,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!configured) return;
     setRole(DEFAULT_ROLE); // never carry a previous user's role; the table read below decides
     setProfile(null);
-    setOnboarded(false);
+    setOnbState(null);
     setLoadedUser(null);
     if (!userId) return;
     void loadServerState(userId);
   }, [configured, userId, loadServerState]);
 
   const signOut = useCallback(async () => {
+    // Device-only setup drafts and weight goal never outlive the session.
+    const uid = latestUser.current;
+    if (uid) await deviceSetupStore.clearForUser(uid).catch(() => {});
     if (supabase) await supabase.auth.signOut().catch(() => {});
     setRole(configured ? DEFAULT_ROLE : resolveDevRole());
     setProfile(null);
-    setOnboarded(false);
+    setOnbState(null);
   }, [configured]);
 
   const refreshRole = useCallback(async () => {
@@ -141,13 +146,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isSignedIn: !!authSession,
       user: authSession?.user ?? null,
       profile,
-      isOnboarded: configured ? onboarded : true,
+      isOnboarded: configured ? !!onbState && (!onbState.is_minor || onbState.linked) : true,
+      onboarding: configured ? onbState : PROTOTYPE_STATE,
       notice,
       setNotice,
       signOut,
       refreshRole,
     }),
-    [role, configured, authLoading, userId, loadedUser, authSession, profile, onboarded, notice, signOut, refreshRole],
+    [role, configured, authLoading, userId, loadedUser, authSession, profile, onbState, notice, signOut, refreshRole],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

@@ -48,6 +48,8 @@ export type Theme = {
   radius: typeof radius;
   motion: typeof motion;
   reducedMotion: boolean;
+  /** Dev preview only (screenshots): forces the resolved scheme without touching the saved mode. null = off. */
+  setSchemeOverride: (scheme: ColorScheme | null) => void;
   /** False until persisted mode/accent have been read from storage. */
   hydrated: boolean;
 };
@@ -62,6 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(DEFAULT_MODE);
   const [accent, setAccentState] = useState<AccentKey>(DEFAULT_ACCENT);
   const [hydrated, setHydrated] = useState(false);
+  const [schemeOverride, setSchemeOverride] = useState<ColorScheme | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -92,7 +95,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(ACCENT_STORAGE_KEY, next).catch(() => {});
   }, []);
 
-  const resolvedScheme: ColorScheme = mode === 'system' ? (systemScheme === 'light' ? 'light' : 'dark') : mode;
+  const resolvedScheme: ColorScheme = schemeOverride ?? (mode === 'system' ? (systemScheme === 'light' ? 'light' : 'dark') : mode);
 
   const theme = useMemo<Theme>(
     () => ({
@@ -109,6 +112,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       radius,
       motion,
       reducedMotion,
+      setSchemeOverride,
       hydrated,
     }),
     [mode, setMode, resolvedScheme, accent, setAccent, reducedMotion, hydrated],

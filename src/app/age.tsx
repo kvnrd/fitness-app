@@ -1,59 +1,52 @@
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStoreAgeSignal } from '../age/storeAgeSignal';
 import { screenAge } from '../auth/ageGate';
 import { useAgeGate } from '../auth/AgeGateProvider';
-import { DateParts, toIsoDate } from '../auth/onboarding';
-import { Button, Text } from '../components/ui';
-import { DobFields } from '../components/DobFields';
-import { useTheme } from '../theme/ThemeProvider';
-import { space } from '../theme/tokens';
+import { DateParts, toIsoDate } from '../onboarding/dob';
+import { useProceedAfterDob } from '../onboarding/flow';
+import { DobScreen } from '../onboarding/screens/Dob';
 
 /**
- * First screen for a signed-out device (Counsel C6 + Q3): date of birth BEFORE any email or account.
- * Neutral: no default date, no minimum age, no thresholds, no hint of which answer works.
+ * Account · Step 1 of 8: date of birth BEFORE any email or OAuth sheet (Counsel C6 + Q3). Neutral.
  * Nothing is stored on the server; on "not eligible" the device gets a flag with no personal data.
+ * The DOB is locked after submit: this route is left with `replace` and redirects away if an answer exists.
  */
-export default function AgeScreen() {
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const { setPending, setExistingAccount, markIneligible } = useAgeGate();
+export default function AgeRoute() {
+  const { getPending, setPending, markIneligible, method } = useAgeGate();
+  const proceed = useProceedAfterDob();
   const [dob, setDob] = useState<DateParts>({ year: '', month: '', day: '' });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const iso = toIsoDate(dob);
+
+  // Only decided on mount: submitting sets the pending answer and must not bounce this screen mid-navigation.
+  const [locked] = useState(() => !!getPending());
+  if (locked) return <Redirect href="/method" />;
 
   async function submit() {
     if (!iso || busy) return;
     setBusy(true);
     setMessage(null);
     const store = await getStoreAgeSignal();
-    const pending = { birthDateIso: iso, store };
-    const r = await screenAge(pending);
+    const r = await screenAge({ birthDateIso: iso, store });
+    if (r.kind === 'ineligible') {
+      await markIneligible(); // the root gate swaps to the not-eligible screen
+      return;
+    }
+    if (r.kind === 'retry') {
+      setBusy(false);
+      setMessage('Something went wrong. Please try again.');
+      return;
+    }
+    setPending({ birthDateIso: iso, store, band: r.band });
+    const err = await proceed(r.band, method ?? 'email', 'replace');
     setBusy(false);
-    if (r === 'eligible') setPending(pending); // the root gate moves on to sign-in
-    else if (r === 'ineligible') await markIneligible();
-    else setMessage('Something went wrong. Please try again.');
+    if (err !== null) {
+      // OAuth failed or was cancelled. The DOB stays locked, so go back to Method (which proceeds directly).
+      router.replace('/method');
+    }
   }
 
-  return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xl, paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.xl, gap: space.md }}
-      >
-        <Text variant="title">Date of birth</Text>
-        <Text color={colors.textMuted}>Enter your date of birth to get started.</Text>
-        <DobFields value={dob} onChange={setDob} />
-        {message ? (
-          <Text variant="small" color={colors.danger} accessibilityLiveRegion="polite">
-            {message}
-          </Text>
-        ) : null}
-        <Button label="Continue" disabled={busy || !iso} onPress={submit} />
-        <Button label="I already have an account" variant="secondary" disabled={busy} onPress={() => setExistingAccount(true)} />
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+  return <DobScreen value={dob} onChange={setDob} valid={!!iso} busy={busy} message={message} onContinue={submit} onBack={() => (router.canGoBack() ? router.back() : router.replace('/method'))} />;
 }
