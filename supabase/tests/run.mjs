@@ -13,6 +13,9 @@ const migDir = join(here, '..', 'migrations');
 const read = (p) => readFileSync(p, 'utf8');
 const migrations = readdirSync(migDir).filter((f) => f.endsWith('.sql')).sort().map((f) => [f, read(join(migDir, f))]);
 
+// Test files run in this order after the migrations, sharing one database and tests.results.
+const TEST_FILES = ['rls.sql', 'phase2b.sql'];
+
 const RESET = `
   drop schema if exists public cascade; drop schema if exists private cascade; drop schema if exists app cascade;
   drop schema if exists tests cascade; drop schema if exists auth cascade; drop schema if exists extensions cascade;
@@ -37,7 +40,7 @@ async function runPglite() {
   await db.exec(read(join(here, 'pgcrypto_stub.sql')));
   await db.exec(read(join(here, 'auth_stub.sql')));
   for (const [f, sql] of migrations) { console.log('migrate', f); await db.exec(sql); }
-  await db.exec(read(join(here, 'rls.sql')));
+  for (const f of TEST_FILES) { console.log('test', f); await db.exec(read(join(here, f))); }
   const { rows } = await db.query(RESULTS);
   return report(rows);
 }
@@ -58,7 +61,7 @@ function runPsql(url) {
   psql(url, [], RESET);
   psql(url, [], read(join(here, 'auth_stub.sql')));
   for (const [f, sql] of migrations) { console.log('migrate', f); psql(url, [], sql); }
-  psql(url, [], read(join(here, 'rls.sql')));
+  for (const f of TEST_FILES) { console.log('test', f); psql(url, [], read(join(here, f))); }
   const out = psql(url, ['-t', '-A', '-F', '\t'], `select n, passed, name, detail from tests.results order by n`);
   const rows = out.trim().split('\n').filter(Boolean).map((l) => {
     const [n, passed, name, detail] = l.split('\t');

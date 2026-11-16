@@ -71,19 +71,37 @@ end $$;
 -- =============================================================== fixtures (superuser)
 select tests.logout();
 insert into auth.users (id, email) select tests.u(i), 'user' || i || '@example.invalid' from generate_series(1, 10) i;
--- Test-only constants (NOT secrets). Real keys are inserted by the operator.
+-- Test-only constant (NOT a secret). The real pepper is inserted by the operator. Health keys no longer
+-- live in the database at all (Phase 2b: KMS envelope encryption).
 insert into private.encryption_keys (name, key) values
-  ('health_v1', 'test-only-health-key-not-a-secret-0001'),
   ('trainer_code_pepper', 'test-only-pepper-not-a-secret-00000001');
+select tests.raises('kms: a health key can no longer be stored in the database',
+  $q$insert into private.encryption_keys (name, key) values ('health_v1', 'test-only-health-key-not-a-secret-0001')$q$, '%encryption_keys_no_health_keys_chk%');
+
+-- Test-only stand-ins for ciphertext and a KMS-wrapped data key (opaque bytes; real crypto is tested in
+-- supabase/functions/tests). The database only ever sees bytes like these.
+create function tests.ct(p text) returns bytea language sql immutable as $$ select convert_to('CT:' || md5(p), 'UTF8') $$;
+create function tests.wk(n integer) returns bytea language sql immutable as $$ select convert_to('WRAPPED-DEK-' || lpad(n::text, 8, '0'), 'UTF8') $$;
+-- Server-function emulation: act as service_role on behalf of a verified caller.
+create function tests.svc_write(p_actor uuid, p_notes text, p_screen text) returns void language plpgsql as $$
+begin
+  perform tests.login(null, 'service_role');
+  if not exists (select 1 from public.health_prepare_write(p_actor)) then
+    perform public.health_register_key(p_actor, tests.wk(1), 'local-dev', 'local-dev:test');
+  end if;
+  perform public.health_write(p_actor, tests.ct(p_notes), tests.ct(p_screen), tests.ct('knee'));
+end $$;
 
 -- ---- 6. signup / age gate
 select tests.login(tests.u(9));
-select tests.raises('signup: under-13 rejected (COPPA)', format('select public.complete_signup(%L, %L)', tests.dob(12), 'x'), 'under_13%');
-select tests.raises('signup: age 13 rejected', format('select public.complete_signup(%L, %L)', tests.dob(13), 'x'), 'under_minimum_age');
-select tests.raises('signup: age 15 rejected', format('select public.complete_signup(%L, %L)', tests.dob(15), 'x'), 'under_minimum_age');
+select tests.eq('signup: under-13 rejected (COPPA)', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(12), 'x', 'eligible'), 'false');
+select tests.eq('signup: age 13 rejected', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(13), 'x', 'eligible'), 'false');
+select tests.eq('signup: age 15 rejected', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(15), 'x', 'eligible'), 'false');
 select tests.raises('signup: future birth date rejected', format('select public.complete_signup(%L, %L)', current_date + 1, 'x'), 'invalid_birth_date');
 select tests.logout();
 select tests.eq('signup: rejected user keeps no profile', 'select count(*)::text from public.profiles where id = tests.u(9)', '0');
+select tests.ok('signup: rejected auth user (email) deleted in the same request', not exists (select 1 from auth.users where id = tests.u(9)));
+insert into auth.users (id, email) values (tests.u(9), 'user9@example.invalid');
 
 select tests.login(tests.u(1)); select public.complete_signup(tests.dob(18), 'Alice');
 select tests.login(tests.u(2)); select public.complete_signup(tests.dob(25), 'Bob');
@@ -105,7 +123,7 @@ select tests.raises('signup: anon cannot call complete_signup', format('select p
 select tests.logout();
 -- is_minor is derived: a superuser attempt to flip it is recomputed by the trigger
 update public.profiles set is_minor = false where id = tests.u(5);
-select tests.eq('profiles: is_minor recomputed from birth_date', 'select is_minor::text from public.profiles where id = tests.u(5)', 'true');
+select tests.eq('profiles: is_minor recomputed from adult_on', 'select is_minor::text from public.profiles where id = tests.u(5)', 'true');
 
 -- ---- fixtures: plans, logs, relationships (inserted as superuser, bypassing RLS)
 insert into public.plans (id, owner_id, client_id, name) values
@@ -127,8 +145,9 @@ select tests.rows('A reads own profile', 'select id from public.profiles where i
 select tests.no_rows('A cannot read B profile', 'select id from public.profiles where id = tests.u(2)');
 select tests.blocked('A cannot update B profile', $q$update public.profiles set display_name = 'pwn' where id = tests.u(2)$q$);
 select tests.blocked('A cannot clear own is_minor', $q$update public.profiles set is_minor = false where id = tests.u(1)$q$);
-select tests.blocked('A cannot change own birth_date', $q$update public.profiles set birth_date = '1990-01-01' where id = tests.u(1)$q$);
-select tests.blocked('A cannot insert a profile for B', format($q$insert into public.profiles (id, birth_date, is_minor) values (%L, '1990-01-01', false)$q$, tests.u(2)));
+select tests.blocked('A cannot change own adult_on', $q$update public.profiles set adult_on = '1990-01-01' where id = tests.u(1)$q$);
+select tests.blocked('A cannot change own age_band', $q$update public.profiles set age_band = '18_plus' where id = tests.u(1)$q$);
+select tests.blocked('A cannot insert a profile for B', format($q$insert into public.profiles (id, age_band, age_source, age_verified_at, is_minor) values (%L, '18_plus', 'self_declared_dob', now(), false)$q$, tests.u(2)));
 select tests.affected('A can update own display_name', $q$update public.profiles set display_name = 'Alice A' where id = tests.u(1)$q$, 1);
 select tests.no_rows('A cannot read B set_logs', 'select * from public.set_logs where user_id = tests.u(2)');
 select tests.rows('A reads own set_logs', 'select * from public.set_logs where user_id = tests.u(1)', 1);
@@ -159,28 +178,43 @@ select tests.no_rows('B cannot read A consent_events', 'select * from public.con
 select tests.blocked('B cannot update A consents', $q$update public.consents set granted = false where user_id = tests.u(1)$q$);
 select tests.raises('B cannot revoke A consent via function', format($q$select public.revoke_consent('health_data', %L)$q$, tests.u(1)), 'forbidden');
 
--- ---- 8. encryption (alice has health_data consent)
+-- ---- 8. encryption (alice has health_data consent). Server function = service_role + p_actor.
+select tests.svc_write(tests.u(1), 'knee pain left, avoid deep squats', 'PAR-Q: none');
+select tests.eq('health: owner read returns own ciphertext', format('select (injury_notes_ct = tests.ct(%L))::text from public.health_read(%L)', 'knee pain left, avoid deep squats', tests.u(1)), 'true');
+select tests.eq('health: owner read returns the wrapped data key', format('select (wrapped_key = tests.wk(1) and key_provider = %L)::text from public.health_read(%L, %L)', 'local-dev', tests.u(1), tests.u(1)), 'true');
+select tests.eq('health: second write reuses the stored data key', format('select count(*)::text from public.health_register_key(%L, tests.wk(99), %L, %L) where wrapped_key = tests.wk(1)', tests.u(1), 'local-dev', 'x'), '1');
 select tests.login(tests.u(1));
-select public.write_health_record('knee pain left, avoid deep squats', 'PAR-Q: none');
-select tests.eq('health: owner decrypts own record', 'select injury_notes from public.read_health_record()', 'knee pain left, avoid deep squats');
-select tests.eq('health: owner decrypts screen', 'select health_screen from public.read_health_record(tests.u(1))', 'PAR-Q: none');
-select tests.no_rows('health: table not readable by owner (ciphertext only via functions)', 'select * from public.health_records');
+select tests.no_rows('health: table not readable by owner (ciphertext only via server)', 'select * from public.health_records');
+select tests.raises('health: client cannot call health_read directly', format('select * from public.health_read(%L)', tests.u(1)), 'permission denied%');
+select tests.raises('health: client cannot call health_write directly', format('select public.health_write(%L, null, null, null)', tests.u(1)), 'permission denied%');
+select tests.raises('health: client cannot call health_shred', format('select public.health_shred(%L)', tests.u(1)), 'permission denied%');
+select tests.no_rows('health: client cannot read wrapped data keys', 'select * from private.user_data_keys');
 select tests.login(tests.u(2));
-select tests.raises('health: B cannot read A via function', format('select * from public.read_health_record(%L)', tests.u(1)), 'forbidden');
 select tests.no_rows('health: B cannot read A ciphertext', 'select * from public.health_records');
-select tests.raises('health: B cannot write without consent', $q$select public.write_health_record('x', 'y')$q$, 'consent_required');
-select tests.no_rows('health: B own read without record returns nothing', 'select * from public.read_health_record()');
+select tests.login(tests.u(1), 'authenticated', 'service_role');
+select tests.raises('health: forged role claim cannot reach the service API', format('select * from public.health_read(%L)', tests.u(1)), 'permission denied%');
+select tests.login(null, 'service_role');
+select tests.raises('health: B (as actor) cannot read A', format('select * from public.health_read(%L, %L)', tests.u(2), tests.u(1)), 'forbidden');
+select tests.raises('health: B cannot write without consent', format('select * from public.health_prepare_write(%L)', tests.u(2)), 'consent_required');
+select tests.raises('health: B cannot register a key without consent', format($q$select * from public.health_register_key(%L, tests.wk(2), 'local-dev', 'x')$q$, tests.u(2)), 'consent_required');
+select tests.raises('health: write without a data key refused', format('select public.health_write(%L, null, null, null)', tests.u(2)), 'consent_required');
+select tests.raises('health: unknown actor refused', 'select * from public.health_read(null)', 'not_authenticated');
 select tests.logout();
-select tests.ok('health: ciphertext stored (non-empty bytea)', (select octet_length(injury_notes_cipher) > 0 and octet_length(health_screen_cipher) > 0 from public.health_records where user_id = tests.u(1)));
-select tests.ok('health: plaintext bytes absent from ciphertext', (select position(convert_to('knee', 'UTF8') in injury_notes_cipher) = 0 from public.health_records where user_id = tests.u(1)));
-select tests.ok('health: no plaintext columns exist', not exists (select 1 from information_schema.columns where table_name = 'health_records' and column_name in ('injury_notes','health_screen')));
+select tests.ok('health: ciphertext stored (non-empty bytea)', (select octet_length(injury_notes_ct) > 0 and octet_length(health_screen_ct) > 0 from public.health_records where user_id = tests.u(1)));
+select tests.ok('health: no plaintext columns exist', not exists (select 1 from information_schema.columns where table_name = 'health_records' and column_name in ('injury_notes','health_screen','injury_category')));
+select tests.ok('kms: no key material column in the database except wrapped keys', not exists (
+  select 1 from information_schema.columns where table_schema in ('public','private') and table_name <> 'encryption_keys'
+    and (column_name ilike '%plain%' or column_name in ('key','dek','data_key','master_key'))));
+select tests.ok('kms: no health keys in private.encryption_keys', not exists (select 1 from private.encryption_keys where name like 'health%'));
+select tests.ok('kms: legacy pgcrypto columns are gone', not exists (select 1 from information_schema.columns where table_name = 'health_records' and column_name in ('injury_notes_cipher','health_screen_cipher','key_name')));
 select tests.ok('audit: no health plaintext in audit_log', not exists (select 1 from public.audit_log where metadata::text ilike '%knee%'));
 
 -- ---- 3. coach with no relationship
 select tests.login(tests.u(3), 'authenticated', 'coach_verified');  -- JWT claim must not matter
 select tests.no_rows('no relationship: coach cannot read A set_logs', 'select * from public.set_logs where user_id = tests.u(1)');
 select tests.no_rows('no relationship: coach cannot read A profile', 'select * from public.profiles where id = tests.u(1)');
-select tests.raises('no relationship: coach cannot read A health', format('select * from public.read_health_record(%L)', tests.u(1)), 'forbidden');
+select tests.login(null, 'service_role');
+select tests.raises('no relationship: coach cannot read A health', format('select * from public.health_read(%L, %L)', tests.u(3), tests.u(1)), 'forbidden');
 select tests.logout();
 -- Roles are server-granted: set coach roles through the service path (also tests set_user_role).
 select tests.login(null, 'service_role');
@@ -212,20 +246,26 @@ select tests.raises('roles: client cannot create trainer codes', format($q$selec
 
 -- apply_for_coach + admin review
 select tests.login(tests.u(8));
-select public.apply_for_coach('NSCA-CPT', 'NSCA', current_date + 365);
+select tests.raises('coach apply: 18+ attestation required', $q$select public.apply_for_coach(false, 'coach-attest-v1')$q$, 'attestation_required');
+select public.apply_for_coach(true, 'coach-attest-v1', 'NSCA-CPT', 'NSCA', current_date + 365);
 select tests.eq('coach apply: role becomes coach_pending (definer only)', 'select role from public.user_roles where user_id = tests.u(8)', 'coach_pending');
 select tests.rows('coach apply: applicant reads own application', 'select * from public.coach_applications', 1);
-select tests.raises('coach apply: pending cannot re-apply', 'select public.apply_for_coach()', 'forbidden');
+select tests.raises('coach apply: pending cannot re-apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
 select tests.no_rows('coach apply: studio gate unmet while pending', 'select 1 where app.is_verified_coach()');
 select tests.login(tests.u(2));
 select tests.no_rows('coach apply: B cannot read D application', 'select * from public.coach_applications');
 select tests.login(tests.u(5));
-select tests.raises('coach apply: minors cannot apply', 'select public.apply_for_coach()', 'forbidden');
+select tests.raises('coach apply: minors cannot apply', $q$select public.apply_for_coach(true, 'coach-attest-v1')$q$, 'forbidden');
 select tests.login(tests.u(8));
 select tests.raises('coach apply: applicant cannot self-approve', format($q$select public.review_coach_application((select id from public.coach_applications where applicant_id = %L), true)$q$, tests.u(8)), 'forbidden');
 select tests.logout();
 create table tests.ids as select id from public.coach_applications where applicant_id = tests.u(8);
 grant select on tests.ids to public;
+select tests.login(tests.u(7));
+select tests.raises('coach 18+: approval refused before the identity check passes', 'select public.review_coach_application((select id from tests.ids), true)', 'identity_check_required');
+select tests.raises('coach 18+: admin cannot set identity result (service only)', $q$select public.set_coach_identity_check((select id from tests.ids), 'passed', 'vs_test')$q$, 'permission denied%');
+select tests.login(null, 'service_role');
+select public.set_coach_identity_check((select id from tests.ids), 'passed', 'vs_test_only_not_real');
 select tests.login(tests.u(7));
 select public.review_coach_application((select id from tests.ids), true);
 select tests.logout();
@@ -237,7 +277,9 @@ values ('40000000-0000-0000-0000-000000000001', tests.u(3), tests.u(1), 'active'
 select tests.login(tests.u(3));
 select tests.no_rows('active, no coach_sharing: coach cannot read A set_logs', 'select * from public.set_logs where user_id = tests.u(1)');
 select tests.no_rows('active, no coach_sharing: coach cannot read A profile', 'select * from public.profiles where id = tests.u(1)');
-select tests.raises('active, no coach_sharing: coach cannot read A health', format('select * from public.read_health_record(%L)', tests.u(1)), 'forbidden');
+select tests.login(null, 'service_role');
+select tests.raises('active, no coach_sharing: coach cannot read A health', format('select * from public.health_read(%L, %L)', tests.u(3), tests.u(1)), 'forbidden');
+select tests.login(tests.u(3));
 select tests.rows('coach reads own relationship rows', 'select * from public.coach_relationships', 1);
 select tests.login(tests.u(4));
 select tests.no_rows('other coach cannot see relationship', 'select * from public.coach_relationships');
@@ -248,9 +290,13 @@ select public.record_consent('coach_sharing', 'v1');
 select tests.login(tests.u(3));
 select tests.rows('consented: coach reads A set_logs', 'select * from public.set_logs where user_id = tests.u(1)', 2);
 select tests.rows('consented: coach reads A profile', 'select id from public.profiles where id = tests.u(1)', 1);
-select tests.eq('consented: coach reads A health', 'select injury_notes from public.read_health_record(tests.u(1))', 'knee pain left, avoid deep squats');
+select tests.login(null, 'service_role');
+select tests.eq('consented: coach reads A health', format('select (injury_notes_ct = tests.ct(%L))::text from public.health_read(%L, %L)', 'knee pain left, avoid deep squats', tests.u(3), tests.u(1)), 'true');
+select tests.logout();
+select tests.ok('consented: coach health read is audited', exists (select 1 from public.audit_log where action = 'health_read_by_coach' and actor_id = tests.u(3) and target_user_id = tests.u(1)));
+select tests.login(tests.u(3));
 select tests.no_rows('consented: coach still cannot read B logs', 'select * from public.set_logs where user_id = tests.u(2)');
-select tests.no_rows('consented: coach cannot read A birth_date', 'select birth_date from public.profiles where id = tests.u(1)');
+select tests.no_rows('consented: coach cannot read A adult_on', 'select adult_on from public.profiles where id = tests.u(1)');
 select tests.blocked('consented: coach cannot modify A logs', $q$update public.set_logs set weight = 999 where user_id = tests.u(1)$q$);
 select tests.blocked('consented: coach cannot delete A logs', $q$delete from public.set_logs where user_id = tests.u(1)$q$);
 select tests.no_rows('consented: coach cannot read A consents', 'select * from public.consents where user_id = tests.u(1)');
@@ -261,7 +307,8 @@ select public.revoke_consent('coach_sharing');
 select tests.eq('consent: revoke is timestamped', $q$select (not granted and revoked_at is not null)::text from public.consents where user_id = tests.u(1) and kind = 'coach_sharing'$q$, 'true');
 select tests.login(tests.u(3));
 select tests.no_rows('revoked consent: coach loses set_logs at once', 'select * from public.set_logs where user_id = tests.u(1)');
-select tests.raises('revoked consent: coach loses health at once', format('select * from public.read_health_record(%L)', tests.u(1)), 'forbidden');
+select tests.login(null, 'service_role');
+select tests.raises('revoked consent: coach loses health at once', format('select * from public.health_read(%L, %L)', tests.u(3), tests.u(1)), 'forbidden');
 select tests.login(tests.u(1));
 select public.record_consent('coach_sharing', 'v2');
 select tests.login(tests.u(3));
@@ -274,15 +321,18 @@ select public.end_coach_relationship('40000000-0000-0000-0000-000000000001');
 select tests.login(tests.u(3));
 select tests.no_rows('ended: coach cannot read A set_logs', 'select * from public.set_logs where user_id = tests.u(1)');
 select tests.no_rows('ended: coach cannot read A profile', 'select * from public.profiles where id = tests.u(1)');
-select tests.raises('ended: coach cannot read A health', format('select * from public.read_health_record(%L)', tests.u(1)), 'forbidden');
+select tests.login(null, 'service_role');
+select tests.raises('ended: coach cannot read A health', format('select * from public.health_read(%L, %L)', tests.u(3), tests.u(1)), 'forbidden');
+select tests.login(tests.u(3));
 select tests.blocked('ended: coach cannot edit assigned plan', $q$update public.plans set name = 'still mine?' where id = '10000000-0000-0000-0000-000000000001'$q$);
 select tests.blocked('ended: coach cannot add day to assigned plan', $q$insert into public.plan_days (plan_id, day_key, title) values ('10000000-0000-0000-0000-000000000001', 'tue', 'x')$q$);
 select tests.login(tests.u(1));
 select tests.rows('ended: client keeps own copy of plan', $q$select * from public.plans where id = '10000000-0000-0000-0000-000000000001'$q$, 1);
 -- consent revoke of health_data blocks the owner too
 select public.revoke_consent('health_data');
-select tests.raises('health: owner blocked after health_data revoked', 'select * from public.read_health_record()', 'consent_required');
-select tests.raises('health: write blocked after health_data revoked', $q$select public.write_health_record('a', 'b')$q$, 'consent_required');
+select tests.login(null, 'service_role');
+select tests.raises('health: owner blocked after health_data revoked', format('select * from public.health_read(%L)', tests.u(1)), 'consent_required');
+select tests.raises('health: write blocked after health_data revoked', format('select * from public.health_prepare_write(%L)', tests.u(1)), 'consent_required');
 
 -- ---- 7. consent timestamps/history
 select tests.login(tests.u(8));
@@ -298,14 +348,16 @@ select tests.blocked('consent_events: user cannot delete history', $q$delete fro
 
 -- ---- 9. parent link / minors
 select tests.login(tests.u(5));
-select public.record_consent('health_data', 'v1');
-select tests.raises('minor: health write blocked until parent linked', $q$select public.write_health_record('shoulder', 'none')$q$, 'consent_required');
+select tests.raises('minor: own consent locked before a parent is linked', $q$select public.record_consent('health_data', 'v1')$q$, 'parent_consent_required');
+select tests.login(null, 'service_role');
+select tests.raises('minor: health write blocked until parent linked', format('select * from public.health_prepare_write(%L)', tests.u(5)), 'consent_required');
+select tests.login(tests.u(5));
 select tests.raises('minor: cannot link a minor as parent', format('select public.link_parent(%L, %L)', tests.u(5), tests.u(5)), 'invalid_parent');
 select tests.raises('minor: cannot request link as someone else', format('select public.link_parent(%L, %L)', tests.u(1), tests.u(6)), 'forbidden');
 select public.link_parent(tests.u(5), tests.u(6));
 select tests.raises('minor: duplicate pending link rejected', format('select public.link_parent(%L, %L)', tests.u(5), tests.u(6)), 'invalid_parent');
 select tests.eq('parent link: created pending + contracting party', 'select (status = $$pending$$ and is_contracting_party)::text from public.parent_links', 'true');
-select tests.raises('minor: pending link does not onboard', $q$select public.write_health_record('shoulder', 'none')$q$, 'consent_required');
+select tests.eq('minor: pending link does not onboard', 'select app.is_minor_onboarded(tests.u(5))::text', 'false');
 select tests.logout();
 create table tests.link_ids as select id from public.parent_links;
 grant select on tests.link_ids to public;
@@ -322,23 +374,34 @@ select public.accept_parent_link((select id from public.parent_links limit 1));
 select tests.logout();
 select tests.ok('parent link: active + contracting party', (select status = 'active' and is_contracting_party and accepted_at is not null from public.parent_links));
 select tests.ok('parent link: minor is now onboarded', app.is_minor_onboarded(tests.u(5)));
+select tests.login(tests.u(5));
+select tests.raises('minor: own consent still locked after link until parent grants', $q$select public.record_consent('health_data', 'v1')$q$, 'parent_consent_required');
 select tests.login(tests.u(6));
 select public.record_consent('parental', 'v1', tests.u(5));
-select tests.rows('parental consent: parent can read minor consents', 'select * from public.consents where user_id = tests.u(5)', 2);
+select public.record_consent('health_data', 'v1', tests.u(5));
+select tests.eq('dual consent: parent grant alone is not effective', $q$select app.has_consent(tests.u(5), 'health_data')::text$q$, 'false');
+select tests.login(tests.u(5));
+select public.record_consent('health_data', 'v1');
+select tests.eq('dual consent: teen + parent = effective', $q$select app.has_consent(tests.u(5), 'health_data')::text$q$, 'true');
+select tests.login(tests.u(6));
+select tests.rows('parental consent: parent can read minor consents', 'select * from public.consents where user_id = tests.u(5)', 3);
 select tests.login(tests.u(5));
 select tests.raises('parental consent: minor cannot self-grant', $q$select public.record_consent('parental', 'v1')$q$, 'forbidden');
 select tests.raises('parent link: minor cannot revoke own guardian', $q$select public.revoke_parent_link((select id from public.parent_links))$q$, 'forbidden');
-select public.write_health_record('shoulder impingement', 'none');
-select tests.eq('minor: owner reads own health once onboarded', 'select injury_notes from public.read_health_record()', 'shoulder impingement');
+select tests.svc_write(tests.u(5), 'shoulder impingement', 'none');
+select tests.eq('minor: owner reads own health once onboarded', format('select (injury_notes_ct = tests.ct(%L))::text from public.health_read(%L)', 'shoulder impingement', tests.u(5)), 'true');
 -- coach hidden from minors' health by default, even with relationship + consent
 select tests.logout();
 insert into public.coach_relationships (coach_id, client_id, status, started_at) values (tests.u(3), tests.u(5), 'active', now());
+select tests.login(tests.u(6));
+select public.record_consent('coach_sharing', 'v1', tests.u(5));
 select tests.login(tests.u(5));
 select public.record_consent('coach_sharing', 'v1');
 select tests.login(tests.u(3));
 select tests.rows('minor: coach can see minor profile when consented + parent linked', 'select id from public.profiles where id = tests.u(5)', 1);
-select tests.no_rows('minor: coach gets NO health data for minor client', 'select * from public.read_health_record(tests.u(5))');
-select tests.no_rows('minor: coach cannot read minor birth_date', 'select birth_date from public.profiles where id = tests.u(5)');
+select tests.no_rows('minor: coach cannot read minor adult_on', 'select adult_on from public.profiles where id = tests.u(5)');
+select tests.login(null, 'service_role');
+select tests.no_rows('minor: coach gets NO health data for minor client', format('select * from public.health_read(%L, %L)', tests.u(3), tests.u(5)));
 -- parent removes link -> minor not onboarded -> coach access stops
 select tests.login(tests.u(6));
 select public.revoke_parent_link((select id from public.parent_links limit 1));
@@ -357,7 +420,7 @@ select tests.no_rows('anon: audit_log', 'select * from public.audit_log');
 select tests.no_rows('anon: parent_links', 'select * from public.parent_links');
 select tests.raises('anon: cannot record consent', $q$select public.record_consent('health_data', 'v1')$q$, 'permission denied%');
 select tests.raises('anon: cannot redeem codes', $q$select public.redeem_trainer_code('ABCDEFGH')$q$, 'permission denied%');
-select tests.raises('anon: cannot read health', 'select * from public.read_health_record()', 'permission denied%');
+select tests.raises('anon: cannot read health', format('select * from public.health_read(%L)', tests.u(1)), 'permission denied%');
 
 -- ---- private schema / default privileges
 select tests.login(tests.u(1));
