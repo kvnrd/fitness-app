@@ -64,7 +64,7 @@ function deps(ctx: AiContextRow, providers: Record<string, unknown>, client: Ant
     anthropic: client,
     model: 'claude-test-model',
     newRequestId: () => `00000000-0000-4000-8000-00000000000${++n}`,
-    onFiltered: (c: string) => filtered.push(c),
+    onFiltered: (c: string) => { filtered.push(c); },
   };
 }
 
@@ -126,6 +126,8 @@ test('minors: weight-loss goal refused and minor rules added to the system promp
   assert.equal(sent.length, 0);
   await handleAiPlan(deps(ctx, providers, client), ALICE, VALID);
   assert.match(sent[0].system, /16 or 17 years old/);
+  assert.match(sent[0].system, /No bulking, body-size or weight targets/);
+  assert.match(sent[0].system, /no supplement suggestions/);
   assert.equal(facts(sent[0]).age_range, '16-17');
 });
 
@@ -168,7 +170,29 @@ test('consent / rate-limit refusals from the database stop the call before Anthr
   assert.deepEqual(await handleAiPlan(d, ALICE, VALID), { status: 403, body: { error: 'consent_required' } });
   const d2 = { ...d, db: { aiContext: async () => { throw new Error('rate_limited'); } } };
   assert.equal((await handleAiPlan(d2, ALICE, VALID)).status, 429);
+  const d3 = { ...d, db: { aiContext: async () => { throw new Error('health_screen_required'); } } };
+  assert.deepEqual(await handleAiPlan(d3, ALICE, VALID), { status: 403, body: { error: 'health_screen_required' } });
+  const d4 = { ...d, db: { aiContext: async () => { throw new Error('clearance_required'); } } };
+  assert.deepEqual(await handleAiPlan(d4, ALICE, VALID), { status: 403, body: { error: 'clearance_required' } });
   assert.equal(sent.length, 0);
+});
+
+test('output: a minor-restricted plan is withheld and only the reason code is logged', async () => {
+  const { ctx, providers } = await ctxFor({ band: '16_17' });
+  const filtered: string[] = [];
+  const bad = goodPlanJson().replace('Smooth tempo', 'Run a dirty bulk and take creatine');
+  const r = await handleAiPlan(deps(ctx, providers, mockAnthropic(bad).client, filtered), ALICE, VALID);
+  assert.deepEqual(r, { status: 422, body: { error: 'plan_unavailable' } });
+  assert.deepEqual(filtered, ['minor_restricted']);
+  assert.ok(!JSON.stringify(r.body).includes('creatine') && !JSON.stringify(r.body).includes('bulk'));
+});
+
+test('output: refusals and unparseable plans log only an allowlisted reason code', async () => {
+  const { ctx, providers } = await ctxFor();
+  const filtered: string[] = [];
+  assert.equal((await handleAiPlan(deps(ctx, providers, mockAnthropic(goodPlanJson(), 'refusal').client, filtered), ALICE, VALID)).status, 422);
+  assert.equal((await handleAiPlan(deps(ctx, providers, mockAnthropic('not json').client, filtered), ALICE, VALID)).status, 422);
+  assert.deepEqual(filtered, ['refusal', 'unparseable']);
 });
 
 // ---------------------------------------------------------------- Anthropic client

@@ -26,8 +26,8 @@ export interface AiDeps {
   model: string;
   /** Random per-request id. Never derived from, logged with, or stored against the user id. */
   newRequestId: () => string;
-  /** Category-only event log (no prompt, no output, no user id). */
-  onFiltered?: (category: string) => void;
+  /** Category-only event log (no prompt, no output, no rejected draft, no user id in the payload). */
+  onFiltered?: (category: string) => void | Promise<void>;
 }
 
 async function injuryCategory(deps: AiDeps, actor: string, ctx: AiContextRow): Promise<InjuryCategory> {
@@ -71,17 +71,23 @@ export async function handleAiPlan(deps: AiDeps, actor: string, input: unknown):
   let text: string;
   try {
     const r = await deps.anthropic.createMessage(request);
-    if (r.stopReason === 'refusal') return fail(422, 'plan_unavailable');
+    if (r.stopReason === 'refusal') {
+      await deps.onFiltered?.('refusal');
+      return fail(422, 'plan_unavailable');
+    }
     text = r.text;
   } catch {
     return fail(502, 'plan_unavailable');
   }
 
   const plan = parsePlan(text, req.daysPerWeek);
-  if (!plan) return fail(422, 'plan_unavailable');
+  if (!plan) {
+    await deps.onFiltered?.('unparseable');
+    return fail(422, 'plan_unavailable');
+  }
   const verdict = filterPlan(plan, { minor });
   if (!verdict.ok) {
-    deps.onFiltered?.(verdict.category);
+    await deps.onFiltered?.(verdict.category);
     return fail(422, 'plan_unavailable');
   }
   // Nothing is sent back to Anthropic (no thumbs up/down feedback, ever).

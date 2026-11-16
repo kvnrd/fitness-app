@@ -4,7 +4,7 @@
 // the whole plan (we never try to "clean" a flagged plan). Only the category is reported, never text.
 import { planStrings, type Plan } from './plan.ts';
 
-export type FilterCategory = 'eating_disorder' | 'body_shaming' | 'medical_treatment' | 'minor_weight_loss';
+export type FilterCategory = 'eating_disorder' | 'body_shaming' | 'medical_treatment' | 'minor_weight_loss' | 'minor_restricted';
 export type FilterResult = { ok: true } | { ok: false; category: FilterCategory };
 
 const RULES: { category: FilterCategory; minorOnly?: boolean; re: RegExp }[] = [
@@ -24,6 +24,12 @@ const RULES: { category: FilterCategory; minorOnly?: boolean; re: RegExp }[] = [
     category: 'minor_weight_loss',
     minorOnly: true,
     re: /\b(calories?|kcal|weight[- ]?loss|lose (weight|fat|pounds|lbs|kilos?)|fat[- ]?(loss|burn\w*)|cutting|deficit|bmi|weigh (yourself|in)|slim(ming)? down|tone up|shred\w*|lean(er)? out)\b/i,
+  },
+  {
+    // Counsel phase4-review #4: 16-17 also get no bulking, size/weight targets, calorie surplus, or supplements.
+    category: 'minor_restricted',
+    minorOnly: true,
+    re: /\b(bulk(ing)?|dirty bulk|lean bulk|calorie surplus|in a surplus|mass[- ]?gain|gain mass|put on size|body[- ]?size|size target|weight target|hypertrophy for size|supplements?|creatine|protein powder|pre-?workout|whey protein|steroids?|sarms?|prohormones?)\b/i,
   },
 ];
 

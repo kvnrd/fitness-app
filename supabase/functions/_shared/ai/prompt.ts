@@ -41,6 +41,7 @@ Rules:
 
 const MINOR_RULES = `The user is 16 or 17 years old. Additional rules:
 - No weight-loss, fat-loss, cutting or calorie content of any kind.
+- No bulking, body-size or weight targets, no calorie-surplus advice, and no supplement suggestions. "Build muscle" means strength and performance, not size or mass.
 - Conservative loads, technique first, no maximal (1-rep max) testing.`;
 
 export function buildPlanRequest(input: PromptInput, model: string): MessagesRequest {

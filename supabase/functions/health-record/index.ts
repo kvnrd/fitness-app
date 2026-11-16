@@ -1,8 +1,11 @@
 // POST /functions/v1/health-record
 //   {"action":"write","injury_notes"?:string|null,"health_screen"?:string|null,"injury_category"?:string|null,
-//    "weight_goal"?:string|null}   weight_goal = JSON string {current,target,unit,pace} (adults only).
+//    "weight_goal"?:string|null,"body_weight"?:string|null,"user_id"?:uuid}
+//    weight_goal = JSON {current,target,unit,pace} (adults only).
+//    body_weight = JSON {current,unit} (current only; 16-17 allowed with health opt-in).
+//    user_id = a linked minor when a parent writes for them; default = self.
 //   Partial update: an omitted field keeps its stored value; an explicit null clears it.
-//   {"action":"read","user_id"?:uuid}   (user_id = a client, for a coach; default = self)
+//   {"action":"read","user_id"?:uuid}   (user_id = a client or linked minor; default = self)
 // The only place health plaintext exists: in this function's memory, encrypted/decrypted with a
 // per-user data key that KMS unwraps. Logs nothing about the request content.
 import { handleHealthRead, handleHealthWrite } from '../_shared/health/handler.ts';

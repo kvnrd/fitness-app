@@ -21,7 +21,7 @@ test('health: write then read round trip; the database only ever holds ciphertex
   }
   assert.equal(db.keys.get(ALICE)!.key_provider, 'local-dev');
   const r = await handleHealthRead(deps, ALICE, undefined);
-  assert.deepEqual(r.body, { record: { injury_notes: 'left knee hurts on stairs', health_screen: 'PAR-Q: no', injury_category: 'knee', weight_goal: null } });
+  assert.deepEqual(r.body, { record: { injury_notes: 'left knee hurts on stairs', health_screen: 'PAR-Q: no', injury_category: 'knee', weight_goal: null, body_weight: null } });
 });
 
 test('health: second write reuses the same data key (one key per user)', async () => {
@@ -106,10 +106,10 @@ test('health: omitted fields keep their stored value; explicit null clears', asy
   await handleHealthWrite(deps, ALICE, { injury_notes: 'n1', injury_category: 'knee', weight_goal: WG() });
   await handleHealthWrite(deps, ALICE, { health_screen: 's1' });
   let rec = (await handleHealthRead(deps, ALICE, undefined)).body.record as Record<string, unknown>;
-  assert.deepEqual([rec.injury_notes, rec.injury_category, rec.health_screen, rec.weight_goal], ['n1', 'knee', 's1', WG()]);
+  assert.deepEqual([rec.injury_notes, rec.injury_category, rec.health_screen, rec.weight_goal, rec.body_weight], ['n1', 'knee', 's1', WG(), null]);
   await handleHealthWrite(deps, ALICE, { weight_goal: null, injury_notes: null });
   rec = (await handleHealthRead(deps, ALICE, undefined)).body.record as Record<string, unknown>;
-  assert.deepEqual([rec.injury_notes, rec.injury_category, rec.health_screen, rec.weight_goal], [null, 'knee', 's1', null]);
+  assert.deepEqual([rec.injury_notes, rec.injury_category, rec.health_screen, rec.weight_goal, rec.body_weight], [null, 'knee', 's1', null, null]);
 });
 
 test('health: weight_goal refused for a 16-17 account with the generic error; clearing is fine', async () => {
@@ -124,5 +124,55 @@ test('health: weight_goal ciphertext is bound to its field (AAD)', async () => {
   await handleHealthWrite(deps, ALICE, { weight_goal: WG(), injury_notes: 'x' });
   const r = db.rows.get(ALICE)!;
   r.n = r.w; // move the weight ciphertext into the notes column
+  assert.equal((await handleHealthRead(deps, ALICE, undefined)).status, 500);
+});
+
+const BW = (o: Record<string, unknown> = {}) => JSON.stringify({ current: 140, unit: 'lb', ...o });
+
+test('health: body_weight round trip is current-only, encrypted, and own-record only', async () => {
+  const { db, deps } = setup();
+  const w = await handleHealthWrite(deps, ALICE, { body_weight: BW() });
+  assert.deepEqual(w, { status: 200, body: { saved: true } });
+  assert.ok(!containsBytes(db.rows.get(ALICE)!.bw!, utf8('140')));
+  const r = await handleHealthRead(deps, ALICE, undefined);
+  assert.equal((r.body.record as { body_weight: string }).body_weight, BW());
+  db.coachOf.set(BOB, ALICE);
+  const c = (await handleHealthRead(deps, BOB, ALICE)).body.record as Record<string, unknown>;
+  assert.ok(!('body_weight' in c) && !('weight_goal' in c));
+  assert.equal(c.health_screen, null);
+});
+
+test('health: body_weight validation is strict (no target or pace)', async () => {
+  const { deps } = setup();
+  const bad: unknown[] = [
+    BW({ current: 39 }), BW({ current: 1501 }), BW({ unit: 'st' }), BW({ target: 130 }), BW({ extra: 1 }),
+    BW({ current: '140' }), '{not json', '[]', 'null', 140, { current: 140, unit: 'lb' },
+    JSON.stringify({ current: 140, unit: 'lb', target: 130 }),
+  ];
+  for (const b of bad) assert.equal((await handleHealthWrite(deps, ALICE, { body_weight: b })).status, 400, String(b));
+  assert.equal((await handleHealthWrite(deps, ALICE, { body_weight: JSON.stringify({ current: 40, unit: 'kg' }) })).status, 200);
+});
+
+test('health: a parent can write and the ciphertext is bound to the teen, not the parent', async () => {
+  const { db, deps } = setup();
+  db.parentOf.set(BOB, ALICE);
+  db.allowed.add(ALICE);
+  const w = await handleHealthWrite(deps, BOB, { user_id: ALICE, health_screen: 'parent+teen answers' });
+  assert.equal(w.status, 200);
+  assert.ok(db.keys.has(ALICE) && !db.keys.has(BOB));
+  const r = (await handleHealthRead(deps, ALICE, ALICE)).body.record as { health_screen: string };
+  assert.equal(r.health_screen, 'parent+teen answers');
+});
+
+test('health: an unrelated adult cannot write for someone else', async () => {
+  const { deps } = setup();
+  assert.deepEqual(await handleHealthWrite(deps, BOB, { user_id: ALICE, injury_notes: 'x' }), { status: 403, body: { error: 'consent_required' } });
+});
+
+test('health: body_weight ciphertext is bound to its field (AAD)', async () => {
+  const { db, deps } = setup();
+  await handleHealthWrite(deps, ALICE, { body_weight: BW(), injury_notes: 'x' });
+  const r = db.rows.get(ALICE)!;
+  r.n = r.bw;
   assert.equal((await handleHealthRead(deps, ALICE, undefined)).status, 500);
 });

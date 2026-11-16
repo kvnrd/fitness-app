@@ -22,18 +22,19 @@ const bytesOrNull = (b: Uint8Array | null) => (b === null ? null : toPgBytea(b))
 
 export function healthDb(rpc: Rpc): HealthDb {
   return {
-    async prepareWrite(actor) {
-      const rows = await call(rpc, 'health_prepare_write', { p_actor: actor });
+    async prepareWrite(actor, target) {
+      const rows = await call(rpc, 'health_prepare_write', { p_actor: actor, p_target: target ?? null });
       return rows.length ? keyRow(rows[0]) : null;
     },
-    async registerKey(actor, row) {
+    async registerKey(actor, row, target) {
       const rows = await call(rpc, 'health_register_key', {
         p_actor: actor, p_wrapped_key: toPgBytea(row.wrapped_key), p_key_provider: row.key_provider, p_kms_key_ref: row.kms_key_ref,
+        p_target: target ?? null,
       });
       if (!rows.length) throw new Error('register_failed');
       return keyRow(rows[0]);
     },
-    async write(actor, fields: HealthCipherWrite) {
+    async write(actor, fields: HealthCipherWrite, target) {
       const set = Object.keys(fields);   // only these fields are written; the rest keep their stored value
       await call(rpc, 'health_write', {
         p_actor: actor,
@@ -42,6 +43,8 @@ export function healthDb(rpc: Rpc): HealthDb {
         p_injury_category_ct: bytesOrNull(fields.injury_category ?? null),
         p_weight_goal_ct: bytesOrNull(fields.weight_goal ?? null),
         p_set: set,
+        p_body_weight_ct: bytesOrNull(fields.body_weight ?? null),
+        p_target: target ?? null,
       });
     },
     async read(actor, target): Promise<HealthCipherRow | null> {
@@ -54,6 +57,7 @@ export function healthDb(rpc: Rpc): HealthDb {
         health_screen_ct: fromPgBytea(r.health_screen_ct as string | null),
         injury_category_ct: fromPgBytea(r.injury_category_ct as string | null),
         weight_goal_ct: fromPgBytea(r.weight_goal_ct as string | null),
+        body_weight_ct: fromPgBytea(r.body_weight_ct as string | null),
       };
     },
   };

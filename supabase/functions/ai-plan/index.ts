@@ -26,7 +26,14 @@ Deno.serve(async (req) => {
       anthropic,
       model,
       newRequestId: () => crypto.randomUUID(),
-      onFiltered: (category) => console.warn(JSON.stringify({ event: 'ai_plan_filtered', category })),
+      onFiltered: async (category) => {
+        // Reason code only — never the draft, the prompt, or the model output.
+        try {
+          await serviceRpc()('log_ai_plan_filtered', { p_actor: actor, p_reason_code: category });
+        } catch {
+          /* the caller still gets plan_unavailable */
+        }
+      },
     },
     actor,
     await readJson(req),
