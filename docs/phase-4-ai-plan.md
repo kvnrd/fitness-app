@@ -64,35 +64,44 @@ Migration `20261117000100_phase4_health_screen_ai_gates.sql`:
 
 - `src/ai/healthScreen.ts`, `quiz.ts`, `flow.ts`, `api.ts`, `notice.ts`, `planDraft.ts`, `useAiPlan.ts`
 - Screens in `src/ai/screens/`, routes under `src/app/ai/`
-- Preview registry ids: `parq`, `parq-yes`, `parq-clearance`, `parq-parent`, `parq-parent-clearance`, `health-switch`, `health-switch-teen`, `quiz`, `quiz-teen`, `generating`, `preview`, `blocked`, `home-ai`, `home-ai-teen`, `train-ai`, `profile-teen`, `terms`, `terms-reaccept`, `terms-reaccept-ready`, `settings-privacy`, `settings-privacy-reask`, `settings-notifications`, `health-reask`
-- Settings › Privacy (`/settings/privacy`) and Notifications (`/settings/notifications`) are reachable from Profile. The 12-month health-consent re-ask is `/settings/health-reask` (also from a card on Privacy when `health_reask_due`). The consent is not auto-expired and the app is not hard-locked.
+- Preview registry ids include the Phase 4 flow plus legal/settings states (including `profile`, `terms-reaccept-waiting`, `health-reask-teen`, `health-reask-waiting`, `home-ai-paused`, `home-ai-paused-teen`, `train-ai-paused`, `settings-notifications-teen`).
+- Settings › Privacy (`/settings/privacy`) and Notifications (`/settings/notifications`) are reachable from Profile. The 12-month health-consent re-ask is `/settings/health-reask` (also from a card on Privacy when `health_reask_due`). `health_reask_self_due` / `health_reask_parent_due` are split; when only the parent is due the teen sees a waiting line. The consent is not auto-expired and this clock never locks or pauses the app.
 
 ## Deviations and follow-ups
 
 - The compact plan-notice footer is baked into the preview tab chrome (and the bottom of each live tab's scroll). It is not a custom system tab bar, because `@react-navigation/bottom-tabs` is not a direct app dependency.
 - When two quiz goals are picked, only the first is sent to `ai-plan` (the request schema is one enum). The second is kept for the preview title.
 - Quiz equipment chips map onto the existing equipment enums (`full_gym` expands to several; `bodyweight` is `none` unless another chip is also on).
-- "Turn on Health data" reuses `submit_privacy_safety` (health + AI on, current hashed texts) rather than a new single-kind grant. A teen still needs the parent's matching grant (`parent_consent_required`).
+- "Review Health data" on the health-switch screen opens in-app Privacy & safety and does not flip Health data or AI. Each switch is turned on there, with the full texts visible.
 - Privacy & safety is now also reachable after the user is in the app, so a later AI-consent or 12-month health re-ask can open it.
 - **Terms of Service** are bundled as `v0.1-draft` (`src/legal/policies/terms-of-service.md`, SHA-256 of the published body). Signup records that version + hash. Acceptances are pre-production: a production build (`EXPO_PUBLIC_ENV=production`) will not count a draft acceptance, and anyone whose latest Terms row is a placeholder, a different hash, or a draft once a non-draft ships is sent to the re-accept screen (`legal/reaccept`). Non-production builds show a visible draft marker. Placeholders such as `[Company]` remain until Kevin/Counsel fill them.
 - `accept_parent_invite` / `accept_parent_link` now require `p_terms_hash` (64 lowercase hex). The parent's Terms and Privacy `consent_events` rows store `text_hash` (Terms) / `policy_doc_hash` (Privacy) and `subject_user_id` = the teen's account (parent and minor ids on the same record).
-- `consent_events` also records `ip_hash`, `device_hash`, and `app_version` on insert. IP uses the same header preference as trainer-code rate limits (`cf-connecting-ip`, then `x-real-ip`, then the last `x-forwarded-for` hop, never the first). Only a peppered hash of the IP and device id is stored, not the raw values. The client sends `x-app-version` and `x-device-id`. If the pepper is missing, hashes are left null rather than failing the write.
+- `consent_events` also records `ip_hash`, `device_hash`, `app_version`, and `meta_pepper_version` on insert. IP uses the same header preference as trainer-code rate limits (`cf-connecting-ip`, then `x-real-ip`, then the last `x-forwarded-for` hop, never the first). Hashes use a dedicated `consent_meta_pepper` (edge secret or KMS HMAC via `SET LOCAL app.consent_meta_pepper`, helper in `supabase/functions/_shared/consentMeta.ts`). This is not `private.encryption_keys` and not the trainer-code pepper. A labeled DB pepper (`private.consent_meta_dev_pepper`) is a dev fallback only. If the pepper is missing, hashes are left null and a `consent_meta_pepper_missing` audit event is logged with the user id only — never an IP. Raw IPs are never written to tables, logs, or analytics. Hashes have the same retention as consent records (account life + 4 years; minors at least until the 22nd birthday) and must not be described as de-identified.
+- `legal_text_versions` is an append-only archive of the exact bundled texts that consent hashes refer to (kind, version, sha256, full text, first_shown_at), seeded at migration by `scripts/seed-legal-text-versions.mjs`. It is not auto-purged.
+- TODO(export): `request_data_export()` only queues a pending row. When the packer is built, the access-request pack must include consent metadata hashes, pepper version, and the matching `legal_text_versions` rows, never a raw IP.
 - Store-signal revocation is hooked at launch for signed-in users. `report_store_signal_revoked()` sets `profiles.store_signal_revoked` and never raises an age or writes install ids, store dates, or the raw response.
 - The weight goal is SecureStore on native and **memory-only on web** (no localStorage). Refreshing the web app drops it.
 - The unwired coach "Invite code · optional" field is hidden. The athlete trainer-code expander stays (it is wired).
-- Invite-sent copy no longer claims a link was already emailed. It says we will email a link once the account is created. Engineer-drafted; flag for Counsel.
-- Settings › Privacy is where Health data, AI, and coach sharing are managed (via the existing consent screen). Download/delete are launch placeholders. Notification prefs are device-local for now.
-- The 12-month health re-ask confirms or turns off via `submit_privacy_safety` (refreshes `reask_on`). It does not hard-lock the tabs, because the consent does not expire. If only the *parent's* grant for a teen is due, the teen cannot refresh that row; Parent Settings for that re-ask is not built yet.
+- Invite-sent title, body, and note are Counsel verbatim (phase4-build-answers). The email sender for the invite and the day-3 / day-7 reminders is not built (launch blocker below).
+- Settings › Privacy copy and the "Consumer Health Data Privacy Policy" link match Counsel. Rights, download, delete health data, delete account, and Coaching rows are clearly marked placeholders until those backends ship. Notification prefs are device-local. 16–17 lock-screen previews of parent/coach messages do not include message text.
+- Two clocks: a due health-screen re-screen pauses AI only (`app.can_ai_plan`), with Counsel's banner on Home and Train; logging, coaching, and the saved plan stay visible and stop adapting. The 12-month Health-data consent re-ask never locks or pauses AI. Turning Health data off from the re-ask screen warns and offers an export first, and shows `HEALTH_TEXT_WITH_AI` (the text whose hash is logged).
+- Adults with stale Terms are gated from general app use, but Settings › Privacy, export, and deletion stay reachable. For 16–17, the parent re-accepts (`accept_terms` also writes `subject_user_id` for each linked minor). The teen is not locked and sees "Waiting for your parent to review the updated Terms."
+- Policy wording Counsel specified for Privacy Policy §4, the retention table "Consent records" row, and drafting-note build hooks is pending in v0.3 of the policies. This pass does not bump or rehash the bundled policies.
+
+## Launch blockers
+
+- **Email sender.** The invite ("We'll email a link…") and the day-3 and day-7 reminders are not sent until a sender is built. Kevin still needs to pick an email vendor, and it has to be listed in Privacy Policy §8.1.
+- **Parent Settings.** Fine to wait in dev, but required at launch. The parent attestation and the parent health box already promise "I can view [Teen]'s data and change or withdraw any choice anytime in Parent Settings." At launch, Parent Settings must include:
+  - view and withdraw for each consent scope;
+  - the parent's consent re-ask card;
+  - an entry point to the parent-together health re-screen (`ai/health?for=`), plus a notice to the parent when it comes due.
 
 ## Open questions for Kevin or Counsel
 
 - Keep "Lose fat" on the adult quiz?
 - 3-tab vs 4-tab cleanup for Tempo / Swap / Gym / Favorites (those boards were left as-is).
 - Teen of-8 bar jump, and the Terms / policy placeholders (`[Company]`, `[Coach Terms]`, and similar) still stand.
-- Attorney review of every `[ATTORNEY]` string before launch, including the new invite-sent, health re-ask, and Settings › Privacy copy.
-- Invite-sent wording is Engineer-drafted: title "Next, create your account"; body "We'll email a link to {email} once your account is created so they can link to it." Confirm or replace.
+- Attorney review of every `[ATTORNEY]` string before launch.
 - Confirm a launch-time `checkStoreAgeSharingRevoked()` call is acceptable. It can show the store's sharing prompt if the user has not decided.
-- Confirm which client-IP header the production Supabase edge actually sets (same open question as the trainer-code rate limiter). Assumption documented in `20261117000300_phase4_legal_consent_meta.sql`: `cf-connecting-ip`, then `x-real-ip`, then the last `x-forwarded-for` hop.
-- Consent rows store a peppered hash of the IP, not the raw address (same pepper as trainer-code rate limits). Confirm that satisfies the "keep the IP address" record requirement.
-- 12-month re-ask does not lock the app. Parent-for-teen re-ask (when only the parent's grant is due) is not in Parent Settings yet.
-- Notification preferences are local to the device; export and delete from Settings › Privacy are placeholders until those flows ship.
+- Confirm which client-IP header the production Supabase edge actually sets (same open question as the trainer-code rate limiter). Assumption documented in `20261117000300_phase4_legal_consent_meta.sql` and applied by `private.client_ip()`: `cf-connecting-ip`, then `x-real-ip`, then the last `x-forwarded-for` hop. Production should set `CONSENT_META_PEPPER` (edge secret or KMS HMAC) rather than relying on the DB dev fallback.
+- Policy v0.3 wording (Privacy Policy §4 "Security and consent records", the retention table "Consent records" row, drafting-note build hooks, and "training schedule" in §7 / §8.1 and health policy §8) is Counsel's next policy pass.
