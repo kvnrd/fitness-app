@@ -1,4 +1,5 @@
 import type { StoreAgeSignal } from '../age/storeAgeSignal';
+import type { DateParts } from '../onboarding/dob.ts';
 import { supabase } from './supabase';
 
 /**
@@ -17,19 +18,9 @@ export type SignupResult =
   | { ok: false; kind: 'ineligible' } // server answered { eligible: false } (any reason)
   | { ok: false; kind: 'retry' };
 
-export type DateParts = { year: string; month: string; day: string };
-
-/** 'YYYY-MM-DD' for a real calendar date that is not in the future, else null. Format check only, not an age check. */
-export function toIsoDate({ year, month, day }: DateParts): string | null {
-  if (!/^\d{4}$/.test(year) || !/^\d{1,2}$/.test(month) || !/^\d{1,2}$/.test(day)) return null;
-  const y = Number(year);
-  const m = Number(month);
-  const d = Number(day);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
-  if (dt.getTime() > Date.now()) return null;
-  return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
+// DOB validation lives in onboarding/dob (single implementation); re-exported for existing importers.
+export type { DateParts };
+export { toIsoDate } from '../onboarding/dob.ts';
 
 export async function completeSignup(birthDateIso: string, displayName: string, store: StoreAgeSignal | null): Promise<SignupResult> {
   if (!supabase) return { ok: false, kind: 'retry' };
