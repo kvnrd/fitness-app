@@ -17,9 +17,8 @@ Native result: `{status: 'sharing'|'declined'|'unavailable'|'verification_requir
 
 - Android (0.0.4 SDK): the client API has no explicit "revoked" value. Parents revoke app approval in Family Link; Google reports this through the Play Console "Revoked app approvals" tab (list of `installId`, kept 90 days) and the `installId` must not be used for anything else. We never store it, so we cannot match it. The module returns `revoked` only when `significantChangeStatus` is `DECLINED` (closest client-visible signal). Real revocation handling is a Console/process matter for Kevin and Counsel.
 - iOS: the module has no revoked state; if sharing is stopped the next request returns `declined`.
-- `checkStoreAgeSharingRevoked()` is not wired into any screen yet. Call it at launch for signed-in users. TODO (server): per Counsel, a signal once received is actual knowledge, so a revocation never raises an age; record nothing personal.
-
-Note: `checkStoreAgeSharingRevoked()` calls the same native request, which can show the store's sharing prompt if the user has not decided. Decide with Counsel whether a launch-time call is acceptable before wiring it.
+- `checkStoreAgeSharingRevoked()` is called at launch for signed-in users (`SessionProvider`). If it reports revoked, the client calls `report_store_signal_revoked()`, which sets `profiles.store_signal_revoked` and does not touch `store_signal`, `age_source`, `age_band`, `is_minor`, or `adult_on`. No install id, store dates, or raw response are stored.
+- Open question for Counsel: that native call can show the store's sharing prompt if the user has not decided. It is hooked up as requested; confirm a launch-time prompt is acceptable, or we should wait for a less-prompting API.
 
 ## What Kevin must do
 

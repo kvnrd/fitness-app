@@ -1,5 +1,7 @@
 import type { Session as AuthSession, User } from '@supabase/supabase-js';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { checkStoreAgeSharingRevoked, onStoreAgeSignalRevoked } from '../age/storeAgeSignal';
+import { reportStoreSignalRevoked } from '../age/reportStoreRevocation';
 import { DEFAULT_ROLE, isRole, isVerifiedCoach, resolveDevRole, Role } from './session';
 import { deviceFlags, deviceSetupStore } from '../onboarding/deviceStorage';
 import { myOnboardingState, type OnboardingState } from '../onboarding/api';
@@ -135,6 +137,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     void loadServerState(userId);
   }, [configured, userId, loadServerState]);
+
+  // Store age-signal revocation: a signal once received is actual knowledge, so the server flag
+  // never raises an age. The native check can show the store sharing prompt; see docs/store-age-signal.md.
+  useEffect(() => {
+    if (!configured || !userId) return;
+    const unsub = onStoreAgeSignalRevoked(() => {
+      void reportStoreSignalRevoked().catch(() => {});
+    });
+    void checkStoreAgeSharingRevoked().catch(() => {});
+    return unsub;
+  }, [configured, userId]);
+
 
   const signOut = useCallback(async () => {
     // Device-only setup drafts and weight goal never outlive the session.

@@ -354,3 +354,39 @@ select tests.ok('legal: accept_terms uses last XFF hop and trims app version', e
      and ip_hash = private.pepper_hash('ip', '198.51.100.20')
      and app_version = '4.0.1-too-long-app-version-strin'));
 
+-- ------------------------------------------------------------------ store-signal revocation (never raises an age)
+select tests.logout();
+select tests.login(tests.u(107));
+select public.complete_signup(tests.dob(30), null, 21, 25, 'apple_declared_age_range', 'terms-v1', null, 'privacy-v1', tests.h('d'));
+select tests.logout();
+select tests.ok('revoked: 107 starts adult with a store signal and the flag off',
+  (select not is_minor and age_band = '18_plus' and store_signal = 'apple_declared_age_range'
+      and age_source = 'apple_declared_age_range' and not store_signal_revoked from public.profiles where id = tests.u(107)));
+select tests.login(tests.u(107));
+select public.report_store_signal_revoked();
+select tests.logout();
+select tests.ok('revoked: flag is set', (select store_signal_revoked from public.profiles where id = tests.u(107)));
+select tests.ok('revoked: adult band, store_signal, age_source and is_minor are unchanged',
+  (select not is_minor and age_band = '18_plus' and store_signal = 'apple_declared_age_range'
+      and age_source = 'apple_declared_age_range' from public.profiles where id = tests.u(107)));
+
+select tests.login(tests.u(108));
+select public.complete_signup((current_date - interval '17 years 6 months')::date, null, 16, 17, 'google_play_age_signals', 'terms-v1', null, 'privacy-v1', tests.h('d'));
+select tests.logout();
+select tests.ok('revoked: 108 starts as a minor governed by the store signal',
+  (select is_minor and age_band = '16_17' and store_signal = 'google_play_age_signals'
+      and age_source = 'google_play_age_signals' and not store_signal_revoked from public.profiles where id = tests.u(108)));
+select tests.login(tests.u(108));
+select public.report_store_signal_revoked();
+select tests.logout();
+select tests.ok('revoked: minor stays minor; band, source and store_signal unchanged',
+  (select is_minor and age_band = '16_17' and store_signal = 'google_play_age_signals'
+      and age_source = 'google_play_age_signals' and store_signal_revoked from public.profiles where id = tests.u(108)));
+
+select tests.login(tests.u(107));
+select tests.blocked('revoked: clients cannot clear the flag directly', $q$update public.profiles set store_signal_revoked = false$q$);
+select tests.logout();
+select tests.raises('revoked: anon cannot report', $q$select public.report_store_signal_revoked()$q$, 'not_authenticated%');
+select tests.ok('revoked: authenticated can execute the RPC and anon cannot',
+  has_function_privilege('authenticated', 'public.report_store_signal_revoked()', 'EXECUTE')
+  and not has_function_privilege('anon', 'public.report_store_signal_revoked()', 'EXECUTE'));
