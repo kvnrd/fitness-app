@@ -63,10 +63,8 @@ export default function ParentLinkScreen() {
     }
   }
 
-  function onAccept(_id: string) {
-    // TODO(job B): route to the parent-consent screen (attestation + parent risk checkbox). accept_parent_link
-    // now requires those args, so this screen can no longer accept on its own.
-    setMessage('Review and confirm is coming in the next update.');
+  function onAccept(id: string) {
+    router.push({ pathname: '/parent-consent', params: { link: id } });
   }
 
   async function onCheckAgain() {
