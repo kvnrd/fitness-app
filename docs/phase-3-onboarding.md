@@ -13,7 +13,7 @@ Status: built and tested **locally only** on branch `phase-3-onboarding` (off `m
 | – | 16–17: Parent help → Invite parent → Invite sent | `parent-help`, `invite-parent`, `invite-sent` | Invite sent can go back to Invite (fix the email); nothing goes back to DOB. Then Apple / Google / email |
 | 2 of 8 | Create (email) | `create` | Name, email, password (12–128, no composition rules), only the Terms checkbox |
 | 3 of 8 | Verify | `verify` | 6-digit email OTP, 60 s resend |
-| – | Waiting for a parent (pending 16–17) | `waiting-parent` | Counsel's pending copy; can fix/resend the parent email |
+| – | Waiting for a parent (pending 16–17) | `waiting-parent` | Counsel's pending copy; "Your parent has until [date] to approve."; can fix/resend until then |
 | 4 of 8 | Role | `setup/role` | Adults only. Coach → two attestation boxes, then `apply_for_coach`. Optional trainer code under "I'm training". Pending teens skip it (server sets athlete) |
 | 5 of 8 | Goal | `setup/goal` | Adults: lose/gain/maintain + weights (device only) + pace. Linked teens: Counsel's minor-safe list. Held for pending teens |
 | 6 of 8 | Training style + follow-ups | `setup/style`, `setup/followups` | Pending teens: device only |
@@ -24,12 +24,12 @@ Status: built and tested **locally only** on branch `phase-3-onboarding` (off `m
 
 The age band used for routing comes from the server (`screen_age` returns `band` only when eligible). `src/onboarding/ageBand.ts` mirrors the rule for tests only.
 
-## Server (migrations `20261116000100`–`000600`)
+## Server (migrations `20261116000100`–`000800`)
 
 - `screen_age` → `{eligible:false}` or `{eligible:true, band}`. Still stores nothing personal.
 - `complete_signup(..., p_terms_version, p_terms_hash, p_privacy_version, p_privacy_hash)` records a `terms` event and a `privacy_policy` event (version + SHA-256 of the bundled policy text). No Terms document exists yet: the client sends `terms-placeholder-v0` with no hash.
 - `training_setups` + `save_training_setup(p_setup jsonb)`: partial saves, strict keys (body weights can never get in), pending minors refused (`not_allowed`), minors only Counsel's minor-safe goals and never a pace.
-- `parent_invites`: `create_parent_invite(p_parent_email)` (pending teen only, neutral response, 5/day), `claim_parent_invites_to_send()` (service only; 256-bit token, only its hash stored), `accept_parent_invite(...)` and `accept_parent_link(...)` (attestation + terms + parent risk acknowledgement + privacy version/hash all required; one generic `false`; 10 failures/hour). The parent email is nulled once the invite is used, cancelled or expired; the day-14 purge cascades.
+- `parent_invites`: `create_parent_invite(p_parent_email)` (pending teen only, neutral response, 5/day), `claim_parent_invites_to_send()` (service only; 256-bit token, only its hash stored), `accept_parent_invite(...)` and `accept_parent_link(...)` (attestation + terms + parent risk acknowledgement + privacy version/hash all required; one generic `false`; 10 failures/hour). The parent email is nulled once the invite is used, cancelled or expired; the day-14 clock is `profiles.created_at` and resending the invite does not extend `expires_at`. `purge_pending_minors()` is scheduled hourly (when pg_cron is available) so deletion is not pushed to about day 15; the daily `run_retention_purge()` still includes it as a backup.
 - Trainer codes: `create_trainer_code(p_max_redemptions, p_expires_in_days, p_coach_id)` (verified coach for self, or service/admin) returns an 80-bit Crockford code once (`XXXX-XXXX-XXXX-XXXX`), stores only the peppered hash, expiry 1–90 days. `revoke_trainer_code(id)`. `redeem_trainer_code(p_code, p_device_id)`: one generic `false` for every failure, `rate_limited` at 10 failures/hour or 30/day per user, 30/hour per IP, 10/hour per device (attempts in `private.trainer_code_attempts`, peppered hashes, purged after 30 days). Pending minors always fail generically; coaches are 18+; coaches never see minors' health fields.
 - Privacy & safety: `submit_privacy_safety(health, ai, risk versions + text hashes, p_health_policy_hash)` logs each item as its own `consent_events` row (on or off) with version, text hash and policy document hash. AI requires health on (`health_required`), on every path; revoking health revokes AI for that grantor (and the parent → teen cascade). Health grants get `reask_on` = grant date + 12 months; `my_onboarding_state().health_reask_due` reports it (the re-ask UI is a later TODO; the consent does not auto-expire).
 - `app.can_train(uid)` = onboarded and effective `risk_notice` (teen AND current parent for 16–17). `set_logs` insert/update require it.
@@ -100,7 +100,7 @@ The age band used for routing comes from the server (`screen_age` returns `band`
 - The coach invite code field on the Role screen is not sent anywhere (no server function takes it yet). Keep or drop?
 - Weight goal is never shown to coaches (own reads only).
 - Parent `privacy_policy` acceptance is filed under the parent's own user id.
-- Day-14 device purge counts from account creation; the server invite expiry uses the same clock.
+- Day-14 clock is account creation (`profiles.created_at`); resending the invite does not extend it. `purge_pending_minors()` runs hourly when pg_cron is available (otherwise the operator must attach the job). Waiting-for-parent shows "Your parent has until [date] to approve."
 - Custom accent color wheel from Paper Prefs is not built (presets only).
 - Header carrying the real client IP on Supabase (see setup step 5).
 - Store-signal revocation check at launch: built, not wired (it may show the store prompt).

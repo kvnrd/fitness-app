@@ -52,3 +52,22 @@ export function inviteStatusText(status: string | null): string {
 /** Train: workouts stay disabled until both risk acknowledgements exist (server enforces via can_train). */
 export const workoutsLocked = (state: OnboardingState | null): boolean => !!state && !state.can_train;
 export const parentRiskMissing = (state: OnboardingState | null): boolean => !!state && state.is_minor && !state.can_train && state.parent_risk_done === false;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PARENT_APPROVE_DAYS = 14;
+
+/** Day-14 clock: account creation + 14 days. Resending the invite does not extend this. */
+export function parentApproveBy(createdAtMs: number): Date {
+  return new Date(createdAtMs + PARENT_APPROVE_DAYS * DAY_MS);
+}
+
+/** Counsel: "Your parent has until [date] to approve." Date is in America/Denver. [ATTORNEY] */
+export function parentApproveDeadlineText(createdAtMs: number, timeZone = 'America/Denver'): string {
+  const label = parentApproveBy(createdAtMs).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone,
+  });
+  return `Your parent has until ${label} to approve.`;
+}

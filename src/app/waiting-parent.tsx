@@ -4,7 +4,7 @@ import { useAgeGate } from '../auth/AgeGateProvider';
 import { useSession } from '../auth/SessionProvider';
 import { createParentInvite } from '../onboarding/api';
 import { isEmailShape } from '../onboarding/password';
-import { inviteNeedsResend } from '../onboarding/routing';
+import { inviteNeedsResend, parentApproveDeadlineText } from '../onboarding/routing';
 import { WaitingParentScreen } from '../onboarding/screens/WaitingParent';
 
 /**
@@ -13,16 +13,19 @@ import { WaitingParentScreen } from '../onboarding/screens/WaitingParent';
  * Style / gym / units setup (steps 6-8) opens from here and is saved on the device only.
  */
 export default function WaitingParentRoute() {
-  const { onboarding, refreshRole, signOut } = useSession();
+  const { onboarding, profile, refreshRole, signOut } = useSession();
   const age = useAgeGate();
   const [email, setEmail] = useState(age.parentEmail);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const status = onboarding?.invite_status ?? null;
+  const createdAt = profile?.created_at ? Date.parse(profile.created_at) : NaN;
+  const deadlineText = Number.isFinite(createdAt) ? parentApproveDeadlineText(createdAt) : null;
   return (
     <WaitingParentScreen
       inviteStatus={status}
+      deadlineText={deadlineText}
       email={email}
       onEmail={setEmail}
       emailValid={isEmailShape(email)}

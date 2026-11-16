@@ -135,9 +135,9 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   ),
   'prefs': () => <PrefsScreen prefs={defaultPrefs()} onChange={noop} onFinish={noop} onSkip={noop} onBack={noop} />,
   // ───── Waiting for a parent ─────
-  'waiting-parent': () => <WaitingParentScreen inviteStatus="sent" email="" onEmail={noop} emailValid={false} showInvite={false} onToggleInvite={noop} onResend={noop} onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />,
+  'waiting-parent': () => <WaitingParentScreen inviteStatus="sent" deadlineText="Your parent has until November 16, 2026 to approve." email="" onEmail={noop} emailValid={false} showInvite={false} onToggleInvite={noop} onResend={noop} onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />,
   'waiting-parent-resend': () => (
-    <WaitingParentScreen inviteStatus="expired" email="parent@example.com" onEmail={noop} emailValid showInvite onToggleInvite={noop} onResend={noop} resendNote="If that address can receive it, the new invite is on its way." onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />
+    <WaitingParentScreen inviteStatus="expired" deadlineText="Your parent has until November 16, 2026 to approve." email="parent@example.com" onEmail={noop} emailValid showInvite onToggleInvite={noop} onResend={noop} resendNote="If that address can receive it, the new invite is on its way." onSetupStyle={noop} onCheckAgain={noop} onSignOut={noop} />
   ),
   // ───── Privacy & safety ─────
   'privacy-adult': () => <PrivacySafetyScreen state={initPs('adult')} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,

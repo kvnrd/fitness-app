@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { OnboardingState } from '../../src/onboarding/api.ts';
-import { inviteNeedsResend, inviteStatusText, nextOnboardingRoute, parentRiskMissing, shouldUploadDraft, workoutsLocked } from '../../src/onboarding/routing.ts';
+import { inviteNeedsResend, inviteStatusText, nextOnboardingRoute, parentApproveBy, parentApproveDeadlineText, parentRiskMissing, shouldUploadDraft, workoutsLocked } from '../../src/onboarding/routing.ts';
 
 const base: OnboardingState = { is_minor: false, linked: false, invite_status: null, setup_done: false, privacy_done: false, can_train: false, parent_risk_done: null, health_reask_due: false };
 const s = (o: Partial<OnboardingState>): OnboardingState => ({ ...base, ...o });
@@ -59,4 +59,13 @@ test('workouts stay locked until can_train; the parent-risk notice only when tha
   assert.equal(parentRiskMissing(s({ is_minor: true, linked: true, can_train: false, parent_risk_done: false })), true);
   assert.equal(parentRiskMissing(s({ is_minor: true, linked: true, can_train: false, parent_risk_done: true })), false);
   assert.equal(parentRiskMissing(s({ can_train: false })), false);
+});
+
+test('parent approve deadline is created_at + 14 days, formatted in America/Denver', () => {
+  const created = Date.parse('2026-11-02T12:00:00-07:00');
+  assert.equal(parentApproveBy(created).toISOString(), '2026-11-16T19:00:00.000Z');
+  assert.equal(parentApproveDeadlineText(created), 'Your parent has until November 16, 2026 to approve.');
+  // late in the Denver day still lands on the calendar date 14 days later in that zone
+  const late = Date.parse('2026-11-02T23:30:00-07:00');
+  assert.equal(parentApproveDeadlineText(late), 'Your parent has until November 16, 2026 to approve.');
 });

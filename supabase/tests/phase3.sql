@@ -11,6 +11,7 @@
 --   64..68 adults (trainer-code limits)               69 auth user without a profile
 --   70 second coach                                   71 adult spare
 --   76 general-only coach applicant                    77 coach applicant with minors box
+--   78 pending minor (resend does not extend day-14)
 -- Test-only constants are NOT secrets.
 
 select tests.logout();
@@ -1039,3 +1040,30 @@ select tests.logout();
 select tests.login(tests.u(50));
 select tests.raises('attest: an athlete cannot record the minors box', $q$select public.record_coach_minors_attestation('coach-attest-minors-v1', tests.h('8'))$q$, 'forbidden');
 select tests.logout();
+
+-- =============================================================== day-14: resend does not extend expires_at
+select tests.signup3(tests.u(78), tests.dob(16));
+select tests.login(tests.u(78));
+select public.create_parent_invite('first78@example.invalid');
+select tests.logout();
+create table tests.exp78 as
+  select i.expires_at
+    from public.parent_invites i
+   where i.minor_user_id = tests.u(78) and i.status = 'queued';
+grant all on tests.exp78 to public;
+select tests.ok('invite: first expiry is profile created_at + 14 days',
+  exists (select 1 from public.parent_invites i join public.profiles p on p.id = i.minor_user_id
+           where i.minor_user_id = tests.u(78) and i.status = 'queued'
+             and i.expires_at = p.created_at + interval '14 days'));
+select tests.login(tests.u(78));
+select public.create_parent_invite('resend78@example.invalid');
+select tests.logout();
+select tests.ok('invite: resending does not extend expires_at (still created_at + 14 days)',
+  exists (select 1 from public.parent_invites i
+            join public.profiles p on p.id = i.minor_user_id
+            join tests.exp78 e on i.expires_at = e.expires_at
+           where i.minor_user_id = tests.u(78) and i.status = 'queued'
+             and i.parent_email = 'resend78@example.invalid'
+             and i.expires_at = p.created_at + interval '14 days')
+  and exists (select 1 from public.parent_invites i join tests.exp78 e on i.expires_at = e.expires_at
+               where i.minor_user_id = tests.u(78) and i.status = 'cancelled'));
