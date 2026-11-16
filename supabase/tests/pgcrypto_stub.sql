@@ -28,3 +28,17 @@ begin
   end if;
   raise exception 'unsupported digest type';
 end $$;
+
+-- TEST ONLY — NOT FOR PRODUCTION. PGlite has no pgcrypto gen_random_bytes. This builds random bytes from
+-- gen_random_uuid() (random v4 uuids). Real pgcrypto gen_random_bytes is used by CI (postgres:17) and
+-- production; the Phase 3 trainer-code / invite-token generators call extensions.gen_random_bytes.
+create or replace function extensions.gen_random_bytes(n integer) returns bytea
+language plpgsql volatile as $$
+declare v text := '';
+begin
+  if n < 1 or n > 1024 then raise exception 'Length not in range'; end if;
+  while length(v) < n * 2 loop
+    v := v || replace(gen_random_uuid()::text, '-', '');
+  end loop;
+  return decode(substr(v, 1, n * 2), 'hex');
+end $$;

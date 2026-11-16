@@ -68,6 +68,10 @@ begin
   perform tests.record(p_name, v is not distinct from p_expected, 'expected ' || coalesce(p_expected, 'NULL') || ', got ' || coalesce(v, 'NULL'));
 end $$;
 
+-- Phase 3: a parent link can only be accepted with the attestation + terms + risk arguments.
+create function tests.accept_link(p_link uuid) returns void language sql as $$
+  select public.accept_parent_link(p_link, 'attest-v1', repeat('a', 64), 'terms-v1', 'risk-v1', repeat('c', 64), 'privacy-v1', repeat('d', 64)) $$;
+
 -- =============================================================== fixtures (superuser)
 select tests.logout();
 insert into auth.users (id, email) select tests.u(i), 'user' || i || '@example.invalid' from generate_series(1, 10) i;
@@ -94,32 +98,32 @@ end $$;
 
 -- ---- 6. signup / age gate
 select tests.login(tests.u(9));
-select tests.eq('signup: under-13 rejected (COPPA)', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(12), 'x', 'eligible'), 'false');
-select tests.eq('signup: age 13 rejected', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(13), 'x', 'eligible'), 'false');
-select tests.eq('signup: age 15 rejected', format('select public.complete_signup(%L, %L) ->> %L', tests.dob(15), 'x', 'eligible'), 'false');
-select tests.raises('signup: future birth date rejected', format('select public.complete_signup(%L, %L)', current_date + 1, 'x'), 'invalid_birth_date');
+select tests.eq('signup: under-13 rejected (COPPA)', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$) ->> %L', tests.dob(12), 'x', 'eligible'), 'false');
+select tests.eq('signup: age 13 rejected', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$) ->> %L', tests.dob(13), 'x', 'eligible'), 'false');
+select tests.eq('signup: age 15 rejected', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$) ->> %L', tests.dob(15), 'x', 'eligible'), 'false');
+select tests.raises('signup: future birth date rejected', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$)', current_date + 1, 'x'), 'invalid_birth_date');
 select tests.logout();
 select tests.eq('signup: rejected user keeps no profile', 'select count(*)::text from public.profiles where id = tests.u(9)', '0');
 select tests.ok('signup: rejected auth user (email) deleted in the same request', not exists (select 1 from auth.users where id = tests.u(9)));
 insert into auth.users (id, email) values (tests.u(9), 'user9@example.invalid');
 
-select tests.login(tests.u(1)); select public.complete_signup(tests.dob(18), 'Alice');
-select tests.login(tests.u(2)); select public.complete_signup(tests.dob(25), 'Bob');
-select tests.login(tests.u(3)); select public.complete_signup(tests.dob(30), 'Coach');
-select tests.login(tests.u(4)); select public.complete_signup(tests.dob(30), 'Coach Two');
-select tests.login(tests.u(6)); select public.complete_signup(tests.dob(40), 'Parent');
-select tests.login(tests.u(7)); select public.complete_signup(tests.dob(35), 'Admin');
-select tests.login(tests.u(8)); select public.complete_signup(tests.dob(28), 'Dana');
-select tests.login(tests.u(10)); select public.complete_signup(tests.dob(33), 'Zed');
+select tests.login(tests.u(1)); select public.complete_signup(tests.dob(18), 'Alice', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(2)); select public.complete_signup(tests.dob(25), 'Bob', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(3)); select public.complete_signup(tests.dob(30), 'Coach', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(4)); select public.complete_signup(tests.dob(30), 'Coach Two', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(6)); select public.complete_signup(tests.dob(40), 'Parent', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(7)); select public.complete_signup(tests.dob(35), 'Admin', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(8)); select public.complete_signup(tests.dob(28), 'Dana', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
+select tests.login(tests.u(10)); select public.complete_signup(tests.dob(33), 'Zed', p_terms_version => 'terms-v1', p_privacy_version => 'privacy-v1', p_privacy_hash => 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd');
 select tests.login(tests.u(5));
-select tests.eq('signup: 16 is minor', format('select (public.complete_signup(%L, %L) ->> %L)', tests.dob(16), 'Kid', 'is_minor'), 'true');
-select tests.raises('signup: second call rejected', format('select public.complete_signup(%L, %L)', tests.dob(30), 'Kid'), 'already_signed_up');
+select tests.eq('signup: 16 is minor', format('select (public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$) ->> %L)', tests.dob(16), 'Kid', 'is_minor'), 'true');
+select tests.raises('signup: second call rejected', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$)', tests.dob(30), 'Kid'), 'already_signed_up');
 select tests.eq('signup: minor not onboarded without parent', 'select app.is_minor_onboarded(tests.u(5))::text', 'false');
 select tests.login(tests.u(1));
 select tests.eq('signup: 18 is not minor', 'select is_minor::text from public.profiles where id = tests.u(1)', 'false');
 select tests.eq('signup: new user is athlete', 'select role from public.user_roles where user_id = tests.u(1)', 'athlete');
 select tests.login(null, 'anon');
-select tests.raises('signup: anon cannot call complete_signup', format('select public.complete_signup(%L, %L)', tests.dob(30), 'x'), 'permission denied%');
+select tests.raises('signup: anon cannot call complete_signup', format('select public.complete_signup(%L, p_display_name => %L, p_terms_version => $$terms-v1$$, p_privacy_version => $$privacy-v1$$, p_privacy_hash => $$dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd$$)', tests.dob(30), 'x'), 'permission denied%');
 select tests.logout();
 -- is_minor is derived: a superuser attempt to flip it is recomputed by the trigger
 update public.profiles set is_minor = false where id = tests.u(5);
@@ -141,6 +145,9 @@ insert into public.set_logs (user_id, exercise_id, set_index, weight, reps, done
 
 -- ---- 1. cross-user isolation (alice vs bob)
 select tests.login(tests.u(1));
+-- Phase 3: logging sets needs the risk acknowledgement (app.can_train). A records it first so the set_log
+-- assertions below still test isolation, not the risk gate (the gate itself is tested in phase3.sql).
+select public.submit_privacy_safety(false, 'health-v1', repeat('a', 64), false, 'ai-B-v1', repeat('b', 64), 'risk-v1', repeat('c', 64), repeat('e', 64));
 select tests.rows('A reads own profile', 'select id from public.profiles where id = tests.u(1)', 1);
 select tests.no_rows('A cannot read B profile', 'select id from public.profiles where id = tests.u(2)');
 select tests.blocked('A cannot update B profile', $q$update public.profiles set display_name = 'pwn' where id = tests.u(2)$q$);
@@ -163,7 +170,7 @@ select tests.blocked('A (athlete) cannot edit plan', $q$update public.plans set 
 select tests.blocked('A (athlete) cannot create plan', format($q$insert into public.plans (owner_id, name) values (%L, 'mine')$q$, tests.u(1)));
 
 -- consents: ungranted by default, B cannot touch A's
-select tests.rows('consents: none by default', 'select * from public.consents where user_id = tests.u(1)', 0);
+select tests.rows('consents: none by default', $q$select * from public.consents where user_id = tests.u(1) and kind <> 'risk_notice'$q$, 0);
 select tests.eq('consents: has_consent false by default', $q$select app.has_consent(tests.u(1), 'health_data')::text$q$, 'false');
 select tests.blocked('consents: direct insert denied', format($q$insert into public.consents (user_id, kind, granted, policy_version) values (%L, 'health_data', true, 'v1')$q$, tests.u(1)));
 select public.record_consent('health_data', 'v1');
@@ -242,7 +249,7 @@ select tests.eq('roles: B is still athlete', 'select role from public.user_roles
 select tests.login(tests.u(2));
 select tests.raises('roles: client cannot recompute flags', 'select public.recompute_minor_flags()', 'permission denied%');
 select tests.raises('roles: client cannot close accounts', format('select public.close_under_13_account(%L)', tests.u(1)), 'permission denied%');
-select tests.raises('roles: client cannot create trainer codes', format($q$select public.create_trainer_code(%L, 'ABCDEFGH1234')$q$, tests.u(2)), 'forbidden');
+select tests.raises('roles: client cannot create trainer codes', $q$select public.create_trainer_code()$q$, 'forbidden');
 
 -- apply_for_coach + admin review
 select tests.login(tests.u(8));
@@ -337,6 +344,7 @@ select tests.raises('health: write blocked after health_data revoked', format('s
 -- ---- 7. consent timestamps/history
 select tests.login(tests.u(8));
 select tests.rows('consent: fresh user has none', 'select * from public.consents', 0);
+select public.record_consent('health_data', 'v1');
 select public.record_consent('ai_vendor', 'v1');
 select public.revoke_consent('ai_vendor');
 select tests.logout();
@@ -363,14 +371,14 @@ create table tests.link_ids as select id from public.parent_links;
 grant select on tests.link_ids to public;
 select tests.login(tests.u(1));
 select tests.no_rows('parent link: unrelated user cannot read link', 'select * from public.parent_links');
-select tests.raises('parent link: unrelated user cannot accept', $q$select public.accept_parent_link((select id from tests.link_ids))$q$, 'forbidden');
+select tests.raises('parent link: unrelated user cannot accept', $q$select tests.accept_link((select id from tests.link_ids))$q$, 'forbidden');
 select tests.logout();
 select tests.ok('parent link: unrelated accept did not change status', (select status = 'pending' from public.parent_links));
 select tests.login(tests.u(6));
 select tests.rows('parent link: parent sees invite', 'select * from public.parent_links', 1);
 select tests.no_rows('parent link: parent cannot read minor profile', 'select id from public.profiles where id = tests.u(5)');
 select tests.no_rows('parent link: parent cannot read minor set_logs', 'select * from public.set_logs where user_id = tests.u(5)');
-select public.accept_parent_link((select id from public.parent_links limit 1));
+select tests.accept_link((select id from public.parent_links limit 1));
 select tests.logout();
 select tests.ok('parent link: active + contracting party', (select status = 'active' and is_contracting_party and accepted_at is not null from public.parent_links));
 select tests.ok('parent link: minor is now onboarded', app.is_minor_onboarded(tests.u(5)));
@@ -384,7 +392,7 @@ select tests.login(tests.u(5));
 select public.record_consent('health_data', 'v1');
 select tests.eq('dual consent: teen + parent = effective', $q$select app.has_consent(tests.u(5), 'health_data')::text$q$, 'true');
 select tests.login(tests.u(6));
-select tests.rows('parental consent: parent can read minor consents', 'select * from public.consents where user_id = tests.u(5)', 3);
+select tests.rows('parental consent: parent can read minor consents', 'select * from public.consents where user_id = tests.u(5)', 4);  -- parental, parent risk_notice (written at accept), health x2
 select tests.login(tests.u(5));
 select tests.raises('parental consent: minor cannot self-grant', $q$select public.record_consent('parental', 'v1')$q$, 'forbidden');
 select tests.raises('parent link: minor cannot revoke own guardian', $q$select public.revoke_parent_link((select id from public.parent_links))$q$, 'forbidden');
@@ -461,23 +469,26 @@ select tests.ok('audit: platform admin reads all', (select count(distinct actor_
 select tests.blocked('audit: admin cannot rewrite either', $q$update public.audit_log set action = 'x'$q$);
 
 -- ---- trainer codes (hash only), rate limit
-select tests.login(null, 'service_role');
-select public.create_trainer_code(tests.u(4), 'TEST-CODE-1234', 2);
 select tests.logout();
-select tests.ok('trainer code: raw code never stored', not exists (select 1 from public.trainer_codes where code_hash ilike '%TEST-CODE%' or code_hash = 'TEST-CODE-1234'));
+create table tests.codes (code text);
+grant all on tests.codes to public;
+select tests.login(null, 'service_role');
+insert into tests.codes select public.create_trainer_code(2, 30, tests.u(4)) ->> 'code';
+select tests.logout();
+select tests.ok('trainer code: raw code never stored', not exists (select 1 from public.trainer_codes t, tests.codes c where t.code_hash = c.code or t.code_hash ilike '%' || replace(c.code, '-', '') || '%'));
 select tests.login(tests.u(4));
 select tests.no_rows('trainer code: coach cannot read hashes', 'select code_hash from public.trainer_codes');
 select tests.rows('trainer code: coach lists own code metadata', 'select id, redemptions from public.trainer_codes', 1);
 select tests.login(tests.u(2));
 select tests.eq('trainer code: wrong code returns false', $q$select public.redeem_trainer_code('NOT-THE-CODE')::text$q$, 'false');
-select tests.eq('trainer code: valid code (case/space-insensitive) redeems', $q$select public.redeem_trainer_code(' test-code-1234 ')::text$q$, 'true');
-select tests.eq('trainer code: repeat redeem does not double count', $q$select public.redeem_trainer_code('TEST-CODE-1234')::text$q$, 'true');
+select tests.eq('trainer code: valid code (case/space-insensitive) redeems', format($q$select public.redeem_trainer_code(%L)::text$q$, ' ' || lower((select code from tests.codes)) || ' '), 'true');
+select tests.eq('trainer code: repeat redeem does not double count', format($q$select public.redeem_trainer_code(%L)::text$q$, (select code from tests.codes)), 'true');
 select tests.logout();
 select tests.ok('trainer code: relationship active + one redemption', (select count(*) = 1 from public.coach_relationships where coach_id = tests.u(4) and client_id = tests.u(2) and status = 'active')
   and (select redemptions = 1 from public.trainer_codes));
 select tests.login(tests.u(10));
 do $$ begin for i in 1..10 loop perform public.redeem_trainer_code('WRONG-' || i); end loop; end $$;
-select tests.raises('trainer code: rate limited after 10 failures', $q$select public.redeem_trainer_code('TEST-CODE-1234')$q$, 'rate_limited');
+select tests.raises('trainer code: rate limited after 10 failures', format($q$select public.redeem_trainer_code(%L)$q$, (select code from tests.codes)), 'rate_limited');
 
 -- ---- requests, hook, admin functions
 select tests.login(tests.u(1));

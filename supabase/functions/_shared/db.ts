@@ -2,7 +2,7 @@
 // `rpc` is supabase-js `client.rpc` bound to a SERVICE-ROLE client; it never runs in the app.
 import { fromPgBytea, toPgBytea } from './bytes.ts';
 import type { AiContextRow } from './ai/handler.ts';
-import type { HealthCipherRow, HealthDb, WrappedKeyRow } from './health/handler.ts';
+import type { HealthCipherRow, HealthDb, HealthCipherWrite, WrappedKeyRow } from './health/handler.ts';
 
 export type Rpc = (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
 
@@ -33,9 +33,15 @@ export function healthDb(rpc: Rpc): HealthDb {
       if (!rows.length) throw new Error('register_failed');
       return keyRow(rows[0]);
     },
-    async write(actor, notes, screen, category) {
+    async write(actor, fields: HealthCipherWrite) {
+      const set = Object.keys(fields);   // only these fields are written; the rest keep their stored value
       await call(rpc, 'health_write', {
-        p_actor: actor, p_injury_notes_ct: bytesOrNull(notes), p_health_screen_ct: bytesOrNull(screen), p_injury_category_ct: bytesOrNull(category),
+        p_actor: actor,
+        p_injury_notes_ct: bytesOrNull(fields.injury_notes ?? null),
+        p_health_screen_ct: bytesOrNull(fields.health_screen ?? null),
+        p_injury_category_ct: bytesOrNull(fields.injury_category ?? null),
+        p_weight_goal_ct: bytesOrNull(fields.weight_goal ?? null),
+        p_set: set,
       });
     },
     async read(actor, target): Promise<HealthCipherRow | null> {
@@ -47,6 +53,7 @@ export function healthDb(rpc: Rpc): HealthDb {
         injury_notes_ct: fromPgBytea(r.injury_notes_ct as string | null),
         health_screen_ct: fromPgBytea(r.health_screen_ct as string | null),
         injury_category_ct: fromPgBytea(r.injury_category_ct as string | null),
+        weight_goal_ct: fromPgBytea(r.weight_goal_ct as string | null),
       };
     },
   };
@@ -65,6 +72,7 @@ export function aiDb(rpc: Rpc): { aiContext(actor: string): Promise<AiContextRow
         key_provider: (r.key_provider as string | null) ?? null,
         kms_key_ref: (r.kms_key_ref as string | null) ?? null,
         injury_category_ct: fromPgBytea(r.injury_category_ct as string | null),
+        weight_goal_ct: fromPgBytea(r.weight_goal_ct as string | null),
       };
     },
   };

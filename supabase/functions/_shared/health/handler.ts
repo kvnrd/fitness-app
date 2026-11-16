@@ -16,13 +16,17 @@ export interface HealthCipherRow extends WrappedKeyRow {
   injury_notes_ct: Uint8Array | null;
   health_screen_ct: Uint8Array | null;
   injury_category_ct: Uint8Array | null;
+  weight_goal_ct: Uint8Array | null;
 }
+
+/** Ciphertext per field. A key that is ABSENT keeps the stored value; null clears it (partial update). */
+export type HealthCipherWrite = Partial<Record<'injury_notes' | 'health_screen' | 'injury_category' | 'weight_goal', Uint8Array | null>>;
 
 /** Thin wrapper over the service-only RPCs (public.health_*). */
 export interface HealthDb {
   prepareWrite(actor: string): Promise<WrappedKeyRow | null>;
   registerKey(actor: string, row: WrappedKeyRow): Promise<WrappedKeyRow>;
-  write(actor: string, notes: Uint8Array | null, screen: Uint8Array | null, category: Uint8Array | null): Promise<void>;
+  write(actor: string, fields: HealthCipherWrite): Promise<void>;
   read(actor: string, target: string): Promise<HealthCipherRow | null>;
 }
 
@@ -34,7 +38,31 @@ export interface HealthDeps {
 
 const MAX_NOTES = 2000;
 const MAX_SCREEN = 4000;
+const MAX_WEIGHT_GOAL = 200;
+const WEIGHT_MIN = 40;
+const WEIGHT_MAX = 1500;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const isWeight = (v: unknown): v is number | null => v === null || (typeof v === 'number' && Number.isFinite(v) && v >= WEIGHT_MIN && v <= WEIGHT_MAX);
+
+/**
+ * Validates the weight_goal JSON string: {current:number|null, target:number|null, unit:'lb'|'kg',
+ * pace:'steady'|'moderate'|'fast'|null}, strict keys, numbers 40..1500, at most 200 characters.
+ * Returns the canonical JSON to encrypt, or null when invalid. (Age is NOT known here: the SQL function
+ * refuses to store a weight goal for 16-17 accounts.)
+ */
+export function canonicalWeightGoal(raw: string): string | null {
+  if (raw.length > MAX_WEIGHT_GOAL) return null;
+  let v: unknown;
+  try { v = JSON.parse(raw); } catch { return null; }
+  const o = strictObject(v, ['current', 'target', 'unit', 'pace']);
+  if (!o) return null;
+  const current = o.current ?? null, target = o.target ?? null, pace = o.pace ?? null;
+  if (!isWeight(current) || !isWeight(target)) return null;
+  if (o.unit !== 'lb' && o.unit !== 'kg') return null;
+  if (pace !== null && pace !== 'steady' && pace !== 'moderate' && pace !== 'fast') return null;
+  return JSON.stringify({ current, target, unit: o.unit, pace });
+}
 
 async function getOrCreateDek(deps: HealthDeps, actor: string): Promise<Uint8Array> {
   const existing = await deps.db.prepareWrite(actor);
@@ -57,25 +85,44 @@ function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 export async function handleHealthWrite(deps: HealthDeps, actor: string, input: unknown): Promise<HandlerResult> {
-  const body = strictObject(input, ['injury_notes', 'health_screen', 'injury_category']);
+  const body = strictObject(input, ['injury_notes', 'health_screen', 'injury_category', 'weight_goal']);
   if (!body) return fail(400, 'invalid_request');
-  const notes = body.injury_notes ?? null;
-  const screen = body.health_screen ?? null;
-  const category = body.injury_category ?? null;
-  if (notes !== null && (typeof notes !== 'string' || notes.length > MAX_NOTES)) return fail(400, 'invalid_request');
-  if (screen !== null && (typeof screen !== 'string' || screen.length > MAX_SCREEN)) return fail(400, 'invalid_request');
-  if (category !== null && !isOneOf(INJURY_CATEGORIES, category)) return fail(400, 'invalid_request');
+  // Partial update: a field that is absent keeps its stored value; an explicit null clears it.
+  const plain: Partial<Record<keyof HealthCipherWrite, string | null>> = {};
+  if ('injury_notes' in body) {
+    const v = body.injury_notes;
+    if (v !== null && (typeof v !== 'string' || v.length > MAX_NOTES)) return fail(400, 'invalid_request');
+    plain.injury_notes = v;
+  }
+  if ('health_screen' in body) {
+    const v = body.health_screen;
+    if (v !== null && (typeof v !== 'string' || v.length > MAX_SCREEN)) return fail(400, 'invalid_request');
+    plain.health_screen = v;
+  }
+  if ('injury_category' in body) {
+    const v = body.injury_category;
+    if (v !== null && !isOneOf(INJURY_CATEGORIES, v)) return fail(400, 'invalid_request');
+    plain.injury_category = v as string | null;
+  }
+  if ('weight_goal' in body) {
+    const v = body.weight_goal;
+    if (v === null) plain.weight_goal = null;
+    else {
+      const canon = typeof v === 'string' ? canonicalWeightGoal(v) : null;
+      if (canon === null) return fail(400, 'invalid_request');
+      plain.weight_goal = canon;
+    }
+  }
 
   let dek: Uint8Array | null = null;
   try {
-    dek = await getOrCreateDek(deps, actor);
-    const enc = async (v: string | null, f: HealthField) => (v === null ? null : encryptField(dek!, v, fieldAad(actor, f)));
-    await deps.db.write(
-      actor,
-      await enc(notes as string | null, 'injury_notes'),
-      await enc(screen as string | null, 'health_screen'),
-      await enc(category as string | null, 'injury_category'),
-    );
+    dek = await getOrCreateDek(deps, actor);   // consent + onboarding are decided in SQL here
+    const out: HealthCipherWrite = {};
+    for (const f of Object.keys(plain) as (keyof HealthCipherWrite)[]) {
+      const v = plain[f] as string | null;
+      out[f] = v === null ? null : await encryptField(dek, v, fieldAad(actor, f));
+    }
+    await deps.db.write(actor, out);   // SQL refuses weight_goal for 16-17 ('forbidden')
     return ok({ saved: true });
   } catch (e) {
     return mapDbError(e);
@@ -98,6 +145,8 @@ export async function handleHealthRead(deps: HealthDeps, actor: string, target: 
         injury_notes: await dec(row.injury_notes_ct, 'injury_notes'),
         health_screen: await dec(row.health_screen_ct, 'health_screen'),
         injury_category: await dec(row.injury_category_ct, 'injury_category'),
+        // Own record only: a coach never receives the body-weight goal.
+        ...(t === actor ? { weight_goal: await dec(row.weight_goal_ct, 'weight_goal') } : {}),
       },
     });
   } catch (e) {
