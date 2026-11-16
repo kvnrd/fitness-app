@@ -31,7 +31,8 @@
       "expo-video",
       "expo-secure-store",
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./modules/store-age-signal/app.plugin.js"
     ]
   }
 }

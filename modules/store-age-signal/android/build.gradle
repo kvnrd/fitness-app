@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.storeagesignal'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.storeagesignal"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // https://developer.android.com/google/play/age-signals/use-age-signals-api
+  implementation 'com.google.android.play:age-signals:0.0.4'
+}

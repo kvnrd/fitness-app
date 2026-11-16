@@ -1,0 +1,7 @@
+{
+  "name": "store-age-signal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apple Declared Age Range and Google Play Age Signals, bounds only",
+  "main": "src/index.ts"
+}

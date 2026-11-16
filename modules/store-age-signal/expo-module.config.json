@@ -1,0 +1,5 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["StoreAgeSignalModule"] },
+  "android": { "modules": ["expo.modules.storeagesignal.StoreAgeSignalModule"] }
+}
