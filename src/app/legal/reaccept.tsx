@@ -6,7 +6,8 @@ import { GENERIC_FAILURE } from '../../onboarding/copy';
 import { useSession } from '../../auth/SessionProvider';
 
 export default function ReacceptTermsRoute() {
-  const { refreshRole } = useSession();
+  const { refreshRole, onboarding } = useSession();
+  const waitingForParent = !!onboarding?.is_minor;
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -31,9 +32,11 @@ export default function ReacceptTermsRoute() {
       checked={checked}
       onChecked={setChecked}
       onOpenTerms={() => router.push('/legal/terms')}
+      onOpenPrivacy={() => router.push('/settings/privacy')}
       onAccept={() => void onAccept()}
       busy={busy}
       message={message}
+      waitingForParent={waitingForParent}
     />
   );
 }

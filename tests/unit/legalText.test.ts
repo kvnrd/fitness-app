@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { sha256Hex, sha256HexPure } from '../../src/legal/hash.ts';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_REASK_BODY, HEALTH_REASK_TITLE, HEALTH_TEXT_WITH_AI, INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_TITLE, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, TERMS, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_REASK_BODY, HEALTH_REASK_BODY_TEEN, HEALTH_REASK_TITLE, HEALTH_REASK_WAITING, HEALTH_TEXT_WITH_AI, INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_NOTE, INVITE_SENT_TITLE, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, PRIVACY_SETTINGS_INTRO, TERMS, TERMS_CHECKBOX_TEXT, TERMS_REACCEPT_SUB, TERMS_REACCEPT_WAITING, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
   adultRiskCard, legalTexts, parentAiText, parentAttestationText, parentCoachText, parentRiskCard, RISK_BODY_RISKS,
 } from '../../src/legal/text.ts';
 
@@ -112,8 +112,26 @@ test('invite-sent copy does not claim the email was already sent', () => {
   assert.ok(!/we sent a link/i.test(INVITE_SENT_TITLE));
 });
 
-test('12-month health re-ask copy says the consent does not expire', () => {
+test('12-month health re-ask copy and invite-sent note are Counsel verbatim', () => {
   assert.equal(HEALTH_REASK_TITLE, 'Confirm Health data');
-  assert.match(HEALTH_REASK_BODY, /12 months/);
-  assert.match(HEALTH_REASK_BODY, /does not turn off on its own/);
+  assert.equal(
+    HEALTH_REASK_BODY,
+    "It's been 12 months since you turned Health data on. It stays on unless you turn it off. Please check the details below and confirm you still want it on. If you turn it off, AI planning stops and we delete your health data within 30 days. Free logging stays.",
+  );
+  assert.equal(
+    HEALTH_REASK_BODY_TEEN,
+    "It's been 12 months since you turned Health data on. Please check the details below and confirm you still want it on. Your parent will be asked too.",
+  );
+  assert.equal(HEALTH_REASK_WAITING, 'Waiting for your parent to confirm Health data. Nothing changes until then.');
+  assert.equal(
+    INVITE_SENT_NOTE,
+    "Your account stays limited until they accept: no purchases, and no workout or health data yet. If they don't link within 14 days of when you create your account, we'll delete your account and their email address. We'll remind you on day 3 and day 7.",
+  );
+});
+
+test('Terms checkbox, re-accept sub, and Settings intro are Counsel verbatim', () => {
+  assert.equal(TERMS_CHECKBOX_TEXT, "I agree to the Terms of Service, and I've read the Privacy Policy.");
+  assert.equal(TERMS_REACCEPT_SUB, "We've updated our Terms. Please read and accept them to keep using Fitness App.");
+  assert.equal(TERMS_REACCEPT_WAITING, 'Waiting for your parent to review the updated Terms.');
+  assert.equal(PRIVACY_SETTINGS_INTRO, 'Turn Health data, AI planning, and coach sharing on or off here. Each one is a separate choice.');
 });

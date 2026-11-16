@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   ADULT_QUIZ_GOALS,
+  QUIZ_PRIVACY,
   TEEN_QUIZ_GOALS,
   emptyQuiz,
   mapEquipment,
@@ -54,4 +55,12 @@ test('up to two goals; equipment maps to schema enums; complete quiz builds a re
   assert.equal(req.daysPerWeek, 4);
   assert.equal(req.sessionMinutes, 50);
   assert.equal(req.experience, 'intermediate');
+});
+
+
+test('quiz privacy line includes training days and session length', () => {
+  assert.equal(
+    QUIZ_PRIVACY,
+    'Anthropic, our AI provider, receives only your goals, experience, equipment, training days and session length, age range, and an injury category, never your name, email, photos, location, or injury notes. The category is used only to avoid or swap exercises, not to build a rehab or treatment plan.',
+  );
 });

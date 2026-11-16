@@ -5,6 +5,7 @@ import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
+import { NOTIFICATIONS_LOCK_SCREEN_NOTE } from '../../legal/text';
 
 export type NotificationPrefs = {
   workoutReminders: boolean;
@@ -45,10 +46,12 @@ export function NotificationsSettingsScreen({
   prefs,
   onChange,
   onBack,
+  isMinor = false,
 }: {
   prefs: NotificationPrefs;
   onChange: (next: NotificationPrefs) => void;
   onBack?: () => void;
+  isMinor?: boolean;
 }) {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
@@ -84,6 +87,11 @@ export function NotificationsSettingsScreen({
             onValue={(v) => onChange({ ...prefs, messages: v })}
           />
         </View>
+        {isMinor ? (
+          <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 20 }}>
+            {NOTIFICATIONS_LOCK_SCREEN_NOTE}
+          </Text>
+        ) : null}
       </ScrollView>
     </ScreenBackground>
   );

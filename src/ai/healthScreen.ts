@@ -2,7 +2,7 @@
  * Health-screen questions and clearance copy. Our own plain-language draft, never labeled PAR-Q+.
  * [COUNSEL] / [ATTORNEY] — legal/phase4-review.md. Parent wording inserts the teen's first name.
  */
-export const HEALTH_SCREEN_VERSION = 'health-screen-2026-11-16-draft';
+export const HEALTH_SCREEN_VERSION = 'health-screen-2026-11-16-reword-draft';
 export const CLEARANCE_VERSION = 'health-clearance-2026-11-16-draft';
 
 export const HEALTH_SCREEN_TITLE = 'Health screen';
@@ -17,13 +17,13 @@ export const parentHealthScreenHint = (teenName: string) =>
   `If any answer is yes, we ask you to get doctor clearance before ${teenName} starts an AI plan.`;
 
 const ADULT_QUESTIONS = [
-  'Has a doctor ever said you have a heart condition or high blood pressure?',
-  'Do you get chest pain at rest, during daily activities, or when you exercise?',
-  'In the last 12 months, have you lost your balance because of dizziness, or have you lost consciousness?',
-  'Have you been diagnosed with another long-term medical condition?',
-  'Are you taking prescribed medication for a long-term condition?',
-  'Do you have a bone, joint, or soft-tissue problem that could be made worse by exercise?',
-  'Has a doctor ever said you should only exercise under medical supervision?',
+  'Has a doctor told you that you have heart disease or high blood pressure?',
+  'Does your chest hurt, feel tight, or feel pressure while you rest, go about your day, or work out?',
+  "In the past year, have you fainted, or felt so dizzy that you couldn't stay steady on your feet?",
+  'Do you have any other ongoing health condition that a doctor has diagnosed?',
+  'Do you take prescription medicine for an ongoing health condition?',
+  'Is there a problem with a bone, joint, muscle, or tendon that training could make worse?',
+  'Has a doctor told you that you need medical supervision when you exercise?',
 ] as const;
 
 export const HEALTH_QUESTION_COUNT = ADULT_QUESTIONS.length;
@@ -32,13 +32,13 @@ export const HEALTH_QUESTION_COUNT = ADULT_QUESTIONS.length;
 export function healthQuestions(teenName?: string): string[] {
   if (!teenName) return [...ADULT_QUESTIONS];
   return [
-    `Has a doctor ever said ${teenName} has a heart condition or high blood pressure?`,
-    `Does ${teenName} get chest pain at rest, during daily activities, or when exercising?`,
-    `In the last 12 months, has ${teenName} lost balance because of dizziness, or lost consciousness?`,
-    `Has ${teenName} been diagnosed with another long-term medical condition?`,
-    `Is ${teenName} taking prescribed medication for a long-term condition?`,
-    `Does ${teenName} have a bone, joint, or soft-tissue problem that could be made worse by exercise?`,
-    `Has a doctor ever said ${teenName} should only exercise under medical supervision?`,
+    `Has a doctor told ${teenName} that ${teenName} has heart disease or high blood pressure?`,
+    `Does ${teenName}'s chest hurt, feel tight, or feel pressure while resting, going about the day, or working out?`,
+    `In the past year, has ${teenName} fainted, or felt so dizzy that ${teenName} couldn't stay steady?`,
+    `Does ${teenName} have any other ongoing health condition that a doctor has diagnosed?`,
+    `Does ${teenName} take prescription medicine for an ongoing health condition?`,
+    `Is there a problem with ${teenName}'s bone, joint, muscle, or tendon that training could make worse?`,
+    `Has a doctor told ${teenName} that ${teenName} needs medical supervision when exercising?`,
   ];
 }
 
@@ -86,17 +86,15 @@ export function clearanceBody(teenName?: string): string {
 export const HEALTH_SWITCH_TITLE = 'Health data is off';
 export const HEALTH_SWITCH_SUB = 'An AI plan needs it on.';
 export const HEALTH_SWITCH_BODY =
-  'An AI plan uses answers from the health screen, and those answers are health data. ' +
-  'To build an AI plan, turn Health data on. If you leave it off, you can still use free logging, or train with a coach.';
-export const HEALTH_SWITCH_CTA = 'Turn on Health data';
+  'An AI plan checks your health-screen answers and uses any injury you add to avoid or swap exercises. Those answers are health data, so Health data has to be on first. From your health info, Anthropic, our AI provider, receives only an injury category, never your notes, measurements, name, or email. If you leave it off, you can still use free logging, or train with a coach.';
+export const HEALTH_SWITCH_CTA = 'Review Health data';
 export const HEALTH_SWITCH_DISMISS = 'Not now';
 
-export const parentHealthSwitchSub = 'An AI plan needs it on — from both of you.';
+export const parentHealthSwitchSub = 'An AI plan needs it on, from you and your parent.';
 
-export function parentHealthSwitchBody(teenName: string): string {
+/** Shown to the teen. The body no longer interpolates a name (Counsel phase4-build-answers B). */
+export function parentHealthSwitchBody(_teenName?: string): string {
   return (
-    `An AI plan uses answers from the health screen, and those answers are health data. ` +
-    `You and your parent both need to turn Health data on before we can build one for ${teenName}. ` +
-    `If you leave it off, ${teenName} can still use free logging, or train with a coach.`
+    'An AI plan checks your health-screen answers and uses any injury you add to avoid or swap exercises. Those answers are health data, so you and your parent both need to turn Health data on first. From your health info, Anthropic, our AI provider, receives only an injury category, never your notes, measurements, name, or email. If you leave it off, you can still use free logging, or train with a coach.'
   );
 }

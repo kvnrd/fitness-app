@@ -121,8 +121,13 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   }, [isConfigured, inApp, user?.id]);
 
   const readyWithTerms = ready && termsOk !== null;
-  const needsTerms = inApp && termsOk === false;
-  const inAppOk = inApp && termsOk === true;
+  const isMinor = !!onboarding?.is_minor;
+  // Adults are gated from general app use until they re-accept, but Settings › Privacy,
+  // export, and deletion stay reachable (TDPSA §541.054; MHMDA). 16–17 are not locked:
+  // the parent re-accepts, and the teen can keep using the app.
+  const needsTerms = inApp && termsOk === false && !isMinor;
+  const termsWaiting = inApp && termsOk === false && isMinor;
+  const inAppOk = inApp && (termsOk === true || isMinor);
 
   useEffect(() => {
     if (readyWithTerms) SplashScreen.hideAsync().catch(() => {});
@@ -171,16 +176,18 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={needsPrivacy || inApp}>
           <Stack.Screen name="privacy-safety" options={needsPrivacy ? { gestureEnabled: false } : undefined} />
         </Stack.Protected>
-        <Stack.Protected guard={needsTerms}>
+        <Stack.Protected guard={needsTerms || termsWaiting}>
           <Stack.Screen name="legal/reaccept" />
+        </Stack.Protected>
+        <Stack.Protected guard={inApp}>
+          <Stack.Screen name="settings/privacy" />
+          <Stack.Screen name="settings/health-reask" />
         </Stack.Protected>
         <Stack.Protected guard={inAppOk}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workout/[day]" />
           <Stack.Screen name="ai" />
-          <Stack.Screen name="settings/privacy" />
           <Stack.Screen name="settings/notifications" />
-          <Stack.Screen name="settings/health-reask" />
         </Stack.Protected>
         <Stack.Protected guard={showConsent}>
           <Stack.Screen name="consent" />

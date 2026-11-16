@@ -50,6 +50,8 @@ const PROTOTYPE_STATE: OnboardingState = {
   can_train: true,
   parent_risk_done: null,
   health_reask_due: false,
+  health_reask_self_due: false,
+  health_reask_parent_due: false,
   health_screen_status: 'ok',
   can_ai_plan: true,
 };

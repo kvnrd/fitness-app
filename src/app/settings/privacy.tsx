@@ -3,7 +3,18 @@ import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { loadConsents } from '../../auth/consents';
 import { useSession } from '../../auth/SessionProvider';
+import {
+  PRIVACY_COACHING_LABEL,
+  PRIVACY_DELETE_ACCOUNT_LABEL,
+  PRIVACY_DELETE_HEALTH_LABEL,
+  PRIVACY_DOWNLOAD_LABEL,
+  PRIVACY_RIGHTS_PLACEHOLDER_NOTE,
+  PRIVACY_RIGHTS_ROW_LABEL,
+} from '../../legal/text';
+import { requestDataExport } from '../../settings/dataExport';
 import { PrivacySettingsScreen } from '../../settings/screens/PrivacySettings';
+
+const placeholder = (title: string) => Alert.alert(title, PRIVACY_RIGHTS_PLACEHOLDER_NOTE);
 
 export default function PrivacySettingsRoute() {
   const { user, onboarding } = useSession();
@@ -33,8 +44,15 @@ export default function PrivacySettingsRoute() {
       onPrivacyPolicy={() => router.push('/legal/privacy')}
       onHealthPolicy={() => router.push('/legal/health-privacy')}
       onTerms={() => router.push('/legal/terms')}
-      onExport={() => Alert.alert('Download my data', 'Data export will be available before launch.')}
-      onDelete={() => Alert.alert('Delete my data', 'Account deletion will be available before launch.')}
+      onRights={() => placeholder(PRIVACY_RIGHTS_ROW_LABEL)}
+      onExport={() => {
+        void requestDataExport().then((ok) =>
+          Alert.alert(PRIVACY_DOWNLOAD_LABEL, ok ? 'We recorded your download request. The export packer is not built yet.' : PRIVACY_RIGHTS_PLACEHOLDER_NOTE),
+        );
+      }}
+      onDeleteHealth={() => placeholder(PRIVACY_DELETE_HEALTH_LABEL)}
+      onDeleteAccount={() => placeholder(PRIVACY_DELETE_ACCOUNT_LABEL)}
+      onCoaching={() => placeholder(PRIVACY_COACHING_LABEL)}
     />
   );
 }

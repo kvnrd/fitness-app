@@ -5,6 +5,23 @@ import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
+import {
+  HEALTH_POLICY_LINK_LABEL,
+  PRIVACY_COACHING_LABEL,
+  PRIVACY_COACHING_SUB,
+  PRIVACY_DELETE_ACCOUNT_LABEL,
+  PRIVACY_DELETE_ACCOUNT_SUB,
+  PRIVACY_DELETE_HEALTH_LABEL,
+  PRIVACY_DELETE_HEALTH_SUB,
+  PRIVACY_DOWNLOAD_LABEL,
+  PRIVACY_DOWNLOAD_SUB,
+  PRIVACY_RIGHTS_PLACEHOLDER_NOTE,
+  PRIVACY_RIGHTS_ROW_LABEL,
+  PRIVACY_RIGHTS_ROW_SUB,
+  PRIVACY_SETTINGS_INTRO,
+  PRIVACY_SETTINGS_REASK_BODY,
+  PRIVACY_SETTINGS_REASK_TITLE,
+} from '../../legal/text';
 
 function Row({
   label,
@@ -59,8 +76,11 @@ export function PrivacySettingsScreen({
   onPrivacyPolicy,
   onHealthPolicy,
   onTerms,
+  onRights,
   onExport,
-  onDelete,
+  onDeleteHealth,
+  onDeleteAccount,
+  onCoaching,
 }: {
   healthOn: boolean;
   aiOn: boolean;
@@ -72,8 +92,11 @@ export function PrivacySettingsScreen({
   onPrivacyPolicy: () => void;
   onHealthPolicy: () => void;
   onTerms: () => void;
+  onRights?: () => void;
   onExport: () => void;
-  onDelete: () => void;
+  onDeleteHealth?: () => void;
+  onDeleteAccount: () => void;
+  onCoaching?: () => void;
 }) {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
@@ -88,7 +111,7 @@ export function PrivacySettingsScreen({
           Privacy
         </Text>
         <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 24 }}>
-          Turn Health data, AI planning, or coach sharing off here. These choices are yours; there is no “accept all.”
+          {PRIVACY_SETTINGS_INTRO}
         </Text>
 
         {reaskDue ? (
@@ -99,10 +122,10 @@ export function PrivacySettingsScreen({
             style={{ borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSunken, padding: 16, gap: 8 }}
           >
             <Text color={colors.text} style={{ fontFamily: fonts.bodySemi, fontSize: 16, lineHeight: 24 }}>
-              Confirm Health data
+              {PRIVACY_SETTINGS_REASK_TITLE}
             </Text>
             <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 20 }}>
-              It’s been 12 months. Health data does not turn off on its own. Confirm it’s still okay, or turn it off.
+              {PRIVACY_SETTINGS_REASK_BODY}
             </Text>
           </Pressable>
         ) : null}
@@ -120,8 +143,20 @@ export function PrivacySettingsScreen({
           <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
             Your rights
           </Text>
-          <Row label="Download my data" sub="We’ll email a copy. This will be available before launch." onPress={onExport} />
-          <Row label="Delete my data" sub="Account deletion will be available before launch." danger onPress={onDelete} />
+          <Text color={colors.textMuted} style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 18, paddingTop: 8 }}>
+            {PRIVACY_RIGHTS_PLACEHOLDER_NOTE}
+          </Text>
+          <Row label={PRIVACY_RIGHTS_ROW_LABEL} sub={PRIVACY_RIGHTS_ROW_SUB} onPress={onRights} />
+          <Row label={PRIVACY_DOWNLOAD_LABEL} sub={PRIVACY_DOWNLOAD_SUB} onPress={onExport} />
+          <Row label={PRIVACY_DELETE_HEALTH_LABEL} sub={PRIVACY_DELETE_HEALTH_SUB} danger={false} onPress={onDeleteHealth} />
+          <Row label={PRIVACY_DELETE_ACCOUNT_LABEL} sub={PRIVACY_DELETE_ACCOUNT_SUB} danger onPress={onDeleteAccount} />
+        </View>
+
+        <View>
+          <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
+            Coaching
+          </Text>
+          <Row label={PRIVACY_COACHING_LABEL} sub={PRIVACY_COACHING_SUB} onPress={onCoaching} />
         </View>
 
         <View>
@@ -129,7 +164,7 @@ export function PrivacySettingsScreen({
             Documents
           </Text>
           <Row label="Privacy Policy" onPress={onPrivacyPolicy} />
-          <Row label="Health data privacy" onPress={onHealthPolicy} />
+          <Row label={HEALTH_POLICY_LINK_LABEL} onPress={onHealthPolicy} />
           <Row label="Terms of Service" onPress={onTerms} />
         </View>
       </ScrollView>

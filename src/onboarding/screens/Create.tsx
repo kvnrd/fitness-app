@@ -113,8 +113,8 @@ export function CreateScreen(p: CreateProps) {
       <Checkbox checked={p.terms} onChange={p.onTerms} label={TERMS_CHECKBOX_TEXT}>
         <Text variant="small" color={colors.textSecondary} style={{ fontFamily: fonts.bodyMedium }}>
           {'I agree to the '}
-          <InlineLink onPress={p.onOpenTerms}>Terms</InlineLink>
-          {' and '}
+          <InlineLink onPress={p.onOpenTerms}>Terms of Service</InlineLink>
+          {", and I've read the "}
           <InlineLink onPress={p.onOpenPrivacy}>Privacy Policy</InlineLink>
           {'.'}
         </Text>

@@ -7,7 +7,7 @@ import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { presetGym, toggleItem } from '../equipment';
-import { initPc, setAi as pcSetAi, setAttest, setCoach, setHealth as pcSetHealth, setRisk as pcSetRisk } from '../parentConsent';
+import { initPc, setAi as pcSetAi, setAttest, setCoach, setHealth as pcSetHealth, setRisk as pcSetRisk, setTerms } from '../parentConsent';
 import { initPs, setAi as psSetAi, setHealth as psSetHealth, setRisk as psSetRisk } from '../privacySafety';
 import { ParentConsentScreen } from '../screens/ParentConsent';
 import { PrivacySafetyScreen } from '../screens/PrivacySafety';
@@ -178,10 +178,10 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   // ───── Parent consent ─────
   'parent-consent': () => <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={initPc()} onChange={noop} onConfirm={noop} />,
   'parent-consent-ready': () => (
-    <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetRisk(setAttest(initPc(), true), true)} onChange={noop} onConfirm={noop} />
+    <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetRisk(setTerms(setAttest(initPc(), true), true), true)} onChange={noop} onConfirm={noop} />
   ),
   'parent-consent-options': () => (
-    <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetRisk(setAttest(setCoach(pcSetAi(pcSetHealth(initPc(), true), true), true), true), true)} onChange={noop} onConfirm={noop} />
+    <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetRisk(setTerms(setAttest(setCoach(pcSetAi(pcSetHealth(initPc(), true), true), true), true), true), true)} onChange={noop} onConfirm={noop} />
   ),
   'parent-consent-needs-health': () => <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={pcSetAi(initPc(), true)} onChange={noop} onConfirm={noop} />,
   // ───── Phase 4: health screen, quiz, plan (ids keep historical Paper stems; the UI never says PAR-Q+) ─────
@@ -190,8 +190,8 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'parq-clearance': () => <HealthClearanceScreen confirmed={false} onConfirmed={noop} onContinue={noop} onBack={noop} />,
   'parq-parent': () => <HealthScreen answers={allNo()} teenName="Alex" onAnswer={noop} onContinue={noop} onBack={noop} />,
   'parq-parent-clearance': () => <HealthClearanceScreen confirmed={false} teenName="Alex" onConfirmed={noop} onContinue={noop} onBack={noop} />,
-  'health-switch': () => <HealthSwitchScreen onTurnOn={noop} onNotNow={noop} onBack={noop} />,
-  'health-switch-teen': () => <HealthSwitchScreen teenName="Alex" onTurnOn={noop} onNotNow={noop} onBack={noop} />,
+  'health-switch': () => <HealthSwitchScreen onReview={noop} onNotNow={noop} onBack={noop} />,
+  'health-switch-teen': () => <HealthSwitchScreen teenName="Alex" onReview={noop} onNotNow={noop} onBack={noop} />,
   quiz: () => <AiQuizScreen state={{ ...adultQuiz }} teen={false} onChange={noop} onGenerate={noop} onBack={noop} />,
   'quiz-teen': () => <AiQuizScreen state={{ ...teenQuiz }} teen onChange={noop} onGenerate={noop} onBack={noop} />,
   generating: () => <AiGeneratingScreen injuryLabel="Knee" onCancel={noop} />,
@@ -200,11 +200,13 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'home-ai': () => <HomeAiScreen hasPlan notice="footer" />,
   'home-ai-teen': () => <HomeAiScreen teen hasPlan showWeight={false} notice="footer" />,
   'train-ai': () => <TrainAiScreen notice="footer" />,
-  'profile-teen': () => <ProfileScreen showWeight weightLabel="142 lb" notice="footer" />,
+  'profile': () => <ProfileScreen name="Jordan" roleLabel="Athlete" notice="footer" />,
+  'profile-teen': () => <ProfileScreen teen name="Alex" roleLabel="Athlete" showWeight weightLabel="142 lb" notice="footer" />,
   // ───── Legal: Terms v0.1-draft ─────
   terms: () => <TermsDocumentScreen />,
   'terms-reaccept': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
   'terms-reaccept-ready': () => <ReacceptTermsScreen checked onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
+  'terms-reaccept-waiting': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} waitingForParent />,
   // ───── Settings › Privacy, Notifications, 12-month health re-ask ─────
   'settings-privacy': () => (
     <PrivacySettingsScreen
@@ -216,7 +218,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
       onHealthPolicy={noop}
       onTerms={noop}
       onExport={noop}
-      onDelete={noop}
+      onDeleteAccount={noop}
     />
   ),
   'settings-privacy-reask': () => (
@@ -231,13 +233,18 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
       onHealthPolicy={noop}
       onTerms={noop}
       onExport={noop}
-      onDelete={noop}
+      onDeleteAccount={noop}
     />
   ),
   'settings-notifications': () => (
     <NotificationsSettingsScreen prefs={{ workoutReminders: true, planReady: true, messages: false }} onChange={noop} />
   ),
+  'settings-notifications-teen': () => (
+    <NotificationsSettingsScreen prefs={{ workoutReminders: true, planReady: true, messages: true }} onChange={noop} isMinor />
+  ),
   'health-reask': () => <HealthReaskScreen onConfirm={noop} onTurnOff={noop} onBack={noop} />,
+  'health-reask-teen': () => <HealthReaskScreen variant="teen" onConfirm={noop} onTurnOff={noop} onBack={noop} />,
+  'health-reask-waiting': () => <HealthReaskScreen variant="waiting_parent" onConfirm={noop} onTurnOff={noop} onBack={noop} />,
   // ───── Plan notice ─────
   'plan-notice': () => <PlanNoticePreview />,
 };

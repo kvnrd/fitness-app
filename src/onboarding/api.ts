@@ -21,6 +21,10 @@ export type OnboardingState = {
   /** null for adults. */
   parent_risk_done: boolean | null;
   health_reask_due: boolean;
+  /** Own health-data grant is due for the 12-month re-ask. */
+  health_reask_self_due: boolean;
+  /** Parent health-data grant is due; the teen waits, nothing pauses. */
+  health_reask_parent_due: boolean;
   /** Derived AI-eligibility gate. null if the server omitted it. */
   health_screen_status: HealthScreenStatus | null;
   can_ai_plan: boolean;
@@ -46,6 +50,8 @@ export async function myOnboardingState(): Promise<OnboardingState | null> {
       can_train: bool(d.can_train),
       parent_risk_done: typeof d.parent_risk_done === 'boolean' ? d.parent_risk_done : null,
       health_reask_due: bool(d.health_reask_due),
+      health_reask_self_due: bool(d.health_reask_self_due),
+      health_reask_parent_due: bool(d.health_reask_parent_due),
       health_screen_status:
         hs === 'missing' || hs === 'due' || hs === 'clearance_needed' || hs === 'ok' ? hs : null,
       can_ai_plan: bool(d.can_ai_plan),

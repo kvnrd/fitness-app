@@ -1,15 +1,26 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { Alert } from 'react-native';
 import { loadConsents } from '../../auth/consents';
 import { useSession } from '../../auth/SessionProvider';
-import { HEALTH_POLICY, legalTextHash, legalTexts } from '../../legal/text';
+import {
+  HEALTH_POLICY,
+  HEALTH_REASK_DOWNLOAD_FIRST,
+  HEALTH_REASK_TURN_OFF,
+  HEALTH_REASK_TURN_OFF_TITLE,
+  HEALTH_REASK_TURN_OFF_WARN,
+  legalTextHash,
+  legalTexts,
+} from '../../legal/text';
 import { submitPrivacySafety } from '../../onboarding/api';
 import { GENERIC_FAILURE } from '../../onboarding/copy';
 import { HealthReaskScreen } from '../../settings/screens/HealthReask';
+import { requestDataExport } from '../../settings/dataExport';
 
 export default function HealthReaskRoute() {
   const { user, onboarding, refreshRole } = useSession();
   const teen = !!onboarding?.is_minor;
+  const waitingForParent = teen && !!onboarding?.health_reask_parent_due && !onboarding?.health_reask_self_due;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -48,10 +59,30 @@ export default function HealthReaskRoute() {
     else router.replace('/settings/privacy');
   }
 
+  function onTurnOff() {
+    Alert.alert(HEALTH_REASK_TURN_OFF_TITLE, HEALTH_REASK_TURN_OFF_WARN, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: HEALTH_REASK_DOWNLOAD_FIRST,
+        onPress: () => {
+          void requestDataExport().then((ok) => {
+            setMessage(
+              ok
+                ? 'We recorded your download request. You can still turn Health data off below.'
+                : 'Download is a placeholder until the export packer ships. You can still turn Health data off.',
+            );
+          });
+        },
+      },
+      { text: HEALTH_REASK_TURN_OFF, style: 'destructive', onPress: () => void submit(false, false) },
+    ]);
+  }
+
   return (
     <HealthReaskScreen
+      variant={waitingForParent ? 'waiting_parent' : teen ? 'teen' : 'adult'}
       onConfirm={() => void submit(true, true)}
-      onTurnOff={() => void submit(false, false)}
+      onTurnOff={onTurnOff}
       onBack={() => router.back()}
       busy={busy}
       message={message}

@@ -77,9 +77,11 @@ export function ProfileScreen({
   onWeight,
   onSignOut,
   onDelete,
+  teen = false,
   onPrivacy,
   onNotifications,
 }: {
+  teen?: boolean;
   name?: string;
   roleLabel?: string;
   showWeight?: boolean;
@@ -135,7 +137,7 @@ export function ProfileScreen({
             <Row label="Distance" value="mi" sub="Pace, speed and distance in Progress. Rowing splits stay per 500 m." />
           </Group>
           <Group title="Privacy & sharing">
-            <Row label="Share workouts and PRs" sub="A coach never sees your health-screen answers." value="On" onPress={onPrivacy} />
+            <Row label="Share workouts and PRs" sub={teen ? 'A coach never sees your health-screen answers.' : 'A coach sees your health-screen answers only if you choose to share them.'} value="On" onPress={onPrivacy} />
           </Group>
           <Group title="App">
             <Row label="Appearance" value="Champagne · System" />

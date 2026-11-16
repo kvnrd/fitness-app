@@ -11,7 +11,7 @@ function keyFor(userId: string | undefined): string {
 }
 
 export default function NotificationsSettingsRoute() {
-  const { user } = useSession();
+  const { user, onboarding } = useSession();
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULTS);
 
   useEffect(() => {
@@ -39,5 +39,7 @@ export default function NotificationsSettingsRoute() {
     void AsyncStorage.setItem(keyFor(user?.id), JSON.stringify(next)).catch(() => {});
   }
 
-  return <NotificationsSettingsScreen prefs={prefs} onChange={onChange} onBack={() => router.back()} />;
+  return (
+    <NotificationsSettingsScreen prefs={prefs} onChange={onChange} onBack={() => router.back()} isMinor={!!onboarding?.is_minor} />
+  );
 }

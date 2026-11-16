@@ -17,7 +17,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 
 export function HealthSwitchScreen({
   teenName,
-  onTurnOn,
+  onReview,
   onNotNow,
   onBack,
   busy,
@@ -25,7 +25,7 @@ export function HealthSwitchScreen({
 }: {
   /** Set when the copy should name the teen (parent-together or the teen's own gate). */
   teenName?: string;
-  onTurnOn: () => void;
+  onReview: () => void;
   onNotNow: () => void;
   onBack?: () => void;
   busy?: boolean;
@@ -38,7 +38,7 @@ export function HealthSwitchScreen({
       onBack={onBack}
       footer={
         <>
-          <PrimaryCta label={HEALTH_SWITCH_CTA} onPress={onTurnOn} busy={busy} />
+          <PrimaryCta label={HEALTH_SWITCH_CTA} onPress={onReview} busy={busy} />
           <SecondaryButton label={HEALTH_SWITCH_DISMISS} onPress={onNotNow} />
           {message ? (
             <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyMedium, fontSize: 12, lineHeight: 16, textAlign: 'center' }}>

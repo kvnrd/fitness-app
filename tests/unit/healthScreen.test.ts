@@ -12,6 +12,8 @@ import {
   parentClearanceAck,
   parentHealthScreenHint,
   parentHealthSwitchBody,
+  HEALTH_SWITCH_BODY,
+  HEALTH_SWITCH_CTA,
   serializeHealthScreen,
   setHealthAnswer,
 } from '../../src/ai/healthScreen.ts';
@@ -22,6 +24,15 @@ test('seven plain-language questions; never labeled PAR-Q+', () => {
   assert.equal(HEALTH_SCREEN_TITLE, 'Health screen');
   assert.ok(!qs.join(' ').toLowerCase().includes('par-q'));
   assert.ok(!HEALTH_SCREEN_TITLE.toLowerCase().includes('par-q'));
+  assert.deepEqual(qs, [
+    'Has a doctor told you that you have heart disease or high blood pressure?',
+    'Does your chest hurt, feel tight, or feel pressure while you rest, go about your day, or work out?',
+    "In the past year, have you fainted, or felt so dizzy that you couldn't stay steady on your feet?",
+    'Do you have any other ongoing health condition that a doctor has diagnosed?',
+    'Do you take prescription medicine for an ongoing health condition?',
+    'Is there a problem with a bone, joint, muscle, or tendon that training could make worse?',
+    'Has a doctor told you that you need medical supervision when you exercise?',
+  ]);
 });
 
 test('parent wording uses the teen first name and is about the teen', () => {
@@ -31,7 +42,8 @@ test('parent wording uses the teen first name and is about the teen', () => {
   assert.ok(qs.every((q) => !/\byou\b/i.test(q) || q.includes('Alex')));
   assert.match(parentHealthScreenHint('Alex'), /before Alex starts an AI plan/);
   assert.equal(parentClearanceAck('Alex'), 'I confirm a doctor has cleared Alex to train.');
-  assert.match(parentHealthSwitchBody('Alex'), /build one for Alex/);
+  assert.match(parentHealthSwitchBody('Alex'), /you and your parent both need to turn Health data on first/);
+  assert.ok(!parentHealthSwitchBody('Alex').includes('Alex'));
   assert.match(clearanceBody('Alex'), /cleared Alex to train/);
   assert.equal(CLEARANCE_ACK, 'I confirm a doctor has cleared me to train.');
 });
@@ -50,4 +62,10 @@ test('continue requires every question; any yes routes to clearance', () => {
   assert.equal(payload.answers[5], true);
   assert.equal(payload.answers[0], false);
   assert.throws(() => serializeHealthScreen(emptyHealthAnswers()));
+});
+
+test('health-switch CTA is Review Health data and does not silently grant', () => {
+  assert.equal(HEALTH_SWITCH_CTA, 'Review Health data');
+  assert.match(HEALTH_SWITCH_BODY, /Health data has to be on first/);
+  assert.match(HEALTH_SWITCH_BODY, /injury category/);
 });
