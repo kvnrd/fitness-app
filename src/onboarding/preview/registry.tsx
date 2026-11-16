@@ -199,7 +199,10 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   blocked: () => <AiBlockedScreen onGenerateAgain={noop} onChangeGoal={noop} />,
   'home-ai': () => <HomeAiScreen hasPlan notice="footer" />,
   'home-ai-teen': () => <HomeAiScreen teen hasPlan showWeight={false} notice="footer" />,
+  'home-ai-paused': () => <HomeAiScreen hasPlan notice="footer" healthScreenPaused />,
+  'home-ai-paused-teen': () => <HomeAiScreen teen hasPlan showWeight={false} notice="footer" healthScreenPaused />,
   'train-ai': () => <TrainAiScreen notice="footer" />,
+  'train-ai-paused': () => <TrainAiScreen notice="footer" healthScreenPaused />,
   'profile': () => <ProfileScreen name="Jordan" roleLabel="Athlete" notice="footer" />,
   'profile-teen': () => <ProfileScreen teen name="Alex" roleLabel="Athlete" showWeight weightLabel="142 lb" notice="footer" />,
   // ───── Legal: Terms v0.1-draft ─────

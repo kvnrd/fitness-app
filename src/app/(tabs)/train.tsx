@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { healthScreenAiPaused } from '../../ai/flow';
 import { useAiPlan } from '../../ai/useAiPlan';
 import { todayKey } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
@@ -11,6 +12,8 @@ import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { AiNotice } from '../../components/AiNotice';
+import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
+import { useSession } from '../../auth/SessionProvider';
 import { space } from '../../theme/tokens';
 
 function plural(n: number, word: string) {
@@ -84,6 +87,8 @@ export default function TrainScreen() {
   const insets = useSafeAreaInsets();
   const { program, locked } = useAppStore();
   const { start, notice, state } = useAiPlan();
+  const { onboarding } = useSession();
+  const teen = !!onboarding?.is_minor;
   const today = todayKey();
   const initials = program.trainer.name
     .split(' ')
@@ -129,6 +134,9 @@ export default function TrainScreen() {
         </View>
       ) : null}
 
+      {state && healthScreenAiPaused(state) ? (
+        <HealthScreenPausedBanner teen={teen} onUpdate={() => router.push('/ai/health')} />
+      ) : null}
       {hasAi && notice === 'banner' ? <AiNotice /> : null}
 
       {!hasAi ? (

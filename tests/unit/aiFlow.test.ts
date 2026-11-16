@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { aiNoticeVariant, nextAiStep, showHomeWeight, showTeenProfileWeight, type AiPlanState } from '../../src/ai/flow.ts';
+import { aiNoticeVariant, healthScreenAiPaused, nextAiStep, showHomeWeight, showTeenProfileWeight, type AiPlanState } from '../../src/ai/flow.ts';
 import { AI_PLAN_NOTICE, AI_PLAN_NOTICE_SHORT } from '../../src/ai/notice.ts';
 
 const base = (): AiPlanState => ({
@@ -41,4 +41,11 @@ test('teen Home hides weight; Profile weight needs both opt-ins and no target', 
   assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: false, hasTarget: false }), false);
   assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: true, hasTarget: true }), false);
   assert.equal(showTeenProfileWeight({ isMinor: false, healthSelf: true, healthParent: true, hasTarget: false }), false);
+});
+
+test('a due health screen pauses AI; a missing screen or a consent re-ask does not use this flag', () => {
+  assert.equal(healthScreenAiPaused({ healthScreenStatus: 'due' }), true);
+  assert.equal(healthScreenAiPaused({ healthScreenStatus: 'ok' }), false);
+  assert.equal(healthScreenAiPaused({ healthScreenStatus: 'missing' }), false);
+  assert.equal(healthScreenAiPaused({ healthScreenStatus: 'clearance_needed' }), false);
 });

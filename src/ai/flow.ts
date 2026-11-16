@@ -68,3 +68,8 @@ export function showHomeWeight(isMinor: boolean): boolean {
 export function showTeenProfileWeight(opts: { isMinor: boolean; healthSelf: boolean; healthParent: boolean; hasTarget: boolean }): boolean {
   return opts.isMinor && opts.healthSelf && opts.healthParent && !opts.hasTarget;
 }
+
+/** The health-screen re-screen being overdue pauses AI only. Consent re-ask never sets this. */
+export function healthScreenAiPaused(s: Pick<AiPlanState, 'healthScreenStatus'>): boolean {
+  return s.healthScreenStatus === 'due';
+}

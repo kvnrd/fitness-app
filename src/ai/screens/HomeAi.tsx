@@ -6,6 +6,7 @@ import { PrimaryCta } from '../../onboarding/ui/PrimaryCta';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TabChrome } from './TabChrome';
+import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 
 export function HomeAiScreen({
   teen = false,
@@ -17,6 +18,7 @@ export function HomeAiScreen({
   onOpenPlan,
   onBuildPlan,
   hasPlan = true,
+  healthScreenPaused = false,
 }: {
   teen?: boolean;
   planTitle?: string;
@@ -27,6 +29,7 @@ export function HomeAiScreen({
   onOpenPlan?: () => void;
   onBuildPlan?: () => void;
   hasPlan?: boolean;
+  healthScreenPaused?: boolean;
 }) {
   const { colors, fonts } = useTheme();
   return (
@@ -34,6 +37,7 @@ export function HomeAiScreen({
       <TabChrome active="home" notice={hasPlan ? notice : null}>
         <View style={{ paddingHorizontal: 24, paddingTop: 8, gap: 20 }}>
           <OnbTitle>Home</OnbTitle>
+          {healthScreenPaused ? <HealthScreenPausedBanner teen={teen} /> : null}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text color={colors.accentInk} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
               {hasPlan ? `AI plan · ${planTitle}` : 'Your plan'}

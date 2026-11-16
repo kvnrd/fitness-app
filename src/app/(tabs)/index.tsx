@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { showHomeWeight } from '../../ai/flow';
+import { healthScreenAiPaused, showHomeWeight } from '../../ai/flow';
 import { useAiPlan } from '../../ai/useAiPlan';
 import { AiNotice } from '../../components/AiNotice';
+import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { Button, Text } from '../../components/ui';
 import { useSession } from '../../auth/SessionProvider';
@@ -29,6 +30,9 @@ export default function HomeScreen() {
         <Text variant="hero" accessibilityRole="header">
           Home
         </Text>
+        {state && healthScreenAiPaused(state) ? (
+          <HealthScreenPausedBanner teen={teen} onUpdate={() => router.push('/ai/health')} />
+        ) : null}
         {hasPlan && notice === 'banner' ? <AiNotice /> : null}
         {showHomeWeight(teen) && !hasPlan ? (
           <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>

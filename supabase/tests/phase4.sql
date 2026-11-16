@@ -489,3 +489,71 @@ select tests.ok('pepper: no raw IP in audit_log metadata',
                   or metadata::text like '%198.51.100%'
                   or metadata::text like '%cf-connecting-ip%'
                   or metadata::text like '%x-forwarded-for%'));
+
+-- ------------------------------------------------------------------ two clocks + parent Terms re-accept
+-- 110: a fresh adult with health + AI + an all-no screen. The consent re-ask must not pause AI.
+-- (91's health was revoked earlier in this file.)
+select tests.logout();
+select tests.ok('clocks: 110 is an adult', (tests.signup3(tests.u(110), tests.dob(30)) ->> 'is_minor') = 'false');
+select tests.login(tests.u(110));
+select public.record_consent('health_data', 'health-v1');
+select public.record_consent('ai_vendor', 'ai-B-v1');
+select tests.eq('clocks: 110 all-no screen is ok', $q$select public.submit_health_screen(false) ->> 'status'$q$, 'ok');
+select tests.logout();
+update public.consents set reask_on = current_date - 1
+ where user_id = tests.u(110) and kind = 'health_data' and grantor = 'self';
+select tests.login(tests.u(110));
+select tests.ok('clocks: consent re-ask due does not pause AI',
+  (public.my_onboarding_state() ->> 'health_reask_self_due') = 'true'
+  and (public.my_onboarding_state() ->> 'health_reask_parent_due') = 'false'
+  and (public.my_onboarding_state() ->> 'health_reask_due') = 'true'
+  and (public.my_onboarding_state() ->> 'can_ai_plan') = 'true'
+  and (public.my_onboarding_state() ->> 'health_screen_status') = 'ok');
+select tests.logout();
+
+-- Only the parent's health grant is due: the teen waits, nothing pauses, AI is unaffected by this clock.
+select tests.logout();
+update public.consents set reask_on = current_date + 30
+ where user_id = tests.u(95) and kind = 'health_data' and grantor = 'self';
+update public.consents set reask_on = current_date - 1
+ where user_id = tests.u(95) and kind = 'health_data' and grantor = 'parent';
+select tests.login(tests.u(95));
+select tests.ok('clocks: only parent re-ask due is waiting, not a self due',
+  (public.my_onboarding_state() ->> 'health_reask_self_due') = 'false'
+  and (public.my_onboarding_state() ->> 'health_reask_parent_due') = 'true'
+  and (public.my_onboarding_state() ->> 'health_reask_due') = 'true');
+select tests.logout();
+
+-- A due health-screen pauses AI only (already enforced by can_ai_plan). 110 still has health consent.
+select tests.logout();
+update public.health_screen_state set reask_on = current_date - 1 where user_id = tests.u(110);
+select tests.login(tests.u(110));
+select tests.ok('clocks: a due health screen pauses AI only',
+  (public.my_onboarding_state() ->> 'health_screen_status') = 'due'
+  and (public.my_onboarding_state() ->> 'can_ai_plan') = 'false');
+select tests.logout();
+update public.health_screen_state set reask_on = current_date + 30 where user_id = tests.u(110);
+
+select tests.login(tests.u(103));
+select tests.raises('terms: a 16–17 cannot re-accept; the parent does',
+  $q$select public.accept_terms('v0.1-draft', tests.h('a'))$q$, 'parent_required%');
+select tests.logout();
+
+select tests.login(tests.u(104));
+select public.accept_terms('v0.1-draft', tests.h('a'));
+select tests.logout();
+select tests.ok('terms: parent re-accept writes a subject row for the linked teen', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(104) and kind = 'terms' and granted and text_hash = tests.h('a')
+     and subject_user_id = tests.u(103) and actor_user_id = tests.u(104)));
+select tests.ok('terms: parent also keeps their own subject-null row', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(104) and kind = 'terms' and granted and text_hash = tests.h('a')
+     and subject_user_id is null));
+select tests.login(tests.u(103));
+select tests.record('terms: the teen''s latest terms is the parent''s subject row',
+  coalesce((public.my_latest_terms() ->> 'hash') = repeat('a', 64), false),
+  (select string_agg(coalesce(e.policy_version,'?') || '@' || e.at::text || '#h=' || coalesce(left(e.text_hash, 8),'null') || '/u=' || left(e.user_id::text, 8) || '/s=' || coalesce(left(e.subject_user_id::text, 8),'nil'), ' | ' order by e.at desc)
+     from public.consent_events e
+    where e.kind = 'terms' and (e.user_id = tests.u(103) or e.subject_user_id = tests.u(103))));
+select tests.logout();

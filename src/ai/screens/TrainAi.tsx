@@ -5,6 +5,7 @@ import { PrimaryCta } from '../../onboarding/ui/PrimaryCta';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TabChrome } from './TabChrome';
+import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 
 /** Presentational Train (AI) state for previews — Week 3 Upper Push, knee-category badge. */
 export function TrainAiScreen({
@@ -18,6 +19,8 @@ export function TrainAiScreen({
   rpe = '8',
   notice = 'footer',
   onBegin,
+  teen = false,
+  healthScreenPaused = false,
 }: {
   dateLabel?: string;
   sessionTitle?: string;
@@ -29,6 +32,8 @@ export function TrainAiScreen({
   rpe?: string;
   notice?: 'banner' | 'footer' | null;
   onBegin?: () => void;
+  teen?: boolean;
+  healthScreenPaused?: boolean;
 }) {
   const { colors, fonts } = useTheme();
   const stat = (n: string, l: string) => (
@@ -51,6 +56,7 @@ export function TrainAiScreen({
                 {dateLabel}
               </Text>
               <OnbTitle>Your plan</OnbTitle>
+              {healthScreenPaused ? <HealthScreenPausedBanner teen={teen} /> : null}
             </View>
             <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: colors.borderStrong }}>
               <Text color={colors.textSecondary} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
