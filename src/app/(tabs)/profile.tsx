@@ -130,6 +130,7 @@ export default function ProfileTab() {
                 Privacy & sharing
               </Text>
               <Row label="Your choices" value="Consent" onPress={() => router.push('/consent')} />
+              <Row label="Terms" value="Terms of Service" onPress={() => router.push('/legal/terms')} />
               <Row label="Privacy" value="Privacy Policy" onPress={() => router.push('/legal/privacy')} />
               <Row label="Health data privacy" value="Policy" onPress={() => router.push('/legal/health-privacy')} />
               {profile && !profile.is_minor ? (

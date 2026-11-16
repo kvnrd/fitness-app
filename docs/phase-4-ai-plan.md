@@ -73,7 +73,8 @@ Migration `20261117000100_phase4_health_screen_ai_gates.sql`:
 - Quiz equipment chips map onto the existing equipment enums (`full_gym` expands to several; `bodyweight` is `none` unless another chip is also on).
 - "Turn on Health data" reuses `submit_privacy_safety` (health + AI on, current hashed texts) rather than a new single-kind grant. A teen still needs the parent's matching grant (`parent_consent_required`).
 - Privacy & safety is now also reachable after the user is in the app, so a later AI-consent or 12-month health re-ask can open it.
-- Remaining Counsel "Legal:" work on this branch (Terms `v0.1-draft`, re-accept, notifications / Settings › Privacy, 12-month re-ask UI, store-signal revocation, consent-row IP/device/app version, parent privacy acceptance referencing the teen, web weight-goal encryption or memory-only, invite-code field wire-or-hide, "We sent a link" copy) is tracked separately and is not all in this doc's "done" column until those commits land.
+- **Terms of Service** are bundled as `v0.1-draft` (`src/legal/policies/terms-of-service.md`, SHA-256 of the published body). Signup records that version + hash. Acceptances are pre-production: a production build (`EXPO_PUBLIC_ENV=production`) will not count a draft acceptance, and anyone whose latest Terms row is a placeholder, a different hash, or a draft once a non-draft ships is sent to the re-accept screen (`legal/reaccept`). Non-production builds show a visible draft marker. Placeholders such as `[Company]` remain until Kevin/Counsel fill them.
+- Remaining Counsel "Legal:" work on this branch: notifications / Settings › Privacy, 12-month re-ask UI, store-signal revocation, consent-row IP/device/app version, parent privacy acceptance referencing the teen (and passing the Terms document hash on the parent-accept RPC), web weight-goal encryption or memory-only, invite-code field wire-or-hide, "We sent a link" copy.
 
 ## Open questions for Kevin or Counsel
 

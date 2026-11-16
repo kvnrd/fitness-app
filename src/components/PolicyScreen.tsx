@@ -11,7 +11,14 @@ import { Text } from './ui';
  * Renders a bundled policy. Public text only (no user data), so these routes are reachable signed out and signed in.
  * [ATTORNEY] The text is a Counsel DRAFT: the header says so and shows the version + content hash that consents record.
  */
-export function PolicyScreen({ doc }: { doc: { version: string; sha256: string; body: string } }) {
+export function PolicyScreen({
+  doc,
+  note,
+}: {
+  doc: { version: string; sha256: string; body: string };
+  /** Extra draft / pre-production line shown under the version (Terms v0.1-draft). */
+  note?: string;
+}) {
   const { colors, radius: r } = useTheme();
   const insets = useSafeAreaInsets();
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -42,6 +49,11 @@ export function PolicyScreen({ doc }: { doc: { version: string; sha256: string; 
         <Text variant="label" color={colors.textMuted} selectable>
           Content hash: {doc.sha256.slice(0, 12)}
         </Text>
+        {note ? (
+          <Text variant="small" color={colors.textSecondary}>
+            {note}
+          </Text>
+        ) : null}
       </View>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space['4xl'], maxWidth: 640, width: '100%', alignSelf: 'center' }}

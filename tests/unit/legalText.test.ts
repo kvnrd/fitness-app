@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { sha256Hex, sha256HexPure } from '../../src/legal/hash.ts';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_TEXT_WITH_AI, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, aiNeedsHealthBody, parentAiNeedsHealthBody,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_TEXT_WITH_AI, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, TERMS, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
   adultRiskCard, legalTexts, parentAiText, parentAttestationText, parentCoachText, parentRiskCard, RISK_BODY_RISKS,
 } from '../../src/legal/text.ts';
 
@@ -27,7 +27,14 @@ test('policy refs carry version + 64-hex hash', () => {
     assert.ok(p.version.length >= 1 && p.version.length <= 64);
     assert.match(p.version, /v0\.2-draft$/);
   }
+  assert.equal(TERMS.version, 'v0.1-draft');
+  assert.equal(TERMS.preProduction, true);
+  assert.match(TERMS.hash, /^[0-9a-f]{64}$/);
   assert.notEqual(PRIVACY_POLICY.hash, HEALTH_POLICY.hash);
+  assert.notEqual(TERMS.hash, PRIVACY_POLICY.hash);
+  assert.equal(termsAcceptanceCounts(TERMS.version, TERMS.hash), true);
+  assert.equal(termsAcceptanceCounts('terms-placeholder-v0', TERMS.hash), false);
+  assert.equal(termsAcceptanceCounts(TERMS.version, null), false);
 });
 
 test('parent AI builder equals the Phase 2 constant when the name is unknown', () => {

@@ -1,22 +1,11 @@
-import { router } from 'expo-router';
-import { Text } from '../../components/ui';
-import { useTheme } from '../../theme/ThemeProvider';
-import { OnbScreen } from '../../onboarding/ui/OnbScreen';
-import { OnbSub, OnbTitle } from '../../onboarding/ui/OnbText';
+import { PolicyScreen } from '../../components/PolicyScreen';
+import { TERMS_DOC } from '../../legal/policies/policies.generated';
+import { isProductionBuild } from '../../legal/text';
 
-/**
- * TODO [ATTORNEY]: no Terms document exists yet. This is an obvious placeholder (public, no data, mounted outside
- * every guard). When Counsel delivers the Terms, bundle them like the privacy policy and replace this screen.
- */
-export default function TermsPlaceholderRoute() {
-  const { colors } = useTheme();
-  return (
-    <OnbScreen onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-      <Text variant="label" color={colors.danger} style={{ textTransform: 'uppercase' }}>
-        Placeholder · not published
-      </Text>
-      <OnbTitle>Terms</OnbTitle>
-      <OnbSub>The Terms are not published yet.</OnbSub>
-    </OnbScreen>
-  );
+/** [ATTORNEY] Counsel Terms of Service, bundled as v0.1-draft. Public text; mounted outside every auth guard. */
+export default function TermsRoute() {
+  const note = isProductionBuild
+    ? undefined
+    : 'This is a pre-production draft. Placeholders such as [Company] are still open. Anything you accept now will have to be accepted again before launch.';
+  return <PolicyScreen doc={TERMS_DOC} note={note} />;
 }

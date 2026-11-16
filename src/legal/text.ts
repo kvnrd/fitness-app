@@ -11,7 +11,7 @@
  *   "[Same retention and training sentence as the version in use.]" -> Version B's two sentences
  *   "[Version A or B text.]" -> the Version B body
  */
-import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC } from './policies/policies.generated.ts';
+import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from './policies/policies.generated.ts';
 import { sha256Hex } from './hash.ts';
 
 export const APP_NAME = 'Fitness App';
@@ -50,7 +50,7 @@ export const VERSIONS = {
   aiTeen: 'ai-B-teen-2026-11-15-draft',
   aiParent: 'ai-B-parent-2026-11-15-draft',
   coachPlaceholder: 'coach-placeholder-v1',
-  terms: 'terms-2026-11-15-draft',
+  terms: 'v0.1-draft',
   healthWithAi: 'health-ai-2026-11-15-draft',
   riskAdult: 'risk-2026-11-15-draft',
   riskParent: 'risk-parent-2026-11-15-draft',
@@ -82,6 +82,26 @@ export const HEALTH_POLICY = {
   label: HEALTH_POLICY_DOC.version,
   hash: HEALTH_POLICY_DOC.sha256,
 } as const;
+
+/** Bundled Terms of Service. Version is v0.1-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
+export const TERMS = {
+  id: TERMS_DOC.id,
+  version: 'v0.1-draft' as const,
+  label: TERMS_DOC.version,
+  hash: TERMS_DOC.sha256,
+  preProduction: true,
+} as const;
+
+export const isDraftLegalVersion = (v: string) => /draft|placeholder/i.test(v);
+export const isProductionBuild = process.env.EXPO_PUBLIC_ENV === 'production';
+
+/** A recorded acceptance only counts in production if the bundled Terms are no longer a draft. */
+export function termsAcceptanceCounts(version: string | null | undefined, hash: string | null | undefined): boolean {
+  if (!version || !hash) return false;
+  if (version !== TERMS.version || hash !== TERMS.hash) return false;
+  if (isProductionBuild && TERMS.preProduction) return false;
+  return true;
+}
 
 // ───────────────────────────── Phase 3 onboarding copy ─────────────────────────────
 // Sources: paper/onb_p3.py, paper/onb_dob.py, legal/phase3-review.md, legal/phase4-review.md.

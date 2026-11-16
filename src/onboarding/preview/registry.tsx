@@ -29,6 +29,7 @@ import { ParentHelpScreen } from '../screens/ParentHelp';
 import { SignInScreen } from '../screens/SignIn';
 import { VerifyScreen } from '../screens/Verify';
 import { WelcomeScreen } from '../screens/Welcome';
+import { ReacceptTermsScreen, TermsDocumentScreen } from '../../legal/screens/ReacceptTerms';
 import { emptyHealthAnswers, setHealthAnswer, type HealthAnswers } from '../../ai/healthScreen';
 import type { QuizState } from '../../ai/quiz';
 import { SAMPLE_PLAN, SAMPLE_QUIZ, SAMPLE_REST, SAMPLE_SWAP_NOTE } from '../../ai/screens/samplePlan';
@@ -197,6 +198,10 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'home-ai-teen': () => <HomeAiScreen teen hasPlan showWeight={false} notice="footer" />,
   'train-ai': () => <TrainAiScreen notice="footer" />,
   'profile-teen': () => <ProfileScreen showWeight weightLabel="142 lb" notice="footer" />,
+  // ───── Legal: Terms v0.1-draft ─────
+  terms: () => <TermsDocumentScreen />,
+  'terms-reaccept': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
+  'terms-reaccept-ready': () => <ReacceptTermsScreen checked onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
   // ───── Plan notice ─────
   'plan-notice': () => <PlanNoticePreview />,
 };
