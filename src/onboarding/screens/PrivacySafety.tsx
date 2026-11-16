@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Text } from '../../components/ui';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEEN_LINE, AI_TEXT_VERSION_B, HEALTH_POLICY_LINK_LABEL,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEEN_LINE, AI_TEXT_VERSION_B, HEALTH_POLICY_LINK_LABEL, aiNeedsHealthBody,
   HEALTH_TEXT_WITH_AI, PRIVACY_SAFETY_SUB_ADULT, PRIVACY_SAFETY_SUB_TEEN, PRIVACY_SAFETY_TITLE, SECTION_AI, SECTION_HEALTH, SECTION_SAFETY, adultRiskCard,
 } from '../../legal/text';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -65,7 +65,7 @@ export function PrivacySafetyScreen({ state: s, onChange, onOpenHealthPolicy, bu
           {s.healthPrompt ? (
             <NeedsHealthNotice
               title={AI_NEEDS_HEALTH_TITLE}
-              body={AI_NEEDS_HEALTH_BODY}
+              body={aiNeedsHealthBody(s.audience)}
               action={AI_NEEDS_HEALTH_ACTION}
               dismiss={AI_NEEDS_HEALTH_DISMISS}
               onAction={() => onChange(confirmHealthPrompt(s))}

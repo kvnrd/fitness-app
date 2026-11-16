@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { sha256Hex, sha256HexPure } from '../../src/legal/hash.ts';
 import {
-  AI_TEXT_PARENT, HEALTH_POLICY, HEALTH_TEXT_WITH_AI, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, HEALTH_POLICY, HEALTH_TEXT_WITH_AI, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, aiNeedsHealthBody, parentAiNeedsHealthBody,
   adultRiskCard, legalTexts, parentAiText, parentAttestationText, parentCoachText, parentRiskCard, RISK_BODY_RISKS,
 } from '../../src/legal/text.ts';
 
@@ -61,4 +61,22 @@ test('health text includes the injury-category sentence; each legal text has a v
     assert.equal(await sha256Hex(t.text), node(t.text));
   }
   assert.notEqual(legalTexts.riskParent({ teenName: 'Alex' }).text, legalTexts.riskParent({ teenName: 'Sam' }).text);
+});
+
+test('AI-needs-health copy is Counsel\'s exact wording (phase3-build-answers §1)', () => {
+  assert.equal(AI_NEEDS_HEALTH_TITLE, 'AI planning needs health info');
+  assert.equal(AI_NEEDS_HEALTH_ACTION, 'Turn on health info');
+  assert.equal(AI_NEEDS_HEALTH_DISMISS, 'Not now');
+  assert.equal(
+    AI_NEEDS_HEALTH_BODY,
+    'AI planning checks your health-screen answers and uses any injury you add to avoid or swap exercises, so "Save my health info" has to be on first. From your health info, Anthropic, our AI provider, receives only an injury category, never your notes, measurements, name, or email. You can turn health info on now, or leave AI off.',
+  );
+  assert.equal(aiNeedsHealthBody('teen'), `${AI_NEEDS_HEALTH_BODY} Your parent must also agree to both.`);
+  assert.equal(aiNeedsHealthBody('adult'), AI_NEEDS_HEALTH_BODY);
+  const p = parentAiNeedsHealthBody({ teenName: 'Alex' });
+  assert.equal(
+    p,
+    "AI planning checks Alex's health-screen answers and uses any injury Alex adds to avoid or swap exercises, so the health box has to be on first. From that health info, Anthropic, our AI provider, receives only an injury category, never Alex's notes, measurements, name, or email. You can turn it on now, or leave AI off.",
+  );
+  assert.ok(parentAiNeedsHealthBody().includes("your teen's health-screen answers"));
 });

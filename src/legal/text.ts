@@ -57,7 +57,7 @@ export const VERSIONS = {
   parentAttest: 'parent-attest-2026-11-15-draft',
   parentHealth: 'health-parent-2026-11-15-draft',
   parentCoach: 'coach-parent-2026-11-15-draft',
-  aiNeedsHealth: 'ai-needs-health-2026-11-15-draft',
+  aiNeedsHealth: 'ai-needs-health-2026-11-16-draft',
 } as const;
 
 // ───────────────────────────── Policies (Counsel v0.2 DRAFT) ─────────────────────────────
@@ -115,17 +115,26 @@ export const HEALTH_TEXT_WITH_AI = `${HEALTH_TEXT} ${HEALTH_AI_SENTENCE}`;
 export const AI_TEEN_LINE = 'Your parent must also agree before this turns on, and either of you can turn it off.';
 
 /**
- * AI planning needs the health switch. [COUNSEL] to confirm: UI chrome, not Counsel copy.
- * Shown when the user taps AI while health is off. No auto-enable: only the explicit "Turn on health info" tap.
+ * "AI planning needs health info" explanation (Counsel phase3-build-answers.md §1, Nov 16, 2026).
+ * Title and buttons kept. The explanation itself is not a consent. "Turn on health info" flips the
+ * same visible health switch; the normal health consent row is logged on submit (version + hash).
+ * AI still needs its own tap. [ATTORNEY]
  */
-export const AI_NEEDS_HEALTH_TITLE = 'AI planning needs health info'; // [COUNSEL]
+export const AI_NEEDS_HEALTH_TITLE = 'AI planning needs health info'; // [ATTORNEY]
 export const AI_NEEDS_HEALTH_BODY =
-  'AI planning uses your injury category from your health info, so "Save my health info" has to be on first. You can turn it on now, or leave AI off.'; // [COUNSEL]
-export const AI_NEEDS_HEALTH_ACTION = 'Turn on health info'; // [COUNSEL]
-export const AI_NEEDS_HEALTH_DISMISS = 'Not now'; // [COUNSEL]
-/** Parent-voice version of the same explanation (UI chrome). */ // [COUNSEL]
-export const parentAiNeedsHealthBody = (n: ParentNames = {}): string =>
-  `AI planning uses an injury category from ${poss(teenOf(n))} health info, so the health box has to be on first. You can turn it on now, or leave AI off.`;
+  'AI planning checks your health-screen answers and uses any injury you add to avoid or swap exercises, so "Save my health info" has to be on first. From your health info, Anthropic, our AI provider, receives only an injury category, never your notes, measurements, name, or email. You can turn health info on now, or leave AI off.'; // [ATTORNEY]
+/** Teen (16-17): adult text, then this sentence. */ // [ATTORNEY]
+export const AI_NEEDS_HEALTH_TEEN_LINE = 'Your parent must also agree to both.';
+export const AI_NEEDS_HEALTH_BODY_TEEN = `${AI_NEEDS_HEALTH_BODY} ${AI_NEEDS_HEALTH_TEEN_LINE}`;
+export const AI_NEEDS_HEALTH_ACTION = 'Turn on health info'; // [ATTORNEY]
+export const AI_NEEDS_HEALTH_DISMISS = 'Not now'; // [ATTORNEY]
+export const aiNeedsHealthBody = (audience: 'adult' | 'teen'): string =>
+  audience === 'teen' ? AI_NEEDS_HEALTH_BODY_TEEN : AI_NEEDS_HEALTH_BODY;
+/** Parent-voice version. ${teen} is the teen's first name, or "your teen". */ // [ATTORNEY]
+export const parentAiNeedsHealthBody = (n: ParentNames = {}): string => {
+  const teen = teenOf(n);
+  return `AI planning checks ${teen}'s health-screen answers and uses any injury ${teen} adds to avoid or swap exercises, so the health box has to be on first. From that health info, Anthropic, our AI provider, receives only an injury category, never ${teen}'s notes, measurements, name, or email. You can turn it on now, or leave AI off.`;
+};
 
 /** Safety-notice card, adult and teen (Counsel phase3-review #2, incl. emergency stop signs). The UI uppercases the headings. */ // [ATTORNEY]
 export const RISK_HEADING_NOT_MEDICAL = 'This is not medical advice';
