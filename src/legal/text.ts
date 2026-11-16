@@ -323,7 +323,16 @@ export const INVITE_TITLE = 'Invite a parent or guardian'; // [ATTORNEY]
 export const INVITE_SUB = 'We’ll email them a link to review and confirm. We use their email only to send this invite.'; // [ATTORNEY]
 export const INVITE_LABEL = 'Parent or guardian email'; // [ATTORNEY]
 export const INVITE_HINT_OFF = 'Enter their email to send the invite'; // [ATTORNEY]
-export const INVITE_SENT_TITLE = 'Invite sent'; // [ATTORNEY]
-export const INVITE_SENT_BODY_AFTER_EMAIL = '. Next, create your account with Apple, Google or email so they can link to it.'; // [ATTORNEY]
+export const INVITE_SENT_TITLE = 'Next, create your account'; // [ATTORNEY]
+/** The invite is only emailed once the teen's account exists; do not claim a link was already sent. [ATTORNEY] */
+export const INVITE_SENT_BODY_BEFORE_EMAIL = 'We’ll email a link to '; // [ATTORNEY]
+export const INVITE_SENT_BODY_AFTER_EMAIL = ' once your account is created so they can link to it.'; // [ATTORNEY]
 export const INVITE_SENT_NOTE =
   'Your account stays limited until they accept — no purchases, and no workout or health data yet. If they don’t link within 14 days, we’ll delete the account and this invite. We’ll remind you on day 3 and day 7.'; // [ATTORNEY]
+
+/** 12-month health-consent re-ask. The consent does not expire; we ask the user to confirm or turn it off. [ATTORNEY] */
+export const HEALTH_REASK_TITLE = 'Confirm Health data';
+export const HEALTH_REASK_BODY =
+  "It’s been 12 months since you turned Health data on. It does not turn off on its own. Please confirm it’s still okay for us to keep and use it, or turn it off.";
+export const HEALTH_REASK_CONFIRM = 'Yes, keep Health data on';
+export const HEALTH_REASK_TURN_OFF = 'Turn Health data off';

@@ -30,6 +30,9 @@ import { SignInScreen } from '../screens/SignIn';
 import { VerifyScreen } from '../screens/Verify';
 import { WelcomeScreen } from '../screens/Welcome';
 import { ReacceptTermsScreen, TermsDocumentScreen } from '../../legal/screens/ReacceptTerms';
+import { PrivacySettingsScreen } from '../../settings/screens/PrivacySettings';
+import { NotificationsSettingsScreen } from '../../settings/screens/NotificationsSettings';
+import { HealthReaskScreen } from '../../settings/screens/HealthReask';
 import { emptyHealthAnswers, setHealthAnswer, type HealthAnswers } from '../../ai/healthScreen';
 import type { QuizState } from '../../ai/quiz';
 import { SAMPLE_PLAN, SAMPLE_QUIZ, SAMPLE_REST, SAMPLE_SWAP_NOTE } from '../../ai/screens/samplePlan';
@@ -62,7 +65,7 @@ const teenQuiz: QuizState = { ...SAMPLE_QUIZ, goals: ['build_strength', 'build_m
 
 
 const role = (o: Partial<RoleProps> = {}): ReactElement => (
-  <RoleScreen role="athlete" onRole={noop} coachInvite="" onCoachInvite={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} attestGeneral={false} onAttestGeneral={noop} attestMinors={false} onAttestMinors={noop} {...o} />
+  <RoleScreen role="athlete" onRole={noop} codeOpen={false} onToggleCode={noop} trainerCode="" onTrainerCode={noop} onApplyCode={noop} onContinue={noop} onRequestCoach={noop} onSkip={noop} onBack={noop} attestGeneral={false} onAttestGeneral={noop} attestMinors={false} onAttestMinors={noop} {...o} />
 );
 const picked = toggleStyle(toggleStyle(toggleStyle(EMPTY_SELECTION, 'hybrid'), 'hyrox'), 'bodybuilding');
 const editedGym = toggleItem(toggleItem(toggleItem(presetGym('full'), 'smith_machine'), 'pec_deck'), 'trx');
@@ -144,7 +147,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'role': () => role(),
   'role-code': () => role({ codeOpen: true, trainerCode: 'K7Q2-9XM4-', codeMessage: { kind: 'error', text: "That code didn't work. Check it and try again." } }),
   'role-code-limited': () => role({ codeOpen: true, trainerCode: 'K7Q2-9XM4-T3PD-8WNA', codeMessage: { kind: 'error', text: 'Too many tries. Try again later.' } }),
-  'role-coach': () => role({ role: 'coach', coachInvite: 'FA-7Q2K-' }),
+  'role-coach': () => role({ role: 'coach' }),
   'goal-adult': () => (
     <GoalAdultScreen goal="lose" onGoal={noop} units="lb" currentText="186.4" onCurrentText={noop} target={178} onTargetStep={noop} pace="steady" onPace={noop} storedOnDevice onDeleteWeight={noop} onContinue={noop} onSkip={noop} onBack={noop} />
   ),
@@ -202,6 +205,39 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   terms: () => <TermsDocumentScreen />,
   'terms-reaccept': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
   'terms-reaccept-ready': () => <ReacceptTermsScreen checked onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
+  // ───── Settings › Privacy, Notifications, 12-month health re-ask ─────
+  'settings-privacy': () => (
+    <PrivacySettingsScreen
+      healthOn
+      aiOn
+      coachOn={false}
+      onManageChoices={noop}
+      onPrivacyPolicy={noop}
+      onHealthPolicy={noop}
+      onTerms={noop}
+      onExport={noop}
+      onDelete={noop}
+    />
+  ),
+  'settings-privacy-reask': () => (
+    <PrivacySettingsScreen
+      healthOn
+      aiOn
+      coachOn={false}
+      reaskDue
+      onManageChoices={noop}
+      onReask={noop}
+      onPrivacyPolicy={noop}
+      onHealthPolicy={noop}
+      onTerms={noop}
+      onExport={noop}
+      onDelete={noop}
+    />
+  ),
+  'settings-notifications': () => (
+    <NotificationsSettingsScreen prefs={{ workoutReminders: true, planReady: true, messages: false }} onChange={noop} />
+  ),
+  'health-reask': () => <HealthReaskScreen onConfirm={noop} onTurnOff={noop} onBack={noop} />,
   // ───── Plan notice ─────
   'plan-notice': () => <PlanNoticePreview />,
 };

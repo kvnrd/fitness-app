@@ -15,9 +15,6 @@ import { StepHeader } from '../ui/StepHeader';
 export type RoleProps = {
   role: 'athlete' | 'coach';
   onRole: (r: 'athlete' | 'coach') => void;
-  /** Optional coach invite code (memory only; no server call takes it yet). */
-  coachInvite: string;
-  onCoachInvite: (v: string) => void;
   /** "Have a code from your coach?" */
   codeOpen: boolean;
   onToggleCode: () => void;
@@ -98,7 +95,7 @@ export function RoleScreen(p: RoleProps) {
         </OptionCard>
         <OptionCard
           title="I’m a coach"
-          description={coach ? 'Build programs for your athletes.' : 'Build programs for your athletes. Needs an invite code or verification.'}
+          description="Build programs for your athletes. We verify every coach before Studio unlocks."
           icon="clipboard-outline"
           badge={<Tag>Verified only</Tag>}
           selected={coach}
@@ -106,18 +103,6 @@ export function RoleScreen(p: RoleProps) {
         >
           {coach ? (
             <View style={{ marginHorizontal: 16, marginBottom: 16, paddingTop: 14, gap: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
-              <TextField
-                label="Invite code · optional"
-                placeholder="FA-7Q2K-…"
-                value={p.coachInvite}
-                onChangeText={(v) => p.onCoachInvite(v.slice(0, 40))}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                autoComplete="off"
-                textContentType="none"
-                maxLength={40}
-                helper="From your gym or head coach. Speeds up approval."
-              />
               <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.accentInk} />
                 <Text color={colors.textSecondary} style={{ flex: 1, fontFamily: fonts.bodyMedium, fontSize: 12, lineHeight: 16 }}>

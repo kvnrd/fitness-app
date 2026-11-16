@@ -44,7 +44,6 @@ export function SetupFlow({ param }: { param?: string }) {
   const [startedFrom, setStartedFrom] = useState<PresetId | null>(null);
   // role
   const [role, setRole] = useState<'athlete' | 'coach'>('athlete');
-  const [coachInvite, setCoachInvite] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
   const [trainerCode, setTrainerCode] = useState('');
   const [codeMessage, setCodeMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
@@ -182,8 +181,6 @@ export function SetupFlow({ param }: { param?: string }) {
         <RoleScreen
           role={role}
           onRole={setRole}
-          coachInvite={coachInvite}
-          onCoachInvite={setCoachInvite}
           codeOpen={codeOpen}
           onToggleCode={() => setCodeOpen(true)}
           trainerCode={trainerCode}

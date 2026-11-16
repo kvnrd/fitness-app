@@ -178,6 +178,9 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workout/[day]" />
           <Stack.Screen name="ai" />
+          <Stack.Screen name="settings/privacy" />
+          <Stack.Screen name="settings/notifications" />
+          <Stack.Screen name="settings/health-reask" />
         </Stack.Protected>
         <Stack.Protected guard={showConsent}>
           <Stack.Screen name="consent" />

@@ -127,8 +127,10 @@ export default function ProfileTab() {
           <>
             <View>
               <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-                Privacy & sharing
+                Settings
               </Text>
+              <Row label="Notifications" onPress={() => router.push('/settings/notifications')} />
+              <Row label="Privacy" sub="Health data, AI, coach sharing, and your rights" onPress={() => router.push('/settings/privacy')} />
               <Row label="Your choices" value="Consent" onPress={() => router.push('/consent')} />
               <Row label="Terms" value="Terms of Service" onPress={() => router.push('/legal/terms')} />
               <Row label="Privacy" value="Privacy Policy" onPress={() => router.push('/legal/privacy')} />

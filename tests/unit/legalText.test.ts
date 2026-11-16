@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { sha256Hex, sha256HexPure } from '../../src/legal/hash.ts';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_TEXT_WITH_AI, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, TERMS, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_REASK_BODY, HEALTH_REASK_TITLE, HEALTH_TEXT_WITH_AI, INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_TITLE, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, TERMS, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
   adultRiskCard, legalTexts, parentAiText, parentAttestationText, parentCoachText, parentRiskCard, RISK_BODY_RISKS,
 } from '../../src/legal/text.ts';
 
@@ -101,4 +101,19 @@ test('coach attestations are Counsel\'s exact wording (phase3-build-answers §2)
   assert.equal(legalTexts.coachAttestMinors().version, 'coach-attest-minors-2026-11-16-draft');
   assert.match(COACH_ATTEST_GENERAL, /16–17/);
   assert.match(COACH_ATTEST_MINORS, /16–17-year-olds/);
+});
+
+test('invite-sent copy does not claim the email was already sent', () => {
+  assert.equal(INVITE_SENT_TITLE, 'Next, create your account');
+  assert.equal(INVITE_SENT_BODY_BEFORE_EMAIL, 'We’ll email a link to ');
+  assert.equal(INVITE_SENT_BODY_AFTER_EMAIL, ' once your account is created so they can link to it.');
+  const body = `${INVITE_SENT_BODY_BEFORE_EMAIL}parent@example.invalid${INVITE_SENT_BODY_AFTER_EMAIL}`;
+  assert.ok(!/we sent a link/i.test(body));
+  assert.ok(!/we sent a link/i.test(INVITE_SENT_TITLE));
+});
+
+test('12-month health re-ask copy says the consent does not expire', () => {
+  assert.equal(HEALTH_REASK_TITLE, 'Confirm Health data');
+  assert.match(HEALTH_REASK_BODY, /12 months/);
+  assert.match(HEALTH_REASK_BODY, /does not turn off on its own/);
 });

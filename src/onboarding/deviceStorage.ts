@@ -8,9 +8,9 @@ import { createDeviceSetupStore, type KeyValueAdapter } from './deviceSetupStore
 /**
  * React Native adapters for deviceSetupStore.
  *  - Draft (units, accent, gym, styles): non-secret preferences -> AsyncStorage on every platform.
- *  - Weight goal: health data -> SecureStore on native.
- *    TODO: web has no secure store; it falls back to AsyncStorage (localStorage), readable by any script on
- *    the page. Acceptable only because the value is tiny and never leaves the device; revisit before a web launch.
+ *  - Weight goal: health data -> SecureStore on native. On web there is no safe, simple encryption
+ *    (any script on the page could read localStorage or a key in JS), so the value is kept in memory
+ *    only and is lost on refresh. Never use AsyncStorage/localStorage for it on web.
  * Values stay small (< 2 KB) so SecureStore's size limit is never hit. Never store tokens here.
  */
 const safe = (k: string) => k.replace(/[^A-Za-z0-9._-]/g, '_');
@@ -21,6 +21,20 @@ const asyncAdapter: KeyValueAdapter = {
   removeItem: (k) => AsyncStorage.removeItem(k),
 };
 
+/** In-memory only. Used for the weight goal on web so it never lands in localStorage. */
+const memoryAdapter: KeyValueAdapter = (() => {
+  const m = new Map<string, string>();
+  return {
+    getItem: async (k) => m.get(k) ?? null,
+    setItem: async (k, v) => {
+      m.set(k, v);
+    },
+    removeItem: async (k) => {
+      m.delete(k);
+    },
+  };
+})();
+
 const secureAdapter: KeyValueAdapter = {
   getItem: (k) => SecureStore.getItemAsync(safe(k)),
   setItem: (k, v) => SecureStore.setItemAsync(safe(k), v, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY }),
@@ -29,7 +43,7 @@ const secureAdapter: KeyValueAdapter = {
 
 export const deviceSetupStore = createDeviceSetupStore({
   draftStorage: asyncAdapter,
-  weightStorage: Platform.OS === 'web' ? asyncAdapter : secureAdapter,
+  weightStorage: Platform.OS === 'web' ? memoryAdapter : secureAdapter,
 });
 
 
