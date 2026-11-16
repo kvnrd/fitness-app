@@ -20,6 +20,22 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
 
+  server-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Unit tests (KMS + Anthropic mocked, no network calls)
+        working-directory: supabase/functions
+        run: npm test
+      - name: Typecheck shared code + tests
+        working-directory: supabase/functions
+        run: npx tsc -p tsconfig.json
+
   gitleaks:
     runs-on: ubuntu-latest
     env:
