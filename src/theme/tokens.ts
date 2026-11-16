@@ -89,7 +89,7 @@ type Vignette = { rx: number; ry: number; cx: number; cy: number; stops: Stop[] 
 export const background = {
   glowAlpha: {
     subtle: { dark: 0.12, light: 0.1 },
-    medium: { dark: 0.22, light: 0.2 },
+    medium: { dark: 0.24, light: 0.20 },
   } satisfies Record<BgStrength, Record<ColorScheme, number>>,
   glow: {
     layerTop: -160,

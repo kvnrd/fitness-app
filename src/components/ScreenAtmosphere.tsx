@@ -15,6 +15,21 @@ import { GRAIN_DATA_URI } from './bgGrainDataUri';
 
 const GRAIN = require('../../assets/bg-grain-256.png');
 
+/** Ellipse radial: Chrome ignores SVG2 rx/ry, so also set r + gradientTransform (SVG 1.1). */
+function ellipseGradient(cx: number, cy: number, rx: number, ry: number) {
+  const r = rx || ry || 1;
+  const sy = rx ? ry / rx : 1;
+  return {
+    gradientUnits: 'userSpaceOnUse' as const,
+    cx,
+    cy,
+    r,
+    rx,
+    ry,
+    gradientTransform: `translate(${cx} ${cy}) scale(1 ${sy}) translate(${-cx} ${-cy})`,
+  };
+}
+
 /** Split an rgba()/hex color so SVG can use opaque stopColor + stopOpacity (more reliable on web). */
 function svgStop(color: string, opacity = 1): { stopColor: string; stopOpacity: number } {
   const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
@@ -52,11 +67,7 @@ function ScreenAtmosphereImpl() {
         <Defs>
           <RadialGradient
             id={glowId}
-            gradientUnits="userSpaceOnUse"
-            cx={layerW * g.atX}
-            cy={g.layerHeight * g.atY}
-            rx={layerW * g.radiusX}
-            ry={g.layerHeight * g.radiusY}
+            {...ellipseGradient(layerW * g.atX, g.layerHeight * g.atY, layerW * g.radiusX, g.layerHeight * g.radiusY)}
           >
             <Stop offset={0} {...svgStop(glowColor)} />
             <Stop offset={g.stop} {...svgStop(glowColor, 0)} />
@@ -72,11 +83,7 @@ function ScreenAtmosphereImpl() {
             <RadialGradient
               key={i}
               id={`v2-bg-vig-${uid}-${i}`}
-              gradientUnits="userSpaceOnUse"
-              cx={v.cx * width}
-              cy={v.cy * height}
-              rx={v.rx * width}
-              ry={v.ry * height}
+              {...ellipseGradient(v.cx * width, v.cy * height, v.rx * width, v.ry * height)}
             >
               {v.stops.map((st, j) => (
                 <Stop key={j} offset={st.at} {...svgStop(st.color)} />
