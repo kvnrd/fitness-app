@@ -9,6 +9,7 @@ import { useSession } from '../../auth/SessionProvider';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { AiNotice } from '../../components/AiNotice';
 import { space } from '../../theme/tokens';
 
 function plural(n: number, word: string) {
@@ -107,6 +108,8 @@ export default function TrainScreen() {
           </Text>
         </View>
       </View>
+
+      {program.aiGenerated ? <AiNotice /> : null}
 
       <Today day={today} />
 

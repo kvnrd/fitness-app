@@ -67,6 +67,8 @@ export interface Program {
   trainer: Trainer;
   weekLabel: string;
   days: Record<DayKey, WorkoutDay>;
+  /** True when the plan came from the ai-plan function; the plan screen then shows Counsel's AI notice. */
+  aiGenerated?: boolean;
 }
 
 /** One logged row: field -> value as typed. */
