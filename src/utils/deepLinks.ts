@@ -5,9 +5,10 @@ import { DAY_KEYS, DayKey } from '../data/types';
  * `/studio` is allowed here but still role-guarded by the route itself.
  * `/age`, `/not-eligible`, `/sign-in`, `/onboarding`, `/parent-link`, `/consent` are allowed only so the router can resolve them;
  * the root layout mounts each one only in its own state (Stack.Protected), otherwise it lands on Train.
+ * `/legal/privacy` and `/legal/health-privacy` are public policy text, mounted outside every guard.
  * They take no params and perform no action on open.
  */
-const STATIC_PATHS = new Set(['/', '/progress', '/studio', '/age', '/not-eligible', '/sign-in', '/onboarding', '/parent-link', '/consent']);
+const STATIC_PATHS = new Set(['/', '/progress', '/studio', '/age', '/not-eligible', '/sign-in', '/onboarding', '/parent-link', '/consent', '/legal/privacy', '/legal/health-privacy']);
 
 export function safeDeepLinkPath(input: string): string | null {
   let path = input.trim();

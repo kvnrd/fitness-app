@@ -102,6 +102,9 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           animation: 'slide_from_right',
         }}
       >
+        {/* Public policy text: outside every guard so it opens signed out, signed in, and from the not-eligible state. [ATTORNEY] drafts */}
+        <Stack.Screen name="legal/privacy" />
+        <Stack.Screen name="legal/health-privacy" />
         <Stack.Protected guard={notEligible}>
           <Stack.Screen name="not-eligible" />
         </Stack.Protected>

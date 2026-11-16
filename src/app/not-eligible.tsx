@@ -1,17 +1,20 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../components/ui';
-import { REJECTION_NOTICE } from '../legal/text';
+import { NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE } from '../legal/text';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
 
-/** Counsel's generic rejection notice. No age, no threshold, no retry option, no buttons. */
+/** Counsel's generic not-eligible notice. No age, no threshold, no retry option, no buttons. [ATTORNEY] */
 export default function NotEligibleScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: space.xl, paddingTop: insets.top + space.xl, backgroundColor: colors.bg }}>
-      <Text accessibilityLiveRegion="polite">{REJECTION_NOTICE}</Text>
+    <View style={{ flex: 1, justifyContent: 'center', gap: space.md, padding: space.xl, paddingTop: insets.top + space.xl, backgroundColor: colors.bg }}>
+      <Text variant="title" accessibilityRole="header" accessibilityLiveRegion="polite">
+        {NOT_ELIGIBLE_TITLE}
+      </Text>
+      <Text color={colors.textSecondary}>{NOT_ELIGIBLE_BODY}</Text>
     </View>
   );
 }

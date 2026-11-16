@@ -138,6 +138,32 @@ export default function TrainScreen() {
               Consent
             </Text>
           </Pressable>
+          <Pressable
+            onPress={() => router.push('/legal/privacy')}
+            accessibilityRole="button"
+            accessibilityLabel="Privacy"
+            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Text variant="bodyStrong" style={{ flex: 1 }}>
+              Privacy
+            </Text>
+            <Text variant="small" color={colors.textMuted}>
+              Privacy Policy
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/legal/health-privacy')}
+            accessibilityRole="button"
+            accessibilityLabel="Consumer Health Data Privacy Policy"
+            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Text variant="bodyStrong" style={{ flex: 1 }}>
+              Health data privacy
+            </Text>
+            <Text variant="small" color={colors.textMuted}>
+              Policy
+            </Text>
+          </Pressable>
           {profile && !profile.is_minor ? (
             <Pressable
               onPress={() => router.push('/parent-link')}
