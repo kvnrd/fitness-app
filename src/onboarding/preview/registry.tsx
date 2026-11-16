@@ -147,6 +147,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'privacy-teen': () => <PrivacySafetyScreen state={initPs('teen')} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   'privacy-teen-ready': () => <PrivacySafetyScreen state={psSetRisk(initPs('teen'), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   'privacy-teen-granted': () => <PrivacySafetyScreen state={psSetRisk(initPs('teen', teenGrants), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
+  'privacy-teen-needs-health': () => <PrivacySafetyScreen state={psSetAi(initPs('teen', teenGrants), true)} onChange={noop} onOpenHealthPolicy={noop} onContinue={noop} />,
   // ───── Parent consent ─────
   'parent-consent': () => <ParentConsentScreen names={{ teenName: 'Alex', teenFullName: 'Alex Rivera', parentName: 'Sam Rivera' }} state={initPc()} onChange={noop} onConfirm={noop} />,
   'parent-consent-ready': () => (
