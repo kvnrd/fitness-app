@@ -18,7 +18,7 @@ function lastLabel(exercise: Exercise, prev?: SetLog) {
 /** One exercise as a ledger entry: name and target, coach's cue, then a row per set. */
 export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: Exercise; index: number }) {
   const { colors, fonts } = useTheme();
-  const { logs, previous, updateSet, toggleSetDone } = useAppStore();
+  const { logs, previous, updateSet, toggleSetDone, locked } = useAppStore();
   const [open, setOpen] = useState(index === 0);
   const rows = rowsFor(logs[day], exercise);
   const done = rows.filter((r) => r.done).length;
@@ -98,6 +98,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                     <View key={f} style={styles.colField}>
                       <TextInput
                         value={row[f] ?? ''}
+                        editable={!locked}
                         onChangeText={(v) => updateSet(day, exercise, i, f, v)}
                         placeholder={String(prev?.[f] ?? '–')}
                         placeholderTextColor={colors.placeholder}
@@ -118,7 +119,8 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                       toggleSetDone(day, exercise, i);
                     }}
                     accessibilityRole="checkbox"
-                    accessibilityState={{ checked: !!row.done }}
+                    disabled={locked}
+                    accessibilityState={{ checked: !!row.done, disabled: locked }}
                     accessibilityLabel={`Set ${i + 1} done`}
                     hitSlop={8}
                     style={styles.colCheck}

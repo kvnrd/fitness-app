@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { todayKey } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
 import { useSession } from '../../auth/SessionProvider';
+import { WORKOUTS_LOCKED_NOTICE, DELETE_WEIGHT_LABEL } from '../../onboarding/copy';
+import { deviceSetupStore } from '../../onboarding/deviceStorage';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
@@ -18,7 +21,7 @@ function plural(n: number, word: string) {
 
 function Today({ day }: { day: DayKey }) {
   const { colors } = useTheme();
-  const { program } = useAppStore();
+  const { program, locked } = useAppStore();
   const w = program.days[day];
   const { ratio, done, total } = useDayProgress(day);
   const action = w.rest ? 'View recovery plan' : ratio >= 1 ? 'Review workout' : ratio > 0 ? 'Continue workout' : 'Start workout';
@@ -36,7 +39,7 @@ function Today({ day }: { day: DayKey }) {
             : `${w.durationMin} min, ${plural(w.exercises.length, 'exercise')}${done > 0 ? `, ${done} of ${total} sets logged` : ''}`}
         </Text>
       </View>
-      <Button label={action} onPress={() => router.push(`/workout/${day}`)} />
+      <Button label={action} disabled={locked} onPress={() => router.push(`/workout/${day}`)} />
       {total > 0 ? <ProgressBar ratio={ratio} /> : null}
     </View>
   );
@@ -82,7 +85,12 @@ export default function TrainScreen() {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const { program } = useAppStore();
-  const { isConfigured, isSignedIn, profile, signOut } = useSession();
+  const { isConfigured, isSignedIn, profile, signOut, user } = useSession();
+  const { locked } = useAppStore();
+  const [hasWeight, setHasWeight] = useState(false);
+  useEffect(() => {
+    if (user) void deviceSetupStore.loadWeightGoal(user.id).then((w) => setHasWeight(!!w)).catch(() => {});
+  }, [user]);
   const today = todayKey();
   const initials = program.trainer.name
     .split(' ')
@@ -108,6 +116,15 @@ export default function TrainScreen() {
           </Text>
         </View>
       </View>
+
+      {locked ? (
+        // Calm, no nagging: UI chrome. Logging is disabled in the UI (the server enforces can_train).
+        <View accessibilityLiveRegion="polite" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: space.md, backgroundColor: colors.surface }}>
+          <Text variant="small" color={colors.textSecondary}>
+            {WORKOUTS_LOCKED_NOTICE}
+          </Text>
+        </View>
+      ) : null}
 
       {program.aiGenerated ? <AiNotice /> : null}
 
@@ -176,6 +193,18 @@ export default function TrainScreen() {
               </Text>
               <Text variant="small" color={colors.textMuted}>
                 Parent or guardian
+              </Text>
+            </Pressable>
+          ) : null}
+          {hasWeight && user ? (
+            <Pressable
+              onPress={() => void deviceSetupStore.clearWeightGoal(user.id).then(() => setHasWeight(false))}
+              accessibilityRole="button"
+              accessibilityLabel={DELETE_WEIGHT_LABEL}
+              style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+            >
+              <Text variant="bodyStrong" style={{ flex: 1 }}>
+                {DELETE_WEIGHT_LABEL}
               </Text>
             </Pressable>
           ) : null}

@@ -123,6 +123,9 @@ export const AI_NEEDS_HEALTH_BODY =
   'AI planning uses your injury category from your health info, so "Save my health info" has to be on first. You can turn it on now, or leave AI off.'; // [COUNSEL]
 export const AI_NEEDS_HEALTH_ACTION = 'Turn on health info'; // [COUNSEL]
 export const AI_NEEDS_HEALTH_DISMISS = 'Not now'; // [COUNSEL]
+/** Parent-voice version of the same explanation (UI chrome). */ // [COUNSEL]
+export const parentAiNeedsHealthBody = (n: ParentNames = {}): string =>
+  `AI planning uses an injury category from ${poss(teenOf(n))} health info, so the health box has to be on first. You can turn it on now, or leave AI off.`;
 
 /** Safety-notice card, adult and teen (Counsel phase3-review #2, incl. emergency stop signs). The UI uppercases the headings. */ // [ATTORNEY]
 export const RISK_HEADING_NOT_MEDICAL = 'This is not medical advice';

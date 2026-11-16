@@ -46,7 +46,7 @@ export async function myOnboardingState(): Promise<OnboardingState | null> {
 }
 
 /** save_training_setup(p_setup). The payload never contains body weights (see buildSetupPayload). */
-export async function saveTrainingSetup(payload: SetupPayload): Promise<boolean> {
+export async function saveTrainingSetup(payload: Partial<SetupPayload>): Promise<boolean> {
   if (!supabase) return false;
   try {
     const { error } = await supabase.rpc('save_training_setup', { p_setup: payload });
@@ -181,6 +181,20 @@ export async function uploadWeightGoal(goal: WeightGoal): Promise<boolean> {
   if (!supabase) return false;
   try {
     const { error } = await supabase.functions.invoke('health-record', { body: { action: 'write', weight_goal: JSON.stringify(goal) } });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/** Version id recorded with the coach application's adult attestation. [ATTORNEY] placeholder until Counsel words it. */
+export const COACH_ADULT_ATTESTATION_VERSION = 'coach-adult-attest-2026-11-15-draft';
+
+/** apply_for_coach(p_attest_adult, p_attestation_version): the existing 2b function. Any failure is generic (false). */
+export async function applyForCoach(): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.rpc('apply_for_coach', { p_attest_adult: true, p_attestation_version: COACH_ADULT_ATTESTATION_VERSION });
     return !error;
   } catch {
     return false;

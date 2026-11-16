@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { useSession } from '../auth/SessionProvider';
 import { mockProgram } from '../data/mockProgram';
+import { workoutsLocked } from '../onboarding/routing';
 import { DayKey, DayLog, Exercise, LogField, Program, SetLog } from '../data/types';
 
 /**
@@ -8,6 +10,8 @@ import { DayKey, DayLog, Exercise, LogField, Program, SetLog } from '../data/typ
  */
 interface AppStore {
   program: Program;
+  /** can_train is false (e.g. a teen whose parent has not finished their part): logging is disabled in the UI; the server enforces. */
+  locked: boolean;
   logs: Partial<Record<DayKey, DayLog>>;
   /** Last session's numbers, shown beside the inputs. */
   previous: Record<string, SetLog[]>;
@@ -48,6 +52,8 @@ function rowsFor(log: DayLog | undefined, exercise: Exercise): SetLog[] {
 }
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
+  const { onboarding, isConfigured } = useSession();
+  const locked = isConfigured && workoutsLocked(onboarding);
   const [program, setProgram] = useState<Program>(mockProgram);
   const [logs, setLogs] = useState<AppStore['logs']>({});
 
@@ -63,10 +69,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppStore>(
     () => ({
       program,
+      locked,
       logs,
       previous: previousMock,
-      updateSet: (day, exercise, index, field, v) => patchRow(day, exercise, index, (row) => ({ ...row, [field]: v })),
-      toggleSetDone: (day, exercise, index) => patchRow(day, exercise, index, (row) => ({ ...row, done: !row.done })),
+      updateSet: (day, exercise, index, field, v) => !locked && patchRow(day, exercise, index, (row) => ({ ...row, [field]: v })),
+      toggleSetDone: (day, exercise, index) => !locked && patchRow(day, exercise, index, (row) => ({ ...row, done: !row.done })),
       addExercise: (day, exercise) =>
         setProgram((p) => ({
           ...p,
@@ -80,7 +87,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       updateDay: (day, patch) =>
         setProgram((p) => ({ ...p, days: { ...p.days, [day]: { ...p.days[day], ...patch } } })),
     }),
-    [program, logs, patchRow],
+    [program, locked, logs, patchRow],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

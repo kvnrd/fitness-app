@@ -17,6 +17,10 @@ import { AgeGateProvider, useAgeGate } from '../auth/AgeGateProvider';
 import { GoogleAuthBridge } from '../auth/providers';
 import { SessionProvider, useSession } from '../auth/SessionProvider';
 import { isGoogleConfigured } from '../auth/signIn';
+import { OnboardingSync } from '../onboarding/OnboardingSync';
+import { consumeAwaitingSignIn } from '../onboarding/parentInviteMemory';
+import { nextOnboardingRoute } from '../onboarding/routing';
+import { useGateFacts } from '../onboarding/useGateFacts';
 import { AppStoreProvider } from '../state/AppStore';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -71,22 +75,29 @@ function ConsentFirstRun() {
 
 function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   const { colors, resolvedScheme, hydrated } = useTheme();
-  const { isConfigured, isSignedIn, isLoading, profile, onboarding } = useSession();
+  const { isConfigured, isSignedIn, isLoading, profile, onboarding, user } = useSession();
+  const nav = useRootNavigationState();
   const age = useAgeGate();
-  const ready = fontsReady && hydrated && !isLoading && (!isConfigured || age.hydrated);
   // Gate only when Supabase is configured; the unconfigured prototype is never locked.
   // Order: not-eligible flag → signed out → signed in without a complete account → pending minor →
-  // setup → privacy & safety → app. my_onboarding_state failing leaves `onboarding` null (fail closed).
+  // setup (+ the linked teen's Goal) → privacy & safety → app. The decision is the pure nextOnboardingRoute();
+  // my_onboarding_state failing leaves `onboarding` null (fail closed).
   // Not-eligible device flag: only the generic notice, unless an existing account is already signed in.
   const notEligible = isConfigured && age.blocked && !(isSignedIn && !!profile);
   const signedOut = isConfigured && !notEligible && !isSignedIn;
   // No profile yet, or a profile whose state could not be read: the "finishing signup" / retry screen.
   const needsProfile = isConfigured && !notEligible && isSignedIn && (!profile || !onboarding);
   const gated = isConfigured && isSignedIn && !!profile && !!onboarding;
-  const pendingMinor = gated && onboarding.is_minor && !onboarding.linked;
-  const needsSetup = gated && !pendingMinor && !onboarding.setup_done;
-  const needsPrivacy = gated && !pendingMinor && onboarding.setup_done && !onboarding.privacy_done;
-  const inApp = !isConfigured || (gated && !pendingMinor && onboarding.setup_done && onboarding.privacy_done);
+  const linkedMinor = gated && onboarding.is_minor && onboarding.linked;
+  const facts = useGateFacts(user?.id ?? null, linkedMinor);
+  const route = gated ? nextOnboardingRoute(onboarding, facts) : null;
+  // A linked teen's device draft is uploading (OnboardingSync); wait for it so the right step shows.
+  const waitingOnDevice = linkedMinor && (!facts.loaded || route === 'upload-draft');
+  const ready = fontsReady && hydrated && !isLoading && (!isConfigured || age.hydrated) && !waitingOnDevice;
+  const pendingMinor = route === 'waiting';
+  const needsSetup = route === 'setup' || route === 'goal';
+  const needsPrivacy = route === 'privacy';
+  const inApp = !isConfigured || route === 'app';
   // Parent-link: pending minors (to see their requests) plus any adult (to accept requests).
   const showParentLink = isConfigured && isSignedIn && !!profile && (pendingMinor || !profile.is_minor);
   // Parent-consent (invite token deep link) is for signed-in adults only.
@@ -97,6 +108,11 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
+
+  // A parent who opened an invite link signed out comes back to the consent screen once they are a signed-in adult.
+  useEffect(() => {
+    if (showParentConsent && nav?.key && consumeAwaitingSignIn()) router.push('/parent-consent');
+  }, [showParentConsent, nav?.key]);
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
 
@@ -146,7 +162,8 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={showParentLink}>
           <Stack.Screen name="parent-link" />
         </Stack.Protected>
-        <Stack.Protected guard={showParentConsent}>
+        {/* Signed out it explains "sign in first" and keeps the token in memory only. */}
+        <Stack.Protected guard={showParentConsent || signedOut}>
           <Stack.Screen name="parent-consent" />
         </Stack.Protected>
         {/* Unguarded routes come last so the first available screen is always the state's own. */}
@@ -157,6 +174,7 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         {/* Dev-only screen preview: always registered outside guards, but the route redirects home unless __DEV__ && EXPO_PUBLIC_SCREEN_PREVIEW === '1'. */}
         <Stack.Screen name="dev-preview" />
       </Stack>
+      {gated ? <OnboardingSync /> : null}
       {showConsent ? <ConsentFirstRun /> : null}
       {isGoogleConfigured ? <GoogleAuthBridge /> : null}
     </View>

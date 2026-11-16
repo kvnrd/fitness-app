@@ -1,11 +1,11 @@
 import type { Session as AuthSession, User } from '@supabase/supabase-js';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_ROLE, isRole, isVerifiedCoach, resolveDevRole, Role } from './session';
-import { deviceSetupStore } from '../onboarding/deviceStorage';
+import { deviceFlags, deviceSetupStore } from '../onboarding/deviceStorage';
 import { myOnboardingState, type OnboardingState } from '../onboarding/api';
 import { isSupabaseConfigured, supabase } from './supabase';
 
-export type Profile = { id: string; display_name: string | null; is_minor: boolean };
+export type Profile = { id: string; display_name: string | null; is_minor: boolean; created_at?: string | null };
 
 type Session = {
   role: Role;
@@ -63,6 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [loadedUser, setLoadedUser] = useState<string | null>(null);
   const userId = authSession?.user.id ?? null;
   const latestUser = useRef<string | null>(null);
+  const prevUser = useRef<string | null>(null);
   latestUser.current = userId;
 
   // Source of truth: SELECT from public.user_roles (RLS: own row only). Not the JWT claim.
@@ -71,7 +72,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       const [r, p] = await Promise.all([
         supabase.from('user_roles').select('role').eq('user_id', uid).maybeSingle(),
-        supabase.from('profiles').select('id, display_name, is_minor').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('id, display_name, is_minor, created_at').eq('id', uid).maybeSingle(),
       ]);
       if (latestUser.current !== uid) return; // signed out / switched while loading
       // On error or missing row fail closed to athlete (never keep a stale elevated role).
@@ -113,6 +114,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [configured]);
 
+  // The account is gone (deleted, or the session ended some other way): drop its device-only setup data too.
+  useEffect(() => {
+    const gone = prevUser.current;
+    prevUser.current = userId;
+    if (gone && gone !== userId) {
+      void deviceSetupStore.clearForUser(gone).catch(() => {});
+      void deviceFlags.clearUser(gone).catch(() => {});
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (!configured) return;
     setRole(DEFAULT_ROLE); // never carry a previous user's role; the table read below decides
@@ -126,7 +137,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     // Device-only setup drafts and weight goal never outlive the session.
     const uid = latestUser.current;
-    if (uid) await deviceSetupStore.clearForUser(uid).catch(() => {});
+    if (uid) {
+      await deviceSetupStore.clearForUser(uid).catch(() => {});
+      await deviceFlags.clearUser(uid).catch(() => {});
+    }
     if (supabase) await supabase.auth.signOut().catch(() => {});
     setRole(configured ? DEFAULT_ROLE : resolveDevRole());
     setProfile(null);
