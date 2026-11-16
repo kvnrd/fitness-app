@@ -35,8 +35,4 @@ Google
 
 ## Not verified here
 
-No native build exists in this environment. Verified only: TypeScript mapping tests, `expo export --platform web`, and that `expo prebuild` in a temp copy adds the entitlement and the Gradle dependency. NOT verified: that the Swift and Kotlin compile, the exact Apple signature (`requestAgeRange(ageGates:_:_:in:)` overloads, `Response` cases, `@unknown default`; Apple's docs pages could not be read here), the Kotlin SDK type names and whether `AgeSignalsStatus`/`SignificantChangeStatus` constants compare as `Int` the way the code assumes, the module's Expo Modules API usage (classic `Module()` form; SDK 58's own modules use a v2 form), prompts and results on real devices, and Play Console behaviour.
-
-## Known repo issue
-
-`tests/unit/storeAgeSignal.test.ts` fails `tsc --noEmit` because `tsconfig.json` has no `allowImportingTsExtensions`, no `@types/node`, and does not exclude `tests/`. Those files were outside this job's scope; fix with either `"exclude": [..., "tests"]` or the compiler option plus `@types/node`.
+No native build exists in this environment. Verified only: TypeScript mapping tests (`npm run test:unit`), `expo export --platform web`, and that `expo prebuild` in a temp copy adds the entitlement and the Gradle dependency. NOT verified: that the Swift and Kotlin compile, the exact Apple signature (`requestAgeRange(ageGates:_:_:in:)` overloads, `Response` cases, `@unknown default`; Apple's docs pages could not be read here), the Kotlin SDK type names and whether `AgeSignalsStatus`/`SignificantChangeStatus` constants compare as `Int` the way the code assumes, the module's Expo Modules API usage (classic `Module()` form; SDK 58's own modules use a v2 form), prompts and results on real devices, and Play Console behaviour.

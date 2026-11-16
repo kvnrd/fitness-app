@@ -1,6 +1,6 @@
 # Phase 2: backend, auth, age gate and consent (record)
 
-Status: code and SQL are written and tested locally. **Phase 2b (Counsel's answers, Nov 15, 2026) changed several Phase 2 items below; where a line says "(Phase 2b)" the [Phase 2b section](#phase-2b-counsels-legal-answers) is the current behavior.** **No hosted Supabase, Apple or Google project exists.** Everything below that needs an account is on Kevin's checklist. Nothing here is legal advice; legal questions are listed at the end for Counsel and are not answered.
+Status: code and SQL are written and tested locally. **Phase 3 (onboarding, parent invites, trainer codes, Privacy & safety) extends this; see [phase-3-onboarding.md](phase-3-onboarding.md) for current behavior where they differ.** **Phase 2b (Counsel's answers, Nov 15, 2026) changed several Phase 2 items below; where a line says "(Phase 2b)" the [Phase 2b section](#phase-2b-counsels-legal-answers) is the current behavior.** **No hosted Supabase, Apple or Google project exists.** Everything below that needs an account is on Kevin's checklist. Nothing here is legal advice; legal questions are listed at the end for Counsel and are not answered.
 
 ## Layout
 
@@ -22,7 +22,7 @@ With `DATABASE_URL` the runner **drops and recreates** the `public`, `private`, 
 
 Health encryption happens in the server functions (Phase 2b), so the SQL tests check that the database only ever holds ciphertext and wrapped keys and that access control is right; the crypto itself is tested in `supabase/functions/tests` (`cd supabase/functions && npm test`).
 
-The client screens have no automated tests yet; `npx tsc --noEmit` is the only check on them and it passes.
+Client logic has unit tests since Phase 3 (`npm run test:unit`); screens are checked by `npx tsc --noEmit` and the web export.
 
 ## Schema summary
 
@@ -100,12 +100,12 @@ Deep links `/age`, `/not-eligible`, `/onboarding`, `/parent-link`, `/consent` ar
 - **Consents.** `src/app/consent.tsx` shows three separate switches (`health_data`, `ai_vendor`, `coach_sharing`), off unless the server says granted, no "accept all". Each calls `record_consent(p_kind, p_policy_version[, p_for_user])` or `revoke_consent(p_kind[, p_for_user])`. State is read from `consents` and the screen shows what the server returns (an error shows "not granted"). None is required to continue. The server still refuses health writes and coach sharing without consent. The screen opens once per app session for a user with no consent rows, and is also reachable from Train → Account → Your choices (adults also get Link requests there). **Labels and `POLICY_VERSION = 'placeholder-v1'` are placeholders; Counsel supplies the real text and version.** The `parental` consent kind exists in SQL but is not shown.
 - **Age / COPPA.** `onboarding.tsx` collects birth date (year/month/day) and an optional display name and calls `complete_signup`. The server computes the age; the client never computes, shows or stores one. Under 13 and under 16 both give the same generic message ("Sorry, you can't use this app."), no age or reason is echoed, the user is signed out, and the message is shown on the sign-in screen. Other errors give a generic retry message and never say whether an account exists. The screen states, as information and not legal advice: under 13 cannot create an account (COPPA), minimum age is 16, 16 to 17 are minors and a parent or guardian must be the contracting party before the account is fully active.
 - **Parent as contracting party.** `parent_links.is_contracting_party` defaults true. A 16 to 17 account is not usable (`app.is_minor_onboarded`, enforced in RLS and functions) until one active contracting-party link exists. `parent-link.tsx` explains this. The email invite is a **stub**: it sends nothing, looks nothing up and stores nothing, because a client-side email lookup would be an account oracle. A "test path" that takes a typed parent user id and calls `link_parent` exists in `__DEV__` builds only (even a generic success/failure answer lets a caller test whether a user id exists). A signed-in adult sees pending requests on the same screen and can call `accept_parent_link`. The linked parent can switch consent toggles to act for the minor (`p_for_user`).
-- **No raw store-age data.** No Apple Declared Age Range or Google Play Age Signals value is read, sent or stored; no column exists for it.
+- **No raw store-age data.** Since Phase 3 the app reads the store age range on device, keeps only the bounds in memory, and sends only lower/upper bounds + source; nothing raw is stored.
 
 ## Gaps and server work still needed
 
 - **Under-13 account closure has no trigger.** `complete_signup` raises, which rolls back everything, so the database holds no record that an under-13 attempt happened. The client signs out but cannot delete the Auth user, and the Auth user (with its email) remains. `close_under_13_account(user_id)` is service-only. To use it, put an Edge Function in front of the signup call (the client calls the function with its JWT, the function calls `complete_signup` as that user and, on `under_13_not_permitted`, calls `close_under_13_account` with the service role). Not built.
-- **Parent email invite** needs a server function that sends the same neutral response whether or not the email has an account. Not built.
+- **Parent email invite:** Phase 3 adds `create_parent_invite` (neutral response) and token-based `accept_parent_invite`; the email sender is still not built.
 - Account deletion and data export have request helpers (`src/auth/accountRequests.ts`) but no in-app buttons yet; fulfilling them is a server job.
 - Parent-facing display of a linked minor's name is not possible (RLS gives parents no profile read); the UI says "Linked minor 1, 2".
 - Parent-link revoke (`revoke_parent_link`) has no UI.
@@ -213,8 +213,8 @@ Source: `legal/phase2-legal-answers.md` (Counsel, Nov 15, 2026; outside this rep
 
 ### Tests
 
-- SQL: `rls.sql` + `phase2b.sql`, **326 assertions** (was 180), green on PGlite and on real Postgres 17.
-- Server functions: `cd supabase/functions && npm test`, **39 tests**. KMS and Anthropic are mocked; there are no network calls. They cover redaction, the output filter, envelope round trips, AAD binding and provider rules. CI runs them in the `server-functions` job.
+- SQL: `rls.sql` + `phase2b.sql`, **326 assertions** (was 180) at the end of Phase 2b; Phase 3 adds `phase3.sql` (733 total).
+- Server functions: `cd supabase/functions && npm test`, **39 tests** at the end of Phase 2b (44 after Phase 3). KMS and Anthropic are mocked; there are no network calls. They cover redaction, the output filter, envelope round trips, AAD binding and provider rules. CI runs them in the `server-functions` job.
 - `npx tsc --noEmit` (root) and `npx tsc -p supabase/functions/tsconfig.json` pass. `deno check` passes on both entry points.
 
 ### Kevin's Phase 2b setup steps (none done)
@@ -261,8 +261,8 @@ Deploy and schedule
 
 ### Not built / needs a decision
 
-- Store age-signal native module (Apple Declared Age Range / Play Age Signals): `getStoreAgeSignal()` returns null.
-- Parent invite sender, days 3/7 reminder sender, the notice to a minor when the parent changes a setting, and parent verification (Stripe Identity), plus the terms, attestation and verification records collected when a link is accepted.
+- ~~Store age-signal native module~~ Built in Phase 3 (`modules/store-age-signal`, see `docs/store-age-signal.md`); not compiled natively yet.
+- Parent invite sender (Phase 3 records invites and issues tokens; the email sender is still not built), days 3/7 reminder sender, the notice to a minor when the parent changes a setting, and parent verification (Stripe Identity), plus the terms, attestation and verification records collected when a link is accepted.
 - Coach identity check provider (`set_coach_identity_check` is the hook), coach-sharing consent text (needs the coach name and a per-item picker), and the "Settings › Privacy" screen that the texts refer to.
-- AI plan wizard UI and progress-photo UI.
+- AI plan wizard UI and progress-photo UI. (Phase 3 built the Privacy & safety and parent consent screens; `consent.tsx` stays as the later settings view.)
 - Tables for minor safety records and NCMEC materials (retention rows say `no_table_yet`).

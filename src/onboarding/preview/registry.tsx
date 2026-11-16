@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react';
 import { View } from 'react-native';
 import { AiNotice } from '../../components/AiNotice';
+import { PolicyScreen } from '../../components/PolicyScreen';
+import { HEALTH_POLICY_DOC } from '../../legal/policies/policies.generated';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -61,6 +63,7 @@ function PlanNoticePreview() {
 }
 
 export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
+  'policy-health': () => <PolicyScreen doc={HEALTH_POLICY_DOC} />,
   welcome: () => <WelcomeScreen onCreate={noop} onSignIn={noop} onTerms={noop} onPrivacy={noop} />,
   method: () => <MethodScreen showApple showGoogle onApple={noop} onGoogle={noop} onEmail={noop} onBack={noop} onSignIn={noop} onTerms={noop} onPrivacy={noop} />,
   dob: () => <DobScreen value={{ month: '', day: '', year: '' }} onChange={noop} valid={false} onContinue={noop} onBack={noop} />,
