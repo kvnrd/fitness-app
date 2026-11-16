@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ExpoCrypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { createDeviceFlags } from './deviceFlags.ts';
 import { createDeviceSetupStore, type KeyValueAdapter } from './deviceSetupStore.ts';
 
 /**
@@ -29,3 +31,7 @@ export const deviceSetupStore = createDeviceSetupStore({
   draftStorage: asyncAdapter,
   weightStorage: Platform.OS === 'web' ? asyncAdapter : secureAdapter,
 });
+
+
+/** Goal-done marker + per-install rate-limit id (AsyncStorage; neither is secret). */
+export const deviceFlags = createDeviceFlags(asyncAdapter, () => ExpoCrypto.randomUUID());
