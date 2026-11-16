@@ -36,3 +36,34 @@ jobs:
           rm gitleaks.tgz
       - name: Scan full history (redacted)
         run: gitleaks detect --source . --log-opts="--all" --redact --no-banner --verbose
+
+  sql-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # Test-only throwaway credentials for the CI service container. Not a secret, not used anywhere else.
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitness_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Test-only value for the disposable service container above (database name must end in _test).
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/fitness_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install psql client and contrib (pgcrypto)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client postgresql-contrib
+      - name: Migrations + RLS tests on Postgres 17 with real pgcrypto
+        run: node supabase/tests/run.mjs

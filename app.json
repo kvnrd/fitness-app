@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +28,10 @@
     "backgroundColor": "#070708",
     "plugins": [
       "expo-router",
-      "expo-video"
+      "expo-video",
+      "expo-secure-store",
+      "expo-apple-authentication",
+      "expo-web-browser"
     ]
   }
 }

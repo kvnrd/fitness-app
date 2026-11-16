@@ -1,0 +1,8 @@
+{
+  "name": "fitness-app-sql-tests",
+  "private": true,
+  "type": "module",
+  "description": "Test-only package for supabase/migrations. Not part of the Expo app.",
+  "scripts": { "test": "node run.mjs" },
+  "devDependencies": { "@electric-sql/pglite": "^0.5.0" }
+}
