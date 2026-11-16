@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ComingInJobB } from '../../onboarding/screens/ComingInJobB';
+import { SetupFlow } from '../../onboarding/SetupFlow';
 
-// TODO(job B): Setup steps 4-8 (role, goal, style, follow-ups, equipment, prefs).
+/** Setup steps 4-8. The optional `step` segment only picks where to start; SetupFlow validates it against the account's mode. */
 export default function SetupStepRoute() {
   const { step } = useLocalSearchParams<{ step?: string }>();
-  return <ComingInJobB name={`setup/${typeof step === 'string' ? step.slice(0, 20) : ''}`} />;
+  return <SetupFlow param={typeof step === 'string' ? step.slice(0, 20) : undefined} />;
 }
