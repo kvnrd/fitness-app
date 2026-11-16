@@ -48,6 +48,8 @@ const PROTOTYPE_STATE: OnboardingState = {
   can_train: true,
   parent_risk_done: null,
   health_reask_due: false,
+  health_screen_status: 'ok',
+  can_ai_plan: true,
 };
 
 export function SessionProvider({ children }: { children: ReactNode }) {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { OnboardingState } from '../../src/onboarding/api.ts';
 import { inviteNeedsResend, inviteStatusText, nextOnboardingRoute, parentApproveBy, parentApproveDeadlineText, parentRiskMissing, shouldUploadDraft, workoutsLocked } from '../../src/onboarding/routing.ts';
 
-const base: OnboardingState = { is_minor: false, linked: false, invite_status: null, setup_done: false, privacy_done: false, can_train: false, parent_risk_done: null, health_reask_due: false };
+const base: OnboardingState = { is_minor: false, linked: false, invite_status: null, setup_done: false, privacy_done: false, can_train: false, parent_risk_done: null, health_reask_due: false, health_screen_status: null, can_ai_plan: false };
 const s = (o: Partial<OnboardingState>): OnboardingState => ({ ...base, ...o });
 const none = { hasDeviceDraft: false, goalDone: false };
 

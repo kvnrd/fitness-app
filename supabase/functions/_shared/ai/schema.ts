@@ -6,7 +6,7 @@ export const INJURY_CATEGORIES = [
 ] as const;
 export type InjuryCategory = (typeof INJURY_CATEGORIES)[number];
 
-export const GOALS = ['build_strength', 'build_muscle', 'general_fitness', 'endurance', 'mobility', 'sport_performance', 'lose_fat'] as const;
+export const GOALS = ['build_strength', 'build_muscle', 'general_fitness', 'endurance', 'mobility', 'sport_performance', 'lose_fat', 'hybrid', 'hyrox'] as const;
 export type Goal = (typeof GOALS)[number];
 /** 16-17: no weight-loss or calorie goals (Counsel, parental consent text). */
 export const MINOR_BLOCKED_GOALS: readonly Goal[] = ['lose_fat'];
