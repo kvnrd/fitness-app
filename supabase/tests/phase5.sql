@@ -145,7 +145,7 @@ select tests.ok('photos: opt-in column defaults to false, never true', (
 
 select tests.login(tests.u(122)); -- minor, even with health later, cannot opt in
 select tests.raises('photos: a 16-17 cannot turn the photo opt-in on',
-  $q$select public.set_progress_photo_opt_in(true)$q$, 'photo_upload_not_allowed');
+  $q$select public.set_progress_photo_opt_in(true, 'photos-v1', repeat('a', 64))$q$, 'photo_upload_not_allowed');
 select tests.ok('photos: minor still has no opt-in', not app.has_progress_photo_opt_in(tests.u(122)));
 select tests.login(tests.u(124));
 -- parent link + health so the age block is not confused with missing consent
@@ -156,18 +156,18 @@ select tests.login(tests.u(120));
 select tests.raises('photos: health on, opt-in off, upload refused',
   format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(120), tests.u(120)::text || '/p5.jpg'),
   'photo_upload_not_allowed');
-select public.set_progress_photo_opt_in(true);
+select public.set_progress_photo_opt_in(true, 'photos-v1', repeat('a', 64));
 select tests.ok('photos: explicit opt-in is recorded', app.has_progress_photo_opt_in(tests.u(120)));
 select tests.affected('photos: adult with health + opt-in can add a row',
   format($q$insert into public.progress_photos (user_id, storage_path, captured_on) values (%L, %L, '2026-11-16')$q$, tests.u(120), tests.u(120)::text || '/p5.jpg'), 1);
 select tests.affected('photos: adult storage upload into own folder',
   format($q$insert into storage.objects (bucket_id, name) values ('progress-photos', %L)$q$, tests.u(120)::text || '/p5.jpg'), 1);
 
-select tests.raises('photos: share requires coach_sharing consent',
+select tests.raises('photos: share requires the photo-share opt-in',
   format($q$select public.share_progress_photo((select id from public.progress_photos where storage_path = %L), %L)$q$,
          tests.u(120)::text || '/p5.jpg', tests.u(121)),
   'consent_required');
-select public.record_consent('coach_sharing', 'v1');
+select public.set_photo_coach_share_opt_in(tests.u(121), true, 'share-v1', repeat('b', 64));
 select tests.raises('photos: cannot share with a coach who is not in an active 1:1',
   format($q$select public.share_progress_photo((select id from public.progress_photos where storage_path = %L), %L)$q$,
          tests.u(120)::text || '/p5.jpg', tests.u(125)),
@@ -176,8 +176,21 @@ select public.share_progress_photo(
   (select id from public.progress_photos where storage_path = tests.u(120)::text || '/p5.jpg'),
   tests.u(121));
 select tests.login(tests.u(121));
-select tests.rows('photos: 1:1 coach sees the shared photo row',
+select tests.no_rows('photos: coach cannot see the row until the copy is watermarked and checked',
+  format('select * from public.progress_photos where user_id = %L', tests.u(120)));
+select tests.login(null, 'service_role');
+select public.finalize_shared_photo_copy(
+  (select s.id from public.progress_photo_shares s
+     join public.progress_photos ph on ph.id = s.photo_id
+    where ph.storage_path = tests.u(120)::text || '/p5.jpg' and s.coach_id = tests.u(121)),
+  '\x22222222222222222222222222222222'::bytea,
+  'passed');
+select tests.login(tests.u(121));
+select tests.rows('photos: 1:1 coach sees the shared watermarked photo row',
   format('select * from public.progress_photos where user_id = %L', tests.u(120)), 1);
+select tests.ok('photos: the shared copy is watermarked and has no download path', exists (
+  select 1 from public.progress_photo_shared_copies c
+   where c.coach_id = tests.u(121) and c.watermarked and c.safety_check = 'passed' and c.wrapped_key is not null));
 select tests.no_rows('photos: coach has no storage download of the object',
   format($q$select * from storage.objects where bucket_id = 'progress-photos' and name = %L$q$, tests.u(120)::text || '/p5.jpg'));
 select tests.login(tests.u(125));
@@ -202,4 +215,229 @@ select tests.login(null, 'service_role');
 select tests.raises('photos: even the service role cannot add a minor''s photo row',
   format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(122), tests.u(122)::text || '/x.jpg'),
   'photo_upload_not_allowed');
+select tests.logout();
+
+
+-- =============================================================== Counsel: consent logs, no auto re-prompt, export + shred
+select tests.login(tests.u(123));
+select public.record_consent('health_data', 'health-v1');
+select public.dismiss_progress_photo_opt_in();
+select tests.ok('consent: Not now logs dismissed and does not turn photos on', (
+  not app.has_progress_photo_opt_in(tests.u(123))
+  and exists (select 1 from public.consent_events
+               where user_id = tests.u(123) and kind = 'progress_photos'
+                 and policy_version = 'dismissed' and granted = false and text_hash is null)));
+select tests.ok('consent: no automatic re-prompt', not app.progress_photo_reprompt_due(tests.u(123)));
+select tests.raises('consent: Continue without a hash is refused',
+  $q$select public.set_progress_photo_opt_in(false, 'photos-v1', 'nope')$q$, 'invalid_text_hash');
+-- First-use Continue with the switch off (never on, no photos): logs off with version+hash, no export required.
+select public.set_progress_photo_opt_in(false, 'photos-v1', repeat('c', 64));
+select tests.ok('consent: Continue with the switch off logs off and keeps photos off', (
+  not app.has_progress_photo_opt_in(tests.u(123))
+  and exists (select 1 from public.consent_events
+               where user_id = tests.u(123) and kind = 'progress_photos'
+                 and granted = false and policy_version = 'photos-v1' and text_hash = repeat('c', 64))));
+select public.set_progress_photo_opt_in(true, 'photos-v1', repeat('c', 64));
+select tests.affected('consent: 123 can add a photo once on',
+  format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(123), tests.u(123)::text || '/off.jpg'), 1);
+select tests.raises('deletion: turning photos off without an export offer is refused',
+  $q$select public.set_progress_photo_opt_in(false, 'photos-v1', repeat('c', 64))$q$, 'export_required');
+select tests.ok('deletion: export hook returns a request id', public.offer_progress_photo_export() is not null);
+select tests.logout();
+select tests.ok('deletion: export hook records the offered-at flag',
+  (select export_offered_at is not null from public.progress_photo_opt_ins where user_id = tests.u(123)));
+select tests.login(tests.u(123));
+select public.register_photo_key('\x11111111111111111111111111111111'::bytea, 'local-dev', 'local-dev:test');
+select public.set_progress_photo_opt_in(false, 'photos-v1', repeat('c', 64));
+-- Inspect private keys as the test role (superuser). service_role has no schema usage on private.
+select tests.logout();
+select tests.ok('deletion: turn-off schedules per-user key shred within 30 days', exists (
+  select 1 from private.photo_data_keys k
+   where k.user_id = tests.u(123) and k.shred_after is not null
+     and k.shred_after > now() + interval '28 days'
+     and k.shred_after <= now() + interval '30 days'
+     and k.shredded_at is null));
+-- If 123 has no health key, register nothing; just backdate the photo shred clock.
+update private.photo_data_keys set shred_after = now() - interval '1 hour' where user_id = tests.u(123);
+select tests.login(null, 'service_role');
+select tests.ok('deletion: purge reports a shredded photo key',
+  (public.run_retention_purge() ->> 'photo_shredded')::int >= 1);
+select tests.logout();
+select tests.ok('deletion: the due photo key is gone and no health key was invented',
+  not exists (select 1 from private.photo_data_keys where user_id = tests.u(123))
+  and not exists (select 1 from private.user_data_keys where user_id = tests.u(123)));
+
+-- =============================================================== Counsel: teen weight, goals, video
+select tests.p4_link(tests.u(122), tests.u(124));
+select tests.p4_dual_health_ai(tests.u(122), tests.u(124));
+select tests.ok('teen: both health opt-ins are on', app.has_consent(tests.u(122), 'health_data'));
+select tests.login(tests.u(122));
+select tests.raises('teen: no weigh-in history even with Health on',
+  format($q$insert into public.weigh_ins (user_id, recorded_on, weight_ct, unit) values (%L, '2026-11-16', '\x01', 'lb')$q$, tests.u(122)),
+  'teen_weight_history_not_allowed');
+select tests.raises('teen: cannot turn on body-weight sharing',
+  $q$select public.set_share_body_weight(true)$q$, 'teen_weight_history_not_allowed');
+select tests.eq('teen: Progress weight series is empty',
+  $q$select count(*)::text from public.progress_weight_series('progress')$q$, '0');
+select tests.eq('teen: Home weight series is empty',
+  $q$select count(*)::text from public.progress_weight_series('home')$q$, '0');
+select tests.eq('teen: Profile also has no history series',
+  $q$select count(*)::text from public.progress_weight_series('profile')$q$, '0');
+select tests.ok('teen: the server will not serve a weight trend', not app.can_serve_weight_trend(tests.u(122)));
+select tests.ok('adult: the server can serve a weight trend', app.can_serve_weight_trend(tests.u(120)));
+select tests.login(tests.u(120));
+select tests.ok('adult: Progress series returns ciphertext weigh-ins when Health is on',
+  (select count(*) from public.progress_weight_series('progress')) >= 1);
+select tests.login(tests.u(122));
+select tests.raises('teen: Lose goal refused', $q$select public.save_training_setup('{"goal":"lose"}')$q$, 'invalid_setup');
+select tests.raises('teen: Gain / size goal refused', $q$select public.save_training_setup('{"goal":"gain"}')$q$, 'invalid_setup');
+select tests.raises('teen: video upload is blocked', $q$select public.upload_progress_video()$q$, 'photo_upload_not_allowed');
+select tests.ok('teen: can_upload_progress_video is always false', not app.can_upload_progress_video(tests.u(122)));
+select tests.ok('teen: cannot opt in to photos', not app.has_progress_photo_opt_in(tests.u(122)));
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.raises('teen: service cannot write a weight_goal',
+  format($q$select public.health_write(%L, null, null, null, tests.ct('wg'), array['weight_goal'])$q$, tests.u(122)),
+  'forbidden');
+select tests.logout();
+
+select tests.login(tests.u(120));
+select tests.raises('adult: Phase 5 has no video upload either', $q$select public.upload_progress_video()$q$, 'video_upload_not_allowed');
+select tests.ok('photos: share opt-in is off by default', not app.has_progress_photo_share_opt_in(tests.u(120), tests.u(125)));
+select tests.raises('photos: share opt-in requires a 1:1 with an approved adult coach',
+  format($q$select public.set_photo_coach_share_opt_in(%L, true, 'share-v1', repeat('b', 64))$q$, tests.u(125)),
+  'one_to_one_required');
+select public.dismiss_photo_coach_share_opt_in();
+select tests.ok('consent: share Not now logs dismissed', exists (
+  select 1 from public.consent_events
+   where user_id = tests.u(120) and kind = 'photo_coach_sharing' and policy_version = 'dismissed'));
+select tests.logout();
+
+-- =============================================================== Counsel Rev 2: turn-off revokes coaches now; delete-all leaves photos on
+select tests.login(tests.u(120));
+-- 120 is still opted in from earlier. Sharing with 121 may already be revoked; share again.
+select public.set_photo_coach_share_opt_in(tests.u(121), true, 'share-v1', repeat('b', 64));
+select public.share_progress_photo(
+  (select id from public.progress_photos where storage_path = tests.u(120)::text || '/p5.jpg' and pending_delete_at is null),
+  tests.u(121));
+select tests.login(null, 'service_role');
+select public.finalize_shared_photo_copy(
+  (select s.id from public.progress_photo_shares s
+     join public.progress_photos ph on ph.id = s.photo_id
+    where ph.storage_path = tests.u(120)::text || '/p5.jpg' and s.coach_id = tests.u(121) and s.revoked_at is null
+    order by s.shared_at desc limit 1),
+  '\x33333333333333333333333333333333'::bytea,
+  'passed');
+select tests.login(tests.u(121));
+select tests.rows('rev2: coach can see the re-shared photo before delete-all',
+  format('select * from public.progress_photos where user_id = %L', tests.u(120)), 1);
+select tests.login(tests.u(120));
+select tests.raises('rev2: delete-all without an export offer is refused',
+  $q$select public.delete_all_progress_photos()$q$, 'export_required');
+select tests.ok('rev2: export hook can run for delete-all', public.offer_progress_photo_export() is not null);
+select public.register_photo_key('\x55555555555555555555555555555555'::bytea, 'local-dev', 'local-dev:test');
+select public.delete_all_progress_photos();
+select tests.ok('rev2: delete-all leaves photos enabled', app.has_progress_photo_opt_in(tests.u(120)));
+select tests.eq('rev2: pending-delete photos are hidden from the athlete',
+  $q$select count(*)::text from public.progress_photos$q$, '0');
+select tests.logout();
+select tests.ok('rev2: delete-all scheduled the current key for shred and left no active key', exists (
+  select 1 from private.photo_data_keys k
+   where k.user_id = tests.u(120) and k.active = false and k.shred_after is not null and k.shredded_at is null)
+  and not exists (select 1 from private.photo_data_keys k where k.user_id = tests.u(120) and k.active));
+select tests.login(tests.u(121));
+select tests.no_rows('rev2: delete-all revokes coach access immediately',
+  format('select * from public.progress_photos where user_id = %L', tests.u(120)));
+select tests.logout();
+select tests.ok('rev2: shared-copy keys are shredded on delete-all', not exists (
+  select 1 from public.progress_photo_shared_copies c
+   where c.coach_id = tests.u(121) and c.wrapped_key is not null and c.shredded_at is null
+     and exists (select 1 from public.progress_photos ph where ph.id = c.photo_id and ph.user_id = tests.u(120))));
+select tests.login(tests.u(120));
+-- Photos still on: a new key can be registered for later shots.
+select public.register_photo_key('\x44444444444444444444444444444444'::bytea, 'local-dev', 'local-dev:test');
+select tests.logout();
+select tests.ok('rev2: a fresh key can be registered while photos stay on', exists (
+  select 1 from private.photo_data_keys k
+   where k.user_id = tests.u(120) and k.active and k.shred_after is null)
+  and exists (
+  select 1 from private.photo_data_keys k
+   where k.user_id = tests.u(120) and k.active = false and k.shred_after is not null));
+
+-- =============================================================== Counsel Rev 3: purge guarantee, teen weight delete, parent export
+select tests.ok('rev3: photo purge deadline is guaranteed (daily job is tested)', app.photo_purge_deadline_guaranteed());
+select tests.ok('rev3: a scheduled photo shred is never later than 30 days out',
+  not exists (select 1 from private.photo_data_keys
+               where shred_after is not null and shred_after > now() + interval '30 days'));
+select tests.ok('rev3: export does not auto-delete photos', not app.photo_export_auto_deletes());
+
+-- 122/124 already have a parent link and both health opt-ins from the teen-weight section.
+select tests.login(null, 'service_role');
+select public.health_register_key(tests.u(122), tests.wk(122), 'local-dev', 'local-dev:test');
+select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-1'));
+select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-2'));
+select tests.logout();
+select tests.ok('rev3: a new teen weight overwrites the previous value; no history row is kept', (
+  (select body_weight_ct = tests.ct('bw-2') from public.health_records where user_id = tests.u(122))
+  and (select count(*) from public.weigh_ins where user_id = tests.u(122)) = 0));
+
+select tests.login(tests.u(124));
+select public.revoke_consent('health_data', tests.u(122));
+select tests.logout();
+select tests.ok('rev3: parent turning Health off deletes the live teen weight immediately',
+  (select body_weight_ct is null from public.health_records where user_id = tests.u(122)));
+select tests.ok('rev3: the teen is notified when the parent caused the deletion', exists (
+  select 1 from public.teen_data_notices n
+   where n.user_id = tests.u(122) and n.kind = 'weight_deleted_by_parent'
+     and n.actor_user_id = tests.u(124)));
+-- Health key is still present; backups go when the key is shredded (existing 29-day path).
+select tests.ok('rev3: the health key is still scheduled for ordinary withdrawal shred, not dropped instantly', exists (
+  select 1 from private.user_data_keys k where k.user_id = tests.u(122)));
+
+-- Turning Health back on starts empty. A parent revoke also drops the teen's self grant.
+select tests.login(tests.u(124));
+select public.record_consent('health_data', 'health-v1', tests.u(122));
+select tests.login(tests.u(122));
+select public.record_consent('health_data', 'health-v1');
+select tests.logout();
+select tests.ok('rev3: after Health is turned back on, the current weight is still empty',
+  (select body_weight_ct is null from public.health_records where user_id = tests.u(122)));
+
+-- Teen turning their own opt-in off also deletes the value, with no parent notice.
+select tests.login(null, 'service_role');
+select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-3'));
+select tests.logout();
+select tests.login(tests.u(122));
+select public.revoke_consent('health_data');
+select tests.logout();
+select tests.ok('rev3: the teen turning Health off also clears the live weight',
+  (select body_weight_ct is null from public.health_records where user_id = tests.u(122)));
+select tests.ok('rev3: a self-clear does not add a parent-caused notice',
+  (select count(*) = 1 from public.teen_data_notices
+    where user_id = tests.u(122) and kind = 'weight_deleted_by_parent'));
+
+select tests.login(tests.u(122));
+select public.record_consent('health_data', 'health-v1');
+select tests.logout();
+select tests.login(null, 'service_role');
+select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-4'));
+select tests.logout();
+select tests.login(tests.u(122));
+select public.clear_teen_current_weight();
+select tests.logout();
+select tests.ok('rev3: Clear weight wipes the live value and leaves Health on', (
+  (select body_weight_ct is null from public.health_records where user_id = tests.u(122))
+  and app.has_consent(tests.u(122), 'health_data')));
+
+select tests.ok('rev3: parent export of teen data is on (Kevin flag, Counsel recommended)', app.parent_can_export_teen_data());
+select tests.login(tests.u(120));
+select tests.raises('rev3: a non-parent cannot export a teen''s data',
+  format($q$select public.parent_export_teen_data(%L)$q$, tests.u(122)),
+  'forbidden');
+select tests.login(tests.u(124));
+select tests.ok('rev3: the parent can request an export', public.parent_export_teen_data(tests.u(122)) is not null);
+select tests.login(tests.u(122));
+select tests.ok('rev3: the teen is told about the parent export', exists (
+  select 1 from public.teen_data_notices
+   where user_id = tests.u(122) and kind = 'parent_exported_data' and actor_user_id = tests.u(124)));
 select tests.logout();
