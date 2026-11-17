@@ -1,11 +1,12 @@
 /**
- * Free Home weight card: weigh-ins stay on the device until the Health data switch is on.
- * Same gate as the adult weight goal (Counsel, Nov 15). Minors never upload a weight goal;
- * a 16–17 may upload weigh-ins only after effective health_data is on (body_weight is allowed
- * for teens; the goal stays adults-only).
+ * Free Home weight card weigh-ins.
  *
- * Storage is the same health-data adapter as the goal (SecureStore on native, memory on web).
- * Never write weigh-ins to AsyncStorage or logs.
+ * Counsel Rev 2 (02b): while Health data is off, no weigh-in is written to the
+ * server or kept on the device as history. The adult weight *goal* may still
+ * stay on the device until Health is on (approved goal line).
+ *
+ * 16–17s never store weigh-in history (no Progress/Home card). Their only
+ * allowed body-weight surface is an optional current value in Profile.
  */
 import { canUploadWeight, type KeyValueAdapter, type UploadResult } from '../onboarding/deviceSetupStore.ts';
 import type { MassUnit } from './units.ts';
@@ -34,16 +35,20 @@ export function createWeightLocalStore(opts: { weightStorage: KeyValueAdapter })
   const { weightStorage } = opts;
 
   return {
-    async loadWeighIns(uid: string): Promise<WeighIn[]> {
+    async loadWeighIns(uid: string, gate: { healthOn: boolean }): Promise<WeighIn[]> {
+      if (!canUploadWeight(gate)) return [];
       return parse(await weightStorage.getItem(key(uid)));
     },
 
-    async saveWeighIn(uid: string, entry: WeighIn): Promise<void> {
+    /** Refuses to write history while Health data is off. */
+    async saveWeighIn(uid: string, entry: WeighIn, gate: { healthOn: boolean }): Promise<'saved' | 'ignored'> {
+      if (!canUploadWeight(gate)) return 'ignored';
       const cur = parse(await weightStorage.getItem(key(uid)));
       const next = cur.filter((e) => e.recordedOn !== entry.recordedOn);
       next.push(entry);
       next.sort((a, b) => (a.recordedOn < b.recordedOn ? -1 : 1));
       await weightStorage.setItem(key(uid), JSON.stringify({ v: 1, entries: next } satisfies WeighInRecord));
+      return 'saved';
     },
 
     async clearWeighIns(uid: string): Promise<void> {
@@ -51,17 +56,17 @@ export function createWeightLocalStore(opts: { weightStorage: KeyValueAdapter })
     },
 
     /**
-     * Upload every stored weigh-in, then delete the device copy only if the upload succeeded.
-     * Health off → kept. A thrown or false upload keeps the copy.
+     * Upload stored weigh-ins (Health must already be on to have any). The device
+     * copy is deleted only after a successful upload.
      */
     async takeWeighInsForUpload(
       uid: string,
       gate: { healthOn: boolean },
       upload: (entries: WeighIn[]) => Promise<UploadResult>,
     ): Promise<'none' | 'kept' | 'uploaded' | 'failed'> {
+      if (!canUploadWeight(gate)) return 'none';
       const entries = parse(await weightStorage.getItem(key(uid)));
       if (!entries.length) return 'none';
-      if (!canUploadWeight(gate)) return 'kept';
       try {
         const ok = isOk(await upload(entries));
         if (!ok) return 'failed';
@@ -74,7 +79,11 @@ export function createWeightLocalStore(opts: { weightStorage: KeyValueAdapter })
   };
 }
 
-/** Combined gate used by the Home weight card and the adult goal. */
+/** Combined gate used by the adult goal (still allowed on-device) and by weigh-in history (not allowed while off). */
 export function canLeaveDevice(opts: { healthOn: boolean }): boolean {
+  return canUploadWeight(opts);
+}
+
+export function canSaveWeighInHistory(opts: { healthOn: boolean }): boolean {
   return canUploadWeight(opts);
 }
