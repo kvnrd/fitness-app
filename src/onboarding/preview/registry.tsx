@@ -1,4 +1,6 @@
 import type { ReactElement } from 'react';
+import { AuroraProgressPreview, AuroraTrainPreview, AuroraWorkoutPreview } from './auroraPreview';
+import { AppearanceSettingsScreen } from '../../settings/screens/AppearanceSettings';
 import { View } from 'react-native';
 import { AiNotice } from '../../components/AiNotice';
 import { PolicyScreen } from '../../components/PolicyScreen';
@@ -250,4 +252,11 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'health-reask-waiting': () => <HealthReaskScreen variant="waiting_parent" onConfirm={noop} onTurnOff={noop} onBack={noop} />,
   // ───── Plan notice ─────
   'plan-notice': () => <PlanNoticePreview />,
+  // ───── Aurora theme (family/preset come from dev-preview query params) ─────
+  'train-aurora': () => <AuroraTrainPreview />,
+  'progress-aurora': () => <AuroraProgressPreview />,
+  'workout-aurora': () => <AuroraWorkoutPreview />,
+  'workout-aurora-empty': () => <AuroraWorkoutPreview empty />,
+  'appearance-aurora': () => <AppearanceSettingsScreen onBack={() => {}} />,
 };
+
