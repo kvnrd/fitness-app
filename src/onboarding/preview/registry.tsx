@@ -63,7 +63,7 @@ import { HomeWeightCard } from '../../progress/screens/HomeWeightCard';
 import { PhotoGalleryScreen } from '../../progress/screens/PhotoGallery';
 import { ProfileBodySection } from '../../progress/screens/ProfileBody';
 import { ProgressChips } from '../../progress/screens/ProgressChips';
-import { ProgressWeightScreen } from '../../progress/screens/ProgressWeight';
+import { ProgressWeightScreen, PREVIEW_WEIGHT_CHART } from '../../progress/screens/ProgressWeight';
 import { WeightGoalSheet } from '../../progress/screens/WeightGoalSheet';
 import { weightSurfaceState } from '../../progress/weightGate.ts';
 
@@ -93,6 +93,7 @@ const sampleWeight = {
   goalLabel: 'Goal · 138 lb',
   goalSub: 'About 17 weeks at your current rate',
   accessibilityLabel: 'Trend weight 142.6 lb, down 3.4 lb over 3 months.',
+  ...PREVIEW_WEIGHT_CHART,
 };
 
 
