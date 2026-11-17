@@ -125,14 +125,16 @@ test('coach sharing is opt-in, 1:1 only, and never for minors or plan followers'
     isMinor: false,
     healthOn: true,
     photoOptedIn: true,
-    coachSharingOn: true,
+    photoShareOptedIn: true,
+    coachIsApprovedAdult: true,
     hasActiveOneToOneCoach: true,
     isPlanFollowerOnly: false,
   };
   assert.equal(canShareProgressPhoto(ok), true);
   assert.equal(canShareProgressPhoto({ ...ok, isMinor: true }), false);
   assert.equal(canShareProgressPhoto({ ...ok, photoOptedIn: false }), false);
-  assert.equal(canShareProgressPhoto({ ...ok, coachSharingOn: false }), false);
+  assert.equal(canShareProgressPhoto({ ...ok, photoShareOptedIn: false }), false);
+  assert.equal(canShareProgressPhoto({ ...ok, coachIsApprovedAdult: false }), false);
   assert.equal(canShareProgressPhoto({ ...ok, hasActiveOneToOneCoach: false }), false);
   assert.equal(canShareProgressPhoto({ ...ok, isPlanFollowerOnly: true }), false);
   assert.equal(canShareProgressPhoto({ ...ok, healthOn: false }), false);

@@ -3,9 +3,9 @@
  * This is separate from health_data and from coach sharing (Counsel: collection vs sharing).
  */
 import type { KeyValueAdapter } from '../onboarding/deviceSetupStore.ts';
+import { DEFAULT_PHOTO_OPT_IN_CHECKED } from './photoConsent.ts';
 
-/** The first-use sheet must start with this unchecked. */
-export const DEFAULT_PHOTO_OPT_IN_CHECKED = false as const;
+export { DEFAULT_PHOTO_OPT_IN_CHECKED };
 
 const key = (uid: string) => `progress.photos.optin.v1.${uid}`;
 

@@ -8,7 +8,10 @@ export type PhotoShareGate = {
   isMinor: boolean;
   healthOn: boolean;
   photoOptedIn: boolean;
-  coachSharingOn: boolean;
+  /** Separate share-with-coach opt-in (not the general training-data coach_sharing switch). */
+  photoShareOptedIn: boolean;
+  /** Approved, verified coach who is 18+. */
+  coachIsApprovedAdult: boolean;
   hasActiveOneToOneCoach: boolean;
   /** Assigned a general plan with no 1:1 coach relationship. */
   isPlanFollowerOnly: boolean;
@@ -17,7 +20,13 @@ export type PhotoShareGate = {
 export function canShareProgressPhoto(g: PhotoShareGate): boolean {
   if (g.isMinor) return false;
   if (g.isPlanFollowerOnly) return false;
-  return g.healthOn === true && g.photoOptedIn === true && g.coachSharingOn === true && g.hasActiveOneToOneCoach === true;
+  return (
+    g.healthOn === true &&
+    g.photoOptedIn === true &&
+    g.photoShareOptedIn === true &&
+    g.coachIsApprovedAdult === true &&
+    g.hasActiveOneToOneCoach === true
+  );
 }
 
 export function canCoachViewSharedPhoto(opts: {
