@@ -46,9 +46,13 @@ function Row({ label, value, sub, onPress, danger }: { label: string; value?: st
 }
 
 export default function ProfileTab() {
-  const { colors, fonts } = useTheme();
+  const { colors, fonts, family, auroraPreset, accent, accents, mode } = useTheme();
   const insets = useSafeAreaInsets();
-  const { profile, onboarding, signOut, user, isConfigured, isSignedIn } = useSession();
+  const { profile, onboarding, signOut, user, isConfigured, isSignedIn, isVerifiedCoach } = useSession();
+  const accentName = accents.find((a) => a.key === accent)?.name ?? 'Champagne';
+  const modeLabel = mode === 'system' ? 'System' : mode === 'light' ? 'Light' : 'Dark';
+  const presetLabel = auroraPreset.charAt(0).toUpperCase() + auroraPreset.slice(1);
+
   const { state, notice } = useAiPlan();
   const teen = !!onboarding?.is_minor;
   const [healthSelf, setHealthSelf] = useState(false);
@@ -129,6 +133,14 @@ export default function ProfileTab() {
               <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
                 Settings
               </Text>
+              <Row
+                label="Appearance"
+                value={family === 'aurora' ? `Aurora · ${auroraPreset[0].toUpperCase()}${auroraPreset.slice(1)}` : `${accentName} · ${modeLabel}`}
+                onPress={() => router.push('/settings/appearance')}
+              />
+              {isVerifiedCoach && family === 'aurora' ? (
+                <Row label="Studio" sub="Coach tools" onPress={() => router.push('/(tabs)/studio')} />
+              ) : null}
               <Row label="Notifications" onPress={() => router.push('/settings/notifications')} />
               <Row label="Privacy" sub="Health data, AI, coach sharing, and your rights" onPress={() => router.push('/settings/privacy')} />
               <Row label="Your choices" value="Consent" onPress={() => router.push('/consent')} />
