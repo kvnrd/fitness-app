@@ -19,28 +19,28 @@ export const APP_NAME = 'Fitness App';
 const fill = (s: string) => s.replace(/\[App\]/g, APP_NAME);
 
 /** Not-eligible dead end (Paper onb_dob). No age, no threshold, no retry option, no button. [ATTORNEY] */
-export const NOT_ELIGIBLE_TITLE = "Sorry, you can't create an account right now"; // [ATTORNEY]
+export const NOT_ELIGIBLE_TITLE = "Sorry, you can’t create an account right now"; // [ATTORNEY]
 export const NOT_ELIGIBLE_BODY = 'Nothing you entered has been saved.'; // [ATTORNEY]
 
 /** Health data (collection). */
 export const HEALTH_TEXT = fill(
-  "Save my health info. Turn on to let [App] collect and store your body weight, measurements, injury and pain notes, health-screen answers, form-check numbers, and training data. We use it only to build and adjust your workouts, show your progress, and keep plans safe. It's encrypted, never sold, never used for ads. Shared only with service providers who process it for us under contract. Turn off anytime in Settings › Privacy; you can also delete it there.",
+  "Save my health info. Turn on to let [App] collect and store your body weight, measurements, injury and pain notes, health-screen answers, form-check numbers, and training data. We use it only to build and adjust your workouts, show your progress, and keep plans safe. It’s encrypted, never sold, never used for ads. Shared only with service providers who process it for us under contract. Turn off anytime in Settings › Privacy; you can also delete it there.",
 );
 
 const AI_TITLE = 'Use AI to build my plan.';
 /** AI vendor, Version B (no ZDR yet). Switch to Version A only after Anthropic confirms ZDR in writing. */
 export const AI_TEXT_VERSION_B =
-  "Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn't train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.";
+  "Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.";
 const AI_B_BODY = AI_TEXT_VERSION_B.slice(AI_TITLE.length + 1);
 const AI_B_RETENTION_AND_TRAINING =
-  "Anthropic processes it only for us, under contract, and doesn't train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer.";
+  "Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer.";
 
 /** 16-17, teen's own switch (locked until the parent agrees). */
 export const AI_TEXT_TEEN = `${AI_TITLE} ${AI_B_BODY} Your parent must also agree before this turns on, and either of you can turn it off.`;
 
 /** Parent's AI box for their teen. */
 export const AI_TEXT_PARENT = fill(
-  `Let [App] send Anthropic, our AI provider, your teen's goals, experience, equipment, age range, and injury category (no name, email, photos, or location) to create and adapt your teen's plan. ${AI_B_RETENTION_AND_TRAINING} Your teen must also agree. You or your teen can turn it off anytime; your teen's saved plan stays but stops adapting.`,
+  `Let [App] send Anthropic, our AI provider, your teen’s goals, experience, equipment, age range, and injury category (no name, email, photos, or location) to create and adapt your teen’s plan. ${AI_B_RETENTION_AND_TRAINING} Your teen must also agree. You or your teen can turn it off anytime; your teen’s saved plan stays but stops adapting.`,
 );
 
 /** Policy versions recorded with each grant. Draft ids until Counsel/attorney sign off. */
@@ -105,10 +105,10 @@ export function termsAcceptanceCounts(version: string | null | undefined, hash: 
 
 // ───────────────────────────── Phase 3 onboarding copy ─────────────────────────────
 // Sources: paper/onb_p3.py, paper/onb_dob.py, legal/phase3-review.md, legal/phase4-review.md.
-// Apostrophes are straight (') to match the Phase 2 constants above. Every string is [ATTORNEY] before launch.
+// Counsel Rev 6: apostrophes in these bundled legal and consent texts are curly (U+2019). The version hash is of the exact characters shown. Any change after a version is live must bump the version.
 
 /** Create screen: the ONLY checkbox. Not pre-checked. No age clause. */ // [ATTORNEY]
-export const TERMS_CHECKBOX_TEXT = "I agree to the Terms of Service, and I've read the Privacy Policy.";
+export const TERMS_CHECKBOX_TEXT = "I agree to the Terms of Service, and I’ve read the Privacy Policy.";
 
 // Pending 16-17 screen. Body is Counsel verbatim; the title is UI chrome. // [ATTORNEY]
 export const PENDING_TITLE = 'Waiting for a parent';
@@ -155,14 +155,14 @@ export const aiNeedsHealthBody = (audience: 'adult' | 'teen'): string =>
 /** Parent-voice version. ${teen} is the teen's first name, or "your teen". */ // [ATTORNEY]
 export const parentAiNeedsHealthBody = (n: ParentNames = {}): string => {
   const teen = teenOf(n);
-  return `AI planning checks ${teen}'s health-screen answers and uses any injury ${teen} adds to avoid or swap exercises, so the health box has to be on first. From that health info, Anthropic, our AI provider, receives only an injury category, never ${teen}'s notes, measurements, name, or email. You can turn it on now, or leave AI off.`;
+  return `AI planning checks ${teen}’s health-screen answers and uses any injury ${teen} adds to avoid or swap exercises, so the health box has to be on first. From that health info, Anthropic, our AI provider, receives only an injury category, never ${teen}’s notes, measurements, name, or email. You can turn it on now, or leave AI off.`;
 };
 
 /** Safety-notice card, adult and teen (Counsel phase3-review #2, incl. emergency stop signs). The UI uppercases the headings. */ // [ATTORNEY]
 export const RISK_HEADING_NOT_MEDICAL = 'This is not medical advice';
 export const RISK_HEADING_RISKS = 'Exercise has risks';
 export const RISK_BODY_NOT_MEDICAL = fill(
-  "[App] creates training plans and logs for general fitness. It isn't medical care, a diagnosis, or a treatment plan, and it isn't a substitute for advice from a doctor or other qualified professional. Talk to a professional before you start or change a program, especially if you have an injury, a health condition, or you're returning to training.",
+  "[App] creates training plans and logs for general fitness. It isn’t medical care, a diagnosis, or a treatment plan, and it isn’t a substitute for advice from a doctor or other qualified professional. Talk to a professional before you start or change a program, especially if you have an injury, a health condition, or you’re returning to training.",
 );
 export const RISK_BODY_RISKS =
   "Strength training and conditioning can cause injury. You choose to take part, and you control how you train: check that a plan fits you, use equipment safely, and stop if something hurts. If anything feels wrong, stop and see a professional. Stop right away and get medical help if you have chest pain, fainting or dizziness, or trouble breathing. In an emergency, call 911.";
@@ -180,7 +180,7 @@ export type ParentNames = {
 };
 const clean = (s: string | null | undefined) => (s ?? '').trim().slice(0, 80);
 const teenOf = (n: ParentNames) => clean(n.teenName) || 'your teen';
-const poss = (name: string) => `${name}'s`;
+const poss = (name: string) => `${name}’s`;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const they = (_name: string) => 'they'; // neutral: the teen's pronouns are not known
 
@@ -191,7 +191,7 @@ export function parentAttestationText(n: ParentNames = {}): string {
   const me = clean(n.parentName);
   return fill(
     `I am ${me ? `${me}, ` : ''}18 or older, and the parent or legal guardian of ${full} with authority to agree for them. ` +
-      `I agree to [App]'s Terms (draft) and Privacy Policy (draft) as the contracting party for ${poss(teen)} account, and I'm responsible for purchases I approve. ` +
+      `I agree to [App]’s Terms (draft) and Privacy Policy (draft) as the contracting party for ${poss(teen)} account, and I’m responsible for purchases I approve. ` +
       `I understand ${teen} is 16–17 and will have: text-only coach chat that I can read, no progress-photo uploads, form checks shared only as skeleton and numbers, no weight-loss or calorie goals, and live sessions only with my invite. ` +
       `Separately, I choose each option below. ${cap(teen)} must also agree to each. ` +
       `I can view ${poss(teen)} data and change or withdraw any choice anytime in Parent Settings, and ${teen} will be told when I do.`,
@@ -199,7 +199,7 @@ export function parentAttestationText(n: ParentNames = {}): string {
 }
 
 export function parentLinkSubtitle(n: ParentNames = {}): string {
-  return `You're linking to ${poss(clean(n.teenFullName) || teenOf(n))} account.`;
+  return `You’re linking to ${poss(clean(n.teenFullName) || teenOf(n))} account.`;
 }
 
 /** Parent health box (Counsel-approved with fixes; the parent-voice paragraph itself is an [ATTORNEY] draft). */
@@ -207,7 +207,7 @@ export function parentHealthText(n: ParentNames = {}): string {
   const teen = teenOf(n);
   return fill(
     `Let [App] collect and store ${poss(teen)} body weight, measurements, injury and pain notes, health-screen answers, form-check numbers, and training data, only to build and adjust workouts, show progress, and keep plans safe. ` +
-      `It's encrypted, never sold, never used for ads. Shared only with service providers who process it for us under contract. ` +
+      `It’s encrypted, never sold, never used for ads. Shared only with service providers who process it for us under contract. ` +
       `If AI planning is also on, Anthropic receives only an injury category from this health info. ${cap(teen)} must also agree. ` +
       `You can turn it off in Parent Settings and ${teen} can in Settings › Privacy, and either of you can delete it. ${cap(teen)} will be told when you change it.`,
   );
@@ -234,7 +234,7 @@ export function parentRiskCard(n: ParentNames = {}) {
     headingNotMedical: RISK_HEADING_NOT_MEDICAL,
     headingRisks: RISK_HEADING_RISKS,
     bodyNotMedical: fill(
-      `[App] creates training plans and logs for general fitness. It isn't medical care, a diagnosis, or a treatment plan, and it isn't a substitute for advice from a doctor or other qualified professional. Talk to a professional before ${teen} starts or changes a program, especially if ${teen} has an injury, a health condition, or is returning to training.`,
+      `[App] creates training plans and logs for general fitness. It isn’t medical care, a diagnosis, or a treatment plan, and it isn’t a substitute for advice from a doctor or other qualified professional. Talk to a professional before ${teen} starts or changes a program, especially if ${teen} has an injury, a health condition, or is returning to training.`,
     ),
     bodyRisks: `Strength training and conditioning can cause injury. ${cap(teen)} chooses to take part, and ${teen} controls how ${they(teen)} train: check that a plan fits ${teen}, use equipment safely, and stop if something hurts. If anything feels wrong for ${teen}, stop and see a professional. Stop right away and get medical help if ${teen} has chest pain, fainting or dizziness, or trouble breathing. In an emergency, call 911.`,
     checkbox: `I have read this notice and talked with ${teen} about these risks. I understand this is not a waiver of ${poss(teen)} legal rights.`,
@@ -254,11 +254,11 @@ export function adultRiskCard() {
 /** Coach general attestation (Counsel phase3-build-answers.md §2). [Company] and [Coach Terms] stay as placeholders. [ATTORNEY] */
 export const COACH_ATTEST_GENERAL_INTRO = 'I confirm that:';
 const COACH_ATTEST_GENERAL_BULLETS_RAW = [
-  "I'm 18 or older, and everything in my application is true.",
-  "I'm an independent coach, not an employee of [Company]. I sell my 1:1 coaching myself, as the seller of record, through my own Stripe account, and I handle my own refunds, chargebacks, and taxes.",
-  "I won't give medical advice, diagnose or treat injuries or conditions, or call myself a doctor, physical therapist, or dietitian unless I'm licensed as one.",
-  "I'll see a client's info only if they share it with me. I'll never ask for a 16–17 client's health info, and I'll see an adult's health answers only if they choose to share them.",
-  "I'll keep client info confidential, use it only to coach that client, and not copy it out of [App]. If the client, their parent, or [Company] asks, I'll delete any notes or copies I kept outside [App] and confirm when it's done.",
+  "I’m 18 or older, and everything in my application is true.",
+  "I’m an independent coach, not an employee of [Company]. I sell my 1:1 coaching myself, as the seller of record, through my own Stripe account, and I handle my own refunds, chargebacks, and taxes.",
+  "I won’t give medical advice, diagnose or treat injuries or conditions, or call myself a doctor, physical therapist, or dietitian unless I’m licensed as one.",
+  "I’ll see a client’s info only if they share it with me. I’ll never ask for a 16–17 client’s health info, and I’ll see an adult’s health answers only if they choose to share them.",
+  "I’ll keep client info confidential, use it only to coach that client, and not copy it out of [App]. If the client, their parent, or [Company] asks, I’ll delete any notes or copies I kept outside [App] and confirm when it’s done.",
   'I agree to the [Coach Terms] and the [App] Terms of Service.',
 ] as const;
 export const COACH_ATTEST_GENERAL_BULLETS = COACH_ATTEST_GENERAL_BULLETS_RAW.map(fill);
@@ -267,11 +267,11 @@ export const COACH_ATTEST_GENERAL = [COACH_ATTEST_GENERAL_INTRO, ...COACH_ATTEST
 /** 16-17 box. Optional; gates minor clients only together with NSOPW + training. [ATTORNEY] */
 export const COACH_ATTEST_MINORS_INTRO = 'I want to coach 16–17-year-olds, and I agree that:';
 const COACH_ATTEST_MINORS_BULLETS_RAW = [
-  '[Company] will run a National Sex Offender Public Website (NSOPW) search on me before approving me, and I\'ll complete Texas child-abuse reporting training first.',
-  "If I believe a child is being abused or neglected, I'll report it as Texas law requires (Texas Family Code chapter 261), and also use [App]'s report tools.",
-  "I'll talk with minor clients only by text in [App] chat, which their parent can read and which is filtered and reviewed. I won't message between 10 pm and 7 am, never contact a minor client outside [App], and won't try to get around the filters.",
-  "Live sessions with minors happen only in [App], with their parent invited, and I'll never record them.",
-  "I'll never see or ask for a minor client's health info, photos, or videos, and I won't give them weight-loss, calorie, body-size, bulking, or supplement advice.",
+  '[Company] will run a National Sex Offender Public Website (NSOPW) search on me before approving me, and I’ll complete Texas child-abuse reporting training first.',
+  "If I believe a child is being abused or neglected, I’ll report it as Texas law requires (Texas Family Code chapter 261), and also use [App]’s report tools.",
+  "I’ll talk with minor clients only by text in [App] chat, which their parent can read and which is filtered and reviewed. I won’t message between 10 pm and 7 am, never contact a minor client outside [App], and won’t try to get around the filters.",
+  "Live sessions with minors happen only in [App], with their parent invited, and I’ll never record them.",
+  "I’ll never see or ask for a minor client’s health info, photos, or videos, and I won’t give them weight-loss, calorie, body-size, bulking, or supplement advice.",
 ] as const;
 export const COACH_ATTEST_MINORS_BULLETS = COACH_ATTEST_MINORS_BULLETS_RAW.map(fill);
 export const COACH_ATTEST_MINORS = [COACH_ATTEST_MINORS_INTRO, ...COACH_ATTEST_MINORS_BULLETS.map((b) => `- ${b}`)].join('\n');
@@ -282,7 +282,10 @@ export type LegalText = { version: string; text: string };
 
 const joinRisk = (c: ReturnType<typeof adultRiskCard>) => [c.headingNotMedical, c.bodyNotMedical, c.headingRisks, c.bodyRisks, c.checkbox].join('\n\n');
 
-/** The exact text + version id for each consent item. Hash with `legalTextHash` at the moment of the grant. */
+/** The exact text + version id for each consent item. Hash with `legalTextHash` at the moment of the grant.
+ *  Counsel Rev 6: the hash covers the exact characters shown, including curly apostrophes (U+2019).
+ *  Switch typography only before the first production hash. Any later text change must bump the version. */
+
 export const legalTexts = {
   terms: (): LegalText => ({ version: VERSIONS.terms, text: TERMS_CHECKBOX_TEXT }),
   health: (): LegalText => ({ version: VERSIONS.healthWithAi, text: HEALTH_TEXT_WITH_AI }),
@@ -328,14 +331,14 @@ export const INVITE_SENT_TITLE = 'Next, create your account'; // [ATTORNEY]
 export const INVITE_SENT_BODY_BEFORE_EMAIL = 'We’ll email a link to '; // [ATTORNEY]
 export const INVITE_SENT_BODY_AFTER_EMAIL = ' once your account is created so they can link to it.'; // [ATTORNEY]
 export const INVITE_SENT_NOTE =
-  "Your account stays limited until they accept: no purchases, and no workout or health data yet. If they don't link within 14 days of when you create your account, we'll delete your account and their email address. We'll remind you on day 3 and day 7."; // [ATTORNEY]
+  "Your account stays limited until they accept: no purchases, and no workout or health data yet. If they don’t link within 14 days of when you create your account, we’ll delete your account and their email address. We’ll remind you on day 3 and day 7."; // [ATTORNEY]
 
 /** 12-month health-consent re-ask. The consent does not expire; we ask the user to confirm or turn it off. [ATTORNEY] */
 export const HEALTH_REASK_TITLE = 'Confirm Health data';
 export const HEALTH_REASK_BODY =
-  "It's been 12 months since you turned Health data on. It stays on unless you turn it off. Please check the details below and confirm you still want it on. If you turn it off, AI planning stops and we delete your health data within 30 days. Free logging stays.";
+  "It’s been 12 months since you turned Health data on. It stays on unless you turn it off. Please check the details below and confirm you still want it on. If you turn it off, AI planning stops and we delete your health data within 30 days. Free logging stays.";
 export const HEALTH_REASK_BODY_TEEN =
-  "It's been 12 months since you turned Health data on. Please check the details below and confirm you still want it on. Your parent will be asked too.";
+  "It’s been 12 months since you turned Health data on. Please check the details below and confirm you still want it on. Your parent will be asked too.";
 export const HEALTH_REASK_WAITING =
   'Waiting for your parent to confirm Health data. Nothing changes until then.';
 export const HEALTH_REASK_CONFIRM = 'Yes, keep Health data on';
@@ -350,7 +353,7 @@ export const PRIVACY_SETTINGS_INTRO =
   'Turn Health data, AI planning, and coach sharing on or off here. Each one is a separate choice.';
 export const PRIVACY_SETTINGS_REASK_TITLE = 'Confirm Health data';
 export const PRIVACY_SETTINGS_REASK_BODY =
-  "It's been 12 months since you turned it on. Check that you still want it on, or turn it off.";
+  "It’s been 12 months since you turned it on. Check that you still want it on, or turn it off.";
 export const PRIVACY_RIGHTS_PLACEHOLDER_NOTE = 'Placeholder — available before launch.';
 export const PRIVACY_RIGHTS_ROW_LABEL = 'Your privacy rights';
 export const PRIVACY_RIGHTS_ROW_SUB =
@@ -366,11 +369,11 @@ export const PRIVACY_COACHING_LABEL = 'Coaching';
 export const PRIVACY_COACHING_SUB = 'Settings › Coaching. Placeholder — available before launch.';
 
 export const TERMS_REACCEPT_TITLE = 'Review the Terms';
-export const TERMS_REACCEPT_SUB = fill("We've updated our Terms. Please read and accept them to keep using [App].");
+export const TERMS_REACCEPT_SUB = fill("We’ve updated our Terms. Please read and accept them to keep using [App].");
 export const TERMS_REACCEPT_WAITING = 'Waiting for your parent to review the updated Terms.';
 
 export const NOTIFICATIONS_LOCK_SCREEN_NOTE =
-  "On your lock screen, previews of messages from a parent or coach won't show the message text.";
+  "On your lock screen, previews of messages from a parent or coach won’t show the message text.";
 
 export const AI_PLAN_PAUSED_ADULT = 'Your AI plan is paused until you update your health screen.';
 export const AI_PLAN_PAUSED_TEEN = 'Your AI plan is paused until you and your parent update your health screen together.';
