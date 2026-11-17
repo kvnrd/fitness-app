@@ -326,12 +326,12 @@ select tests.logout();
 
 select tests.login(tests.u(106));
 -- cf-connecting-ip wins over a spoofed first XFF hop. Same header preference as trainer-code rate limits.
-select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.10","x-forwarded-for":"1.2.3.4, 198.51.100.9","x-device-id":"dev-legal-106","x-app-version":"4.0.0"}', true);
+select tests.set_headers('{"cf-connecting-ip":"203.0.113.10","x-forwarded-for":"1.2.3.4, 198.51.100.9","x-device-id":"dev-legal-106","x-app-version":"4.0.0"}');
 select tests.ok('legal: parent invite accepted with terms hash', tests.accept_inv(tests.tok(tests.u(105))));
 -- last-XFF-hop fallback when no cf / x-real-ip; app version is trimmed to 32 chars
-select set_config('request.headers', '{"x-forwarded-for":"1.2.3.4, 198.51.100.20","x-app-version":"4.0.1-too-long-app-version-string-is-trimmed-here"}', true);
+select tests.set_headers('{"x-forwarded-for":"1.2.3.4, 198.51.100.20","x-app-version":"4.0.1-too-long-app-version-string-is-trimmed-here"}');
 select public.accept_terms('terms-v1', tests.h('e'));
-select set_config('request.headers', '', true);
+select tests.set_headers('');
 select tests.logout();
 
 select tests.ok('legal: parent terms row stores the hash and references the teen', exists (
@@ -456,9 +456,9 @@ select public.complete_signup(tests.dob(30), null, null, null, null, 'terms-v1',
 select tests.logout();
 delete from private.consent_meta_dev_pepper;
 select tests.login(tests.u(109));
-select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.99","x-device-id":"dev-missing-pepper"}', true);
+select tests.set_headers('{"cf-connecting-ip":"203.0.113.99","x-device-id":"dev-missing-pepper"}');
 select public.accept_terms('terms-v-missing', tests.h('f'));
-select set_config('request.headers', '', true);
+select tests.set_headers('');
 select tests.logout();
 select tests.ok('pepper: missing pepper leaves hashes and version null', exists (
   select 1 from public.consent_events
