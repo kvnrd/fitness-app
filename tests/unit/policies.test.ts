@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { GENERATED, POLICY_DIR, loadAll, renderGenerated } from '../../scripts/policyLib.mjs';
-import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC } from '../../src/legal/policies/policies.generated.ts';
+import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from '../../src/legal/policies/policies.generated.ts';
 
-const docs = { privacy: PRIVACY_POLICY_DOC, health: HEALTH_POLICY_DOC };
+const docs = { privacy: PRIVACY_POLICY_DOC, health: HEALTH_POLICY_DOC, terms: TERMS_DOC };
 
 test('generated file is current (run `npm run policies` if this fails)', () => {
   assert.equal(readFileSync(GENERATED, 'utf8'), renderGenerated());
@@ -13,7 +13,7 @@ test('generated file is current (run `npm run policies` if this fails)', () => {
 
 test('hashes recompute from the .md files', () => {
   for (const p of loadAll()) {
-    const g = docs[p.id as 'privacy' | 'health'];
+    const g = docs[p.id as keyof typeof docs];
     assert.equal(g.sha256, createHash('sha256').update(p.body, 'utf8').digest('hex'));
     assert.equal(g.sha256, p.sha256);
     assert.equal(g.body, p.body);
@@ -33,7 +33,9 @@ test('drafting-notes block never ships', () => {
 test('versions parsed', () => {
   assert.equal(PRIVACY_POLICY_DOC.version, 'v0.2 DRAFT');
   assert.equal(HEALTH_POLICY_DOC.version, 'v0.2 DRAFT');
+  assert.equal(TERMS_DOC.version, 'v0.1 DRAFT');
   assert.match(PRIVACY_POLICY_DOC.title, /Privacy Policy/);
+  assert.match(TERMS_DOC.title, /Terms of Service/);
 });
 
 test('body is the source minus only the notes block', () => {
@@ -47,13 +49,13 @@ test('body is the source minus only the notes block', () => {
 import { parseBlocks, parseInline } from '../../src/components/markdownParse.ts';
 
 test('markdown parser handles the policy bodies without losing text', () => {
-  for (const g of Object.values(docs)) {
+  for (const [id, g] of Object.entries(docs)) {
     const blocks = parseBlocks(g.body);
-    assert.ok(blocks.some((b) => b.t === 'heading'));
-    assert.ok(blocks.some((b) => b.t === 'list'));
-    assert.ok(blocks.some((b) => b.t === 'table'));
-    assert.ok(blocks.some((b) => b.t === 'hr'));
-    assert.ok(!JSON.stringify(blocks).includes('**'), 'unparsed bold markers left over');
+    assert.ok(blocks.some((b) => b.t === 'heading'), id);
+    assert.ok(blocks.some((b) => b.t === 'list'), id);
+    assert.ok(blocks.some((b) => b.t === 'hr'), id);
+    if (id !== 'terms') assert.ok(blocks.some((b) => b.t === 'table'), id);
+    assert.ok(!JSON.stringify(blocks).includes('**'), 'unparsed bold markers left over in ' + id);
   }
 });
 

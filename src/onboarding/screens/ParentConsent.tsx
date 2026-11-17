@@ -1,12 +1,13 @@
 import { View } from 'react-native';
 import { Text } from '../../components/ui';
+import { InlineLink } from '../ui/OnbText';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, PRIVACY_SAFETY_TITLE, SECTION_PARENT_OPTIONAL, SECTION_SAFETY, parentAiNeedsHealthBody,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, PRIVACY_SAFETY_TITLE, SECTION_PARENT_OPTIONAL, SECTION_SAFETY, TERMS_CHECKBOX_TEXT, parentAiNeedsHealthBody,
   parentAiText, parentAttestationText, parentCoachText, parentHealthText, parentLinkSubtitle, parentRiskCard, type ParentNames,
 } from '../../legal/text';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
-  aiDisabled, canConfirm, confirmAiPrompt, confirmHint, dismissAiPrompt, setAi, setAttest, setCoach, setHealth, setRisk, type PcState,
+  aiDisabled, canConfirm, confirmAiPrompt, confirmHint, dismissAiPrompt, setAi, setAttest, setCoach, setHealth, setRisk, setTerms, type PcState,
 } from '../parentConsent';
 import { Checkbox } from '../ui/Checkbox';
 import { NeedsHealthNotice, OptionBox, SectionCaption } from '../ui/ConsentCard';
@@ -23,6 +24,8 @@ export type ParentConsentProps = {
   message?: string | null;
   onConfirm: () => void;
   onBack?: () => void;
+  onOpenTerms?: () => void;
+  onOpenPrivacy?: () => void;
 };
 
 /**
@@ -30,7 +33,7 @@ export type ParentConsentProps = {
  * for coach sharing) + the parent risk card (third person). "Confirm and link" needs the attestation AND the parent risk
  * checkbox; the optional boxes never gate it. [ATTORNEY]
  */
-export function ParentConsentScreen({ names, state: s, onChange, busy, message, onConfirm, onBack }: ParentConsentProps) {
+export function ParentConsentScreen({ names, state: s, onChange, busy, message, onConfirm, onBack, onOpenTerms, onOpenPrivacy }: ParentConsentProps) {
   const { colors, fonts } = useTheme();
   const att = parentAttestationText(names);
   return (
@@ -58,6 +61,18 @@ export function ParentConsentScreen({ names, state: s, onChange, busy, message, 
         <Checkbox checked={s.attest} onChange={(v) => onChange(setAttest(s, v))} label="I confirm the parent or guardian statement">
           <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23 }}>
             {att}
+          </Text>
+        </Checkbox>
+      </View>
+
+      <View style={{ borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 18 }}>
+        <Checkbox checked={s.terms} onChange={(v) => onChange(setTerms(s, v))} label={TERMS_CHECKBOX_TEXT}>
+          <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23 }}>
+            {'I agree to the '}
+            <InlineLink onPress={onOpenTerms ?? (() => {})}>Terms of Service</InlineLink>
+            {", and I've read the "}
+            <InlineLink onPress={onOpenPrivacy ?? (() => {})}>Privacy Policy</InlineLink>
+            {'.'}
           </Text>
         </Checkbox>
       </View>

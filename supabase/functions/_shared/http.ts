@@ -9,6 +9,9 @@ export const fail = (status: number, error: string): HandlerResult => ({ status,
 /** Maps a database error message to a generic client error. */
 export function mapDbError(e: unknown): HandlerResult {
   const msg = e instanceof Error ? e.message : String(e);
+  if (/health_screen_required/.test(msg)) return fail(403, 'health_screen_required');
+  if (/clearance_required/.test(msg)) return fail(403, 'clearance_required');
+  if (/parent_required/.test(msg)) return fail(403, 'parent_required');
   if (/consent_required/.test(msg)) return fail(403, 'consent_required');
   if (/forbidden|not_authenticated/.test(msg)) return fail(403, 'forbidden');
   if (/rate_limited/.test(msg)) return fail(429, 'rate_limited');

@@ -47,3 +47,19 @@ test('filter: normal training language passes', () => {
     assert.deepEqual(filterText(s, minor), { ok: true }, s);
   }
 });
+
+test('filter: 16-17 get no bulking, size or weight targets, surplus, or supplements', () => {
+  for (const s of [
+    'A 12-week bulking block',
+    'Eat in a surplus to grow',
+    'Take creatine and a pre-workout',
+    'Add a whey protein shake',
+    'Put on size in your upper body',
+    'A weight target of 180 lb',
+  ]) {
+    assert.deepEqual(filterText(s, minor), { ok: false, category: 'minor_restricted' }, s);
+  }
+  // Adults may see surplus / supplements; "Build muscle" as strength still passes for teens.
+  assert.equal(filterText('Take creatine daily', adult).ok, true);
+  assert.equal(filterText('Build muscle with goblet squats and rows', minor).ok, true);
+});

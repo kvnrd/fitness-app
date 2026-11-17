@@ -13,6 +13,7 @@ export const GENERATED = join(POLICY_DIR, 'policies.generated.ts');
 export const POLICIES = [
   { id: 'privacy', file: 'privacy-policy.md', exportName: 'PRIVACY_POLICY_DOC' },
   { id: 'health', file: 'consumer-health-data-privacy-policy.md', exportName: 'HEALTH_POLICY_DOC' },
+  { id: 'terms', file: 'terms-of-service.md', exportName: 'TERMS_DOC' },
 ];
 
 export function stripDraftingNotes(md) {

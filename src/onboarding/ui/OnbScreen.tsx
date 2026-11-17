@@ -18,6 +18,7 @@ export function OnbScreen({
   onBack,
   onSkip,
   skipLabel = 'Skip',
+  headerRight,
   contentGap = 24,
   centerContent = false,
 }: {
@@ -27,6 +28,8 @@ export function OnbScreen({
   /** Header "SKIP" (setup steps). */
   onSkip?: () => void;
   skipLabel?: string;
+  /** Non-interactive header label (e.g. "2 of 2", "Preview", "Cancel"). */
+  headerRight?: ReactNode;
   contentGap?: number;
   centerContent?: boolean;
 }) {
@@ -40,7 +43,7 @@ export function OnbScreen({
     <ScreenBackground>
       <KeyboardAvoidingView style={full ? undefined : { flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View nativeID={full ? 'preview-full' : undefined} style={full ? { paddingTop: top } : { flex: 1, paddingTop: top }}>
-          {onBack || onSkip ? (
+          {onBack || onSkip || headerRight ? (
             <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
               {onBack ? <BackButton onPress={onBack} /> : <View />}
               {onSkip ? (
@@ -49,16 +52,18 @@ export function OnbScreen({
                     {skipLabel}
                   </Text>
                 </Pressable>
+              ) : headerRight ? (
+                headerRight
               ) : null}
             </View>
           ) : null}
           {full ? (
-            <View style={{ paddingHorizontal: 24, paddingTop: onBack || onSkip ? 20 : 8, paddingBottom: 24, gap: contentGap }}>{children}</View>
+            <View style={{ paddingHorizontal: 24, paddingTop: onBack || onSkip || headerRight ? 20 : 8, paddingBottom: 24, gap: contentGap }}>{children}</View>
           ) : (
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: onBack || onSkip ? 20 : 8, paddingBottom: 24, gap: contentGap, justifyContent: centerContent ? 'center' : 'flex-start' }}
+              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: onBack || onSkip || headerRight ? 20 : 8, paddingBottom: 24, gap: contentGap, justifyContent: centerContent ? 'center' : 'flex-start' }}
             >
               {children}
             </ScrollView>

@@ -294,11 +294,15 @@ select tests.raises('ai: no ai_vendor consent -> refused', format('select * from
 select tests.login(tests.u(34));
 select tests.raises('ai: AI cannot be granted without health (Counsel phase4-review #2)', $q$select public.record_consent('ai_vendor', 'ai-B-v1')$q$, 'health_required');
 select public.record_consent('health_data', 'health-v1'); select public.record_consent('ai_vendor', 'ai-B-v1');
+select public.submit_health_screen(false);  -- Phase 4: AI planning also needs a current health screen (all-no).
 select tests.svc_write(tests.u(34), 'free text that must never reach the AI', 'screen');
 select tests.eq('ai: with health consent only the encrypted category + wrapped key come back', format('select (health_ok and injury_category_ct = tests.ct(%L) and wrapped_key is not null)::text from public.ai_plan_context(%L)', 'knee', tests.u(34)), 'true');
 select tests.ok('ai: context exposes no name/email/user id/notes/photo/location columns', not exists (
   select 1 from pg_proc p, unnest(p.proargnames) a(n) where p.proname = 'ai_plan_context'
     and a.n not in ('p_actor','age_band','health_ok','wrapped_key','key_provider','kms_key_ref','injury_category_ct')));
+select tests.login(tests.u(22));
+select public.submit_health_screen(false, tests.u(21));  -- Phase 4: parent-together screen for the linked minor.
+select tests.login(null, 'service_role');
 select tests.eq('ai: linked minor with teen + parent opt-in gets 16_17 context', format('select age_band from public.ai_plan_context(%L)', tests.u(21)), '16_17');
 select tests.login(tests.u(20)); select public.record_consent('health_data', 'health-v1', tests.u(24)); select public.record_consent('ai_vendor', 'ai-B-parent-v1', tests.u(24));
 select tests.login(null, 'service_role');

@@ -6,10 +6,11 @@ import { HINT_PARENT_PRIVACY } from '../legal/text.ts';
  * is disabled while health is off (tapping it shows the explanation), and turning health off turns AI off.
  * [ATTORNEY]
  */
-export type PcState = { attest: boolean; risk: boolean; health: boolean; ai: boolean; coach: boolean; aiPrompt: boolean };
-export const initPc = (): PcState => ({ attest: false, risk: false, health: false, ai: false, coach: false, aiPrompt: false });
+export type PcState = { attest: boolean; terms: boolean; risk: boolean; health: boolean; ai: boolean; coach: boolean; aiPrompt: boolean };
+export const initPc = (): PcState => ({ attest: false, terms: false, risk: false, health: false, ai: false, coach: false, aiPrompt: false });
 
 export const setAttest = (s: PcState, v: boolean): PcState => ({ ...s, attest: v });
+export const setTerms = (s: PcState, v: boolean): PcState => ({ ...s, terms: v });
 export const setRisk = (s: PcState, v: boolean): PcState => ({ ...s, risk: v });
 export const setCoach = (s: PcState, v: boolean): PcState => ({ ...s, coach: v });
 export const setHealth = (s: PcState, v: boolean): PcState => ({ ...s, health: v, ai: v ? s.ai : false, aiPrompt: false });
@@ -22,7 +23,7 @@ export const confirmAiPrompt = (s: PcState): PcState => (s.aiPrompt ? { ...s, ai
 export const dismissAiPrompt = (s: PcState): PcState => ({ ...s, aiPrompt: false });
 
 export const aiDisabled = (s: PcState): boolean => !s.health;
-export const canConfirm = (s: PcState): boolean => s.attest === true && s.risk === true;
+export const canConfirm = (s: PcState): boolean => s.attest === true && s.terms === true && s.risk === true;
 export const confirmHint = (s: PcState): string => (canConfirm(s) ? '' : HINT_PARENT_PRIVACY);
 
 export type OptionalKind = 'health_data' | 'ai_vendor' | 'coach_sharing';

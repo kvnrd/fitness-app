@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '../../components/ui';
-import { INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_NOTE, INVITE_SENT_TITLE } from '../../legal/text';
+import { INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_NOTE, INVITE_SENT_TITLE } from '../../legal/text';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AuthProviderButtons } from '../ui/AuthProviderButtons';
 import { OnbScreen } from '../ui/OnbScreen';
@@ -28,7 +28,7 @@ export function InviteSentScreen(p: {
       <View style={{ gap: 14 }}>
         <OnbTitle>{INVITE_SENT_TITLE}</OnbTitle>
         <Text color={colors.textSecondary}>
-          {'We sent a link to '}
+          {INVITE_SENT_BODY_BEFORE_EMAIL}
           <Text color={colors.text} style={{ fontFamily: fonts.bodyBold }}>
             {p.email}
           </Text>

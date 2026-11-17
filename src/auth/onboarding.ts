@@ -1,6 +1,6 @@
 import type { StoreAgeSignal } from '../age/storeAgeSignal';
 import type { DateParts } from '../onboarding/dob.ts';
-import { PRIVACY_POLICY } from '../legal/text';
+import { PRIVACY_POLICY, TERMS } from '../legal/text';
 import { createParentInvite } from '../onboarding/api';
 import { supabase } from './supabase';
 
@@ -25,11 +25,9 @@ export type { DateParts };
 export { toIsoDate } from '../onboarding/dob.ts';
 
 /**
- * [ATTORNEY] TODO: no Terms document exists yet. Until one is bundled, signup records this placeholder id with a
- * null hash (the Terms checkbox text itself is legalTexts.terms()). Replace with the Terms doc version + hash.
+ * [ATTORNEY] Terms are bundled as v0.1-draft. Acceptances are pre-production and must be repeated
+ * before launch (a production build will not count a draft acceptance).
  */
-export const TERMS_PLACEHOLDER_VERSION = 'terms-placeholder-v0';
-
 export async function completeSignup(birthDateIso: string, displayName: string, store: StoreAgeSignal | null): Promise<SignupResult> {
   if (!supabase) return { ok: false, kind: 'retry' };
   try {
@@ -39,8 +37,8 @@ export async function completeSignup(birthDateIso: string, displayName: string, 
       p_store_lower: store?.lower ?? null,
       p_store_upper: store?.upper ?? null,
       p_store_source: store?.source ?? null,
-      p_terms_version: TERMS_PLACEHOLDER_VERSION,
-      p_terms_hash: null,
+      p_terms_version: TERMS.version,
+      p_terms_hash: TERMS.hash,
       p_privacy_version: PRIVACY_POLICY.version,
       p_privacy_hash: PRIVACY_POLICY.hash,
     });

@@ -9,7 +9,7 @@ import { useFonts } from 'expo-font';
 import { router, Stack, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { loadConsents } from '../auth/consents';
@@ -22,6 +22,7 @@ import { consumeAwaitingSignIn } from '../onboarding/parentInviteMemory';
 import { nextOnboardingRoute } from '../onboarding/routing';
 import { useGateFacts } from '../onboarding/useGateFacts';
 import { AppStoreProvider } from '../state/AppStore';
+import { myLatestTerms, needsTermsReaccept } from '../legal/termsApi';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -104,17 +105,40 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   const showParentConsent = isConfigured && isSignedIn && !!profile && !profile.is_minor;
   // Consent is reachable by any onboarded signed-in user; it is never a lock.
   const showConsent = isConfigured && isSignedIn && inApp;
+  const [termsOk, setTermsOk] = useState<boolean | null>(isConfigured ? null : true);
+  useEffect(() => {
+    if (!isConfigured || !inApp) {
+      setTermsOk(true);
+      return;
+    }
+    let alive = true;
+    void myLatestTerms().then((l) => {
+      if (alive) setTermsOk(!needsTermsReaccept(l));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [isConfigured, inApp, user?.id]);
+
+  const readyWithTerms = ready && termsOk !== null;
+  const isMinor = !!onboarding?.is_minor;
+  // Adults are gated from general app use until they re-accept, but Settings › Privacy,
+  // export, and deletion stay reachable (TDPSA §541.054; MHMDA). 16–17 are not locked:
+  // the parent re-accepts, and the teen can keep using the app.
+  const needsTerms = inApp && termsOk === false && !isMinor;
+  const termsWaiting = inApp && termsOk === false && isMinor;
+  const inAppOk = inApp && (termsOk === true || isMinor);
 
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
-  }, [ready]);
+    if (readyWithTerms) SplashScreen.hideAsync().catch(() => {});
+  }, [readyWithTerms]);
 
   // A parent who opened an invite link signed out comes back to the consent screen once they are a signed-in adult.
   useEffect(() => {
     if (showParentConsent && nav?.key && consumeAwaitingSignIn()) router.push('/parent-consent');
   }, [showParentConsent, nav?.key]);
 
-  if (!ready) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
+  if (!readyWithTerms) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -149,12 +173,21 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={pendingMinor || needsSetup}>
           <Stack.Screen name="setup/[step]" />
         </Stack.Protected>
-        <Stack.Protected guard={needsPrivacy}>
-          <Stack.Screen name="privacy-safety" options={{ gestureEnabled: false }} />
+        <Stack.Protected guard={needsPrivacy || inApp}>
+          <Stack.Screen name="privacy-safety" options={needsPrivacy ? { gestureEnabled: false } : undefined} />
+        </Stack.Protected>
+        <Stack.Protected guard={needsTerms || termsWaiting}>
+          <Stack.Screen name="legal/reaccept" />
         </Stack.Protected>
         <Stack.Protected guard={inApp}>
+          <Stack.Screen name="settings/privacy" />
+          <Stack.Screen name="settings/health-reask" />
+        </Stack.Protected>
+        <Stack.Protected guard={inAppOk}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workout/[day]" />
+          <Stack.Screen name="ai" />
+          <Stack.Screen name="settings/notifications" />
         </Stack.Protected>
         <Stack.Protected guard={showConsent}>
           <Stack.Screen name="consent" />

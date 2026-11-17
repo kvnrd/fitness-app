@@ -44,7 +44,8 @@
     "export:web": "expo export --platform web",
     "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
     "test:unit": "node --test \"tests/unit/*.test.ts\"",
-    "policies": "node scripts/bundle-policies.mjs"
+    "policies": "node scripts/bundle-policies.mjs && node scripts/seed-legal-text-versions.mjs",
+    "legal-text-versions": "node scripts/seed-legal-text-versions.mjs"
   },
   "private": true
 }

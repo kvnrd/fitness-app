@@ -1,248 +1,100 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { todayKey } from '../../components/WeekStrip';
-import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
-import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
-import { useSession } from '../../auth/SessionProvider';
-import { WORKOUTS_LOCKED_NOTICE, DELETE_WEIGHT_LABEL } from '../../onboarding/copy';
-import { deviceSetupStore } from '../../onboarding/deviceStorage';
-import { useAppStore, useDayProgress } from '../../state/AppStore';
-import { useTheme } from '../../theme/ThemeProvider';
-import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { Ionicons } from '@expo/vector-icons';
+import { healthScreenAiPaused, showHomeWeight } from '../../ai/flow';
+import { useAiPlan } from '../../ai/useAiPlan';
 import { AiNotice } from '../../components/AiNotice';
+import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
+import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { Button, Text } from '../../components/ui';
+import { useSession } from '../../auth/SessionProvider';
+import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
 
-function plural(n: number, word: string) {
-  return `${n} ${word}${n === 1 ? '' : 's'}`;
-}
-
-function Today({ day }: { day: DayKey }) {
-  const { colors } = useTheme();
-  const { program, locked } = useAppStore();
-  const w = program.days[day];
-  const { ratio, done, total } = useDayProgress(day);
-  const action = w.rest ? 'View recovery plan' : ratio >= 1 ? 'Review workout' : ratio > 0 ? 'Continue workout' : 'Start workout';
-
-  return (
-    <View style={{ gap: space.lg }}>
-      <View style={{ gap: space.xs }}>
-        <Text variant="stamp" accessibilityRole="header">
-          {DAY_LABELS[day].long}
-        </Text>
-        <Text variant="title">{w.title}</Text>
-        <Text variant="body" color={colors.textSecondary}>
-          {w.rest
-            ? 'Rest day. Walk and mobility only.'
-            : `${w.durationMin} min, ${plural(w.exercises.length, 'exercise')}${done > 0 ? `, ${done} of ${total} sets logged` : ''}`}
-        </Text>
-      </View>
-      <Button label={action} disabled={locked} onPress={() => router.push(`/workout/${day}`)} />
-      {total > 0 ? <ProgressBar ratio={ratio} /> : null}
-    </View>
-  );
-}
-
-function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
-  const { colors, fonts } = useTheme();
-  const { program } = useAppStore();
-  const w = program.days[day];
-  const { ratio } = useDayProgress(day);
-  const complete = ratio >= 1;
-  return (
-    <Pressable
-      onPress={() => router.push(`/workout/${day}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`${DAY_LABELS[day].long}${isToday ? ', today' : ''}: ${w.title}${complete ? ', completed' : ''}`}
-      style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
-    >
-      <Text style={[styles.dayName, { fontFamily: fonts.displayBold }]} color={isToday ? colors.text : colors.textMuted}>
-        {DAY_LABELS[day].short}
-      </Text>
-      <Text variant="bodyStrong" color={w.rest ? colors.textSecondary : colors.text} style={{ flex: 1 }} numberOfLines={1}>
-        {w.title}
-      </Text>
-      <Text variant="small" color={colors.textMuted} style={{ fontVariant: ['tabular-nums'] }}>
-        {w.rest ? 'Rest' : `${w.durationMin} min`}
-      </Text>
-      <View
-        style={[
-          styles.status,
-          { borderColor: colors.borderStrong },
-          complete && { backgroundColor: colors.accent, borderColor: colors.accent },
-          !complete && ratio > 0 && { borderColor: colors.textSecondary },
-        ]}
-      >
-        {complete ? <Ionicons name="checkmark" size={12} color={colors.accentText} /> : null}
-      </View>
-    </Pressable>
-  );
-}
-
-export default function TrainScreen() {
-  const { colors, fonts } = useTheme();
+export default function HomeScreen() {
+  const { onboarding, profile } = useSession();
+  const { start, notice, state } = useAiPlan();
   const insets = useSafeAreaInsets();
-  const { program } = useAppStore();
-  const { isConfigured, isSignedIn, profile, signOut, user } = useSession();
-  const { locked } = useAppStore();
-  const [hasWeight, setHasWeight] = useState(false);
-  useEffect(() => {
-    if (user) void deviceSetupStore.loadWeightGoal(user.id).then((w) => setHasWeight(!!w)).catch(() => {});
-  }, [user]);
-  const today = todayKey();
-  const initials = program.trainer.name
-    .split(' ')
-    .map((p) => p[0])
-    .join('');
+  const { colors, fonts } = useTheme();
+  const teen = !!onboarding?.is_minor;
+  const hasPlan = !!state?.planAccepted;
+  const first = profile?.display_name?.trim().split(/\s+/)[0];
 
   return (
     <ScreenBackground>
-    <ScrollView
-      style={{ flex: 1, backgroundColor: 'transparent' }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
-    >
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text variant="bodyStrong">{program.trainer.programName}</Text>
-          <Text variant="small" color={colors.textSecondary}>
-            {program.weekLabel} with <Text variant="small" color={colors.coach}>{program.trainer.name}</Text>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: 'transparent' }}
+        contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 20 }}
+      >
+        <Text variant="hero" accessibilityRole="header">
+          Home
+        </Text>
+        {state && healthScreenAiPaused(state) ? (
+          <HealthScreenPausedBanner teen={teen} onUpdate={() => router.push('/ai/health')} />
+        ) : null}
+        {hasPlan && notice === 'banner' ? <AiNotice /> : null}
+        {showHomeWeight(teen) && !hasPlan ? (
+          <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>
+            Body weight lives in Profile after you turn Health data on.
           </Text>
-        </View>
-        <View style={[styles.avatar, { borderColor: colors.coach }]} accessibilityLabel={`Coach ${program.trainer.name}`}>
-          <Text variant="small" color={colors.coach} style={{ fontFamily: fonts.bodySemi }}>
-            {initials}
-          </Text>
-        </View>
-      </View>
-
-      {locked ? (
-        // Calm, no nagging: UI chrome. Logging is disabled in the UI (the server enforces can_train).
-        <View accessibilityLiveRegion="polite" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: space.md, backgroundColor: colors.surface }}>
-          <Text variant="small" color={colors.textSecondary}>
-            {WORKOUTS_LOCKED_NOTICE}
-          </Text>
-        </View>
-      ) : null}
-
-      {program.aiGenerated ? <AiNotice /> : null}
-
-      <Today day={today} />
-
-      <View>
-        <SectionHeader title="This week" />
-        <View>
-          {DAY_KEYS.map((d) => (
-            <DayRow key={d} day={d} isToday={d === today} />
-          ))}
-        </View>
-      </View>
-
-      {isConfigured && isSignedIn ? (
-        <View>
-          <SectionHeader title="Account" />
+        ) : null}
+        {hasPlan ? (
           <Pressable
-            onPress={() => router.push('/consent')}
+            onPress={() => router.push('/(tabs)/train')}
             accessibilityRole="button"
-            accessibilityLabel="Your choices"
-            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+            accessibilityLabel="Open your AI plan"
+            style={{
+              padding: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              gap: 12,
+            }}
           >
-            <Text variant="bodyStrong" style={{ flex: 1 }}>
-              Your choices
-            </Text>
-            <Text variant="small" color={colors.textMuted}>
-              Consent
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSunken,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="sparkles" size={20} color={colors.accentInk} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                  AI plan{first ? ` · ${first}` : ''}
+                </Text>
+                <Text color={colors.text} style={{ fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 24 }}>
+                  Your current plan
+                </Text>
+              </View>
+            </View>
           </Pressable>
-          <Pressable
-            onPress={() => router.push('/legal/privacy')}
-            accessibilityRole="button"
-            accessibilityLabel="Privacy"
-            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
+        ) : (
+          <View
+            style={{
+              padding: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              gap: 12,
+            }}
           >
-            <Text variant="bodyStrong" style={{ flex: 1 }}>
-              Privacy
+            <Text color={colors.text} style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 24 }}>
+              Build an AI plan from a short quiz after the health screen. You can still log workouts without one.
             </Text>
-            <Text variant="small" color={colors.textMuted}>
-              Privacy Policy
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push('/legal/health-privacy')}
-            accessibilityRole="button"
-            accessibilityLabel="Consumer Health Data Privacy Policy"
-            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
-          >
-            <Text variant="bodyStrong" style={{ flex: 1 }}>
-              Health data privacy
-            </Text>
-            <Text variant="small" color={colors.textMuted}>
-              Policy
-            </Text>
-          </Pressable>
-          {profile && !profile.is_minor ? (
-            <Pressable
-              onPress={() => router.push('/parent-link')}
-              accessibilityRole="button"
-              accessibilityLabel="Link requests"
-              style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
-            >
-              <Text variant="bodyStrong" style={{ flex: 1 }}>
-                Link requests
-              </Text>
-              <Text variant="small" color={colors.textMuted}>
-                Parent or guardian
-              </Text>
-            </Pressable>
-          ) : null}
-          {hasWeight && user ? (
-            <Pressable
-              onPress={() => void deviceSetupStore.clearWeightGoal(user.id).then(() => setHasWeight(false))}
-              accessibilityRole="button"
-              accessibilityLabel={DELETE_WEIGHT_LABEL}
-              style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
-            >
-              <Text variant="bodyStrong" style={{ flex: 1 }}>
-                {DELETE_WEIGHT_LABEL}
-              </Text>
-            </Pressable>
-          ) : null}
-          <Pressable
-            onPress={() => void signOut()}
-            accessibilityRole="button"
-            accessibilityLabel="Sign out"
-            style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
-          >
-            <Text variant="bodyStrong" style={{ flex: 1 }}>
-              Sign out
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
-    </ScrollView>
+            <Button label="Build an AI plan" onPress={start} />
+          </View>
+        )}
+        {hasPlan && notice === 'footer' ? <AiNotice variant="footer" /> : null}
+      </ScrollView>
     </ScreenBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space.lg, paddingBottom: space['4xl'], gap: space['4xl'], maxWidth: 640, width: '100%', alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    paddingVertical: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  dayName: { fontSize: 20, lineHeight: 24, width: 44 },
-  status: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-});

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HINT_PARENT_PRIVACY } from '../../src/legal/text.ts';
 import {
-  aiDisabled, canConfirm, confirmAiPrompt, confirmHint, consentsToRecord, initPc, setAi, setAttest, setCoach, setHealth, setRisk,
+  aiDisabled, canConfirm, confirmAiPrompt, confirmHint, consentsToRecord, initPc, setAi, setAttest, setCoach, setHealth, setRisk, setTerms,
 } from '../../src/onboarding/parentConsent.ts';
 
 test('starts with everything off and the hint showing', () => {
@@ -12,21 +12,23 @@ test('starts with everything off and the hint showing', () => {
   assert.deepEqual(consentsToRecord(s), []);
 });
 
-test('Confirm needs the attestation AND the parent risk checkbox', () => {
+test('Confirm needs the attestation, the Terms checkbox, AND the parent risk checkbox', () => {
   assert.equal(canConfirm(setAttest(initPc(), true)), false);
   assert.equal(canConfirm(setRisk(initPc(), true)), false);
-  const s = setRisk(setAttest(initPc(), true), true);
+  assert.equal(canConfirm(setRisk(setAttest(initPc(), true), true)), false);
+  const s = setRisk(setTerms(setAttest(initPc(), true), true), true);
   assert.equal(canConfirm(s), true);
   assert.equal(confirmHint(s), '');
   assert.equal(canConfirm(setAttest(s, false)), false);
+  assert.equal(canConfirm(setTerms(s, false)), false);
 });
 
 test('the optional boxes never gate Confirm, in either direction', () => {
   let s = setCoach(setHealth(initPc(), true), true);
   assert.equal(canConfirm(s), false);
-  s = setRisk(setAttest(s, true), true);
+  s = setRisk(setTerms(setAttest(s, true), true), true);
   assert.equal(canConfirm(s), true);
-  assert.equal(canConfirm(setRisk(setAttest(initPc(), true), true)), true); // all optional off
+  assert.equal(canConfirm(setRisk(setTerms(setAttest(initPc(), true), true), true)), true); // all optional off
 });
 
 test('AI box is disabled without health; tapping it explains, and only the explicit action turns health on', () => {

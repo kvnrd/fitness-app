@@ -17,16 +17,17 @@ export interface HealthCipherRow extends WrappedKeyRow {
   health_screen_ct: Uint8Array | null;
   injury_category_ct: Uint8Array | null;
   weight_goal_ct: Uint8Array | null;
+  body_weight_ct: Uint8Array | null;
 }
 
 /** Ciphertext per field. A key that is ABSENT keeps the stored value; null clears it (partial update). */
-export type HealthCipherWrite = Partial<Record<'injury_notes' | 'health_screen' | 'injury_category' | 'weight_goal', Uint8Array | null>>;
+export type HealthCipherWrite = Partial<Record<'injury_notes' | 'health_screen' | 'injury_category' | 'weight_goal' | 'body_weight', Uint8Array | null>>;
 
 /** Thin wrapper over the service-only RPCs (public.health_*). */
 export interface HealthDb {
-  prepareWrite(actor: string): Promise<WrappedKeyRow | null>;
-  registerKey(actor: string, row: WrappedKeyRow): Promise<WrappedKeyRow>;
-  write(actor: string, fields: HealthCipherWrite): Promise<void>;
+  prepareWrite(actor: string, target?: string | null): Promise<WrappedKeyRow | null>;
+  registerKey(actor: string, row: WrappedKeyRow, target?: string | null): Promise<WrappedKeyRow>;
+  write(actor: string, fields: HealthCipherWrite, target?: string | null): Promise<void>;
   read(actor: string, target: string): Promise<HealthCipherRow | null>;
 }
 
@@ -64,17 +65,33 @@ export function canonicalWeightGoal(raw: string): string | null {
   return JSON.stringify({ current, target, unit: o.unit, pace });
 }
 
-async function getOrCreateDek(deps: HealthDeps, actor: string): Promise<Uint8Array> {
-  const existing = await deps.db.prepareWrite(actor);
-  if (existing) return providerFor(deps.providers, existing.key_provider).unwrapDataKey(existing.wrapped_key, existing.kms_key_ref, { userId: actor });
+/**
+ * Current body weight only (Counsel #5: teens may store a current weight with both health opt-ins,
+ * never a goal or target). {current:number, unit:'lb'|'kg'}, 40..1500, at most 200 characters.
+ */
+export function canonicalBodyWeight(raw: string): string | null {
+  if (raw.length > MAX_WEIGHT_GOAL) return null;
+  let v: unknown;
+  try { v = JSON.parse(raw); } catch { return null; }
+  const o = strictObject(v, ['current', 'unit']);
+  if (!o) return null;
+  const current = o.current;
+  if (typeof current !== 'number' || !Number.isFinite(current) || current < WEIGHT_MIN || current > WEIGHT_MAX) return null;
+  if (o.unit !== 'lb' && o.unit !== 'kg') return null;
+  return JSON.stringify({ current, unit: o.unit });
+}
+
+async function getOrCreateDek(deps: HealthDeps, actor: string, subject: string): Promise<Uint8Array> {
+  const existing = await deps.db.prepareWrite(actor, subject === actor ? null : subject);
+  if (existing) return providerFor(deps.providers, existing.key_provider).unwrapDataKey(existing.wrapped_key, existing.kms_key_ref, { userId: subject });
   const provider = activeProvider(deps.providers, deps.activeProviderId);
-  const fresh = await provider.generateDataKey({ userId: actor });
-  const stored = await deps.db.registerKey(actor, { wrapped_key: fresh.wrapped, key_provider: provider.id, kms_key_ref: fresh.keyRef });
+  const fresh = await provider.generateDataKey({ userId: subject });
+  const stored = await deps.db.registerKey(actor, { wrapped_key: fresh.wrapped, key_provider: provider.id, kms_key_ref: fresh.keyRef }, subject === actor ? null : subject);
   if (stored.key_provider === provider.id && stored.kms_key_ref === fresh.keyRef && equalBytes(stored.wrapped_key, fresh.wrapped)) {
     return fresh.plaintext;
   }
   wipe(fresh.plaintext); // lost a race: another request stored a key first, use that one
-  return providerFor(deps.providers, stored.key_provider).unwrapDataKey(stored.wrapped_key, stored.kms_key_ref, { userId: actor });
+  return providerFor(deps.providers, stored.key_provider).unwrapDataKey(stored.wrapped_key, stored.kms_key_ref, { userId: subject });
 }
 
 function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
@@ -85,8 +102,11 @@ function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 export async function handleHealthWrite(deps: HealthDeps, actor: string, input: unknown): Promise<HandlerResult> {
-  const body = strictObject(input, ['injury_notes', 'health_screen', 'injury_category', 'weight_goal']);
+  const body = strictObject(input, ['injury_notes', 'health_screen', 'injury_category', 'weight_goal', 'body_weight', 'user_id']);
   if (!body) return fail(400, 'invalid_request');
+  const target = body.user_id;
+  if (target !== undefined && (typeof target !== 'string' || !UUID_RE.test(target))) return fail(400, 'invalid_request');
+  const subject = typeof target === 'string' ? target : actor;
   // Partial update: a field that is absent keeps its stored value; an explicit null clears it.
   const plain: Partial<Record<keyof HealthCipherWrite, string | null>> = {};
   if ('injury_notes' in body) {
@@ -113,16 +133,25 @@ export async function handleHealthWrite(deps: HealthDeps, actor: string, input: 
       plain.weight_goal = canon;
     }
   }
+  if ('body_weight' in body) {
+    const v = body.body_weight;
+    if (v === null) plain.body_weight = null;
+    else {
+      const canon = typeof v === 'string' ? canonicalBodyWeight(v) : null;
+      if (canon === null) return fail(400, 'invalid_request');
+      plain.body_weight = canon;
+    }
+  }
 
   let dek: Uint8Array | null = null;
   try {
-    dek = await getOrCreateDek(deps, actor);   // consent + onboarding are decided in SQL here
+    dek = await getOrCreateDek(deps, actor, subject);   // consent + onboarding are decided in SQL here
     const out: HealthCipherWrite = {};
     for (const f of Object.keys(plain) as (keyof HealthCipherWrite)[]) {
       const v = plain[f] as string | null;
-      out[f] = v === null ? null : await encryptField(dek, v, fieldAad(actor, f));
+      out[f] = v === null ? null : await encryptField(dek, v, fieldAad(subject, f));
     }
-    await deps.db.write(actor, out);   // SQL refuses weight_goal for 16-17 ('forbidden')
+    await deps.db.write(actor, out, subject === actor ? null : subject);   // SQL refuses weight_goal for 16-17 ('forbidden')
     return ok({ saved: true });
   } catch (e) {
     return mapDbError(e);
@@ -145,8 +174,11 @@ export async function handleHealthRead(deps: HealthDeps, actor: string, target: 
         injury_notes: await dec(row.injury_notes_ct, 'injury_notes'),
         health_screen: await dec(row.health_screen_ct, 'health_screen'),
         injury_category: await dec(row.injury_category_ct, 'injury_category'),
-        // Own record only: a coach never receives the body-weight goal.
-        ...(t === actor ? { weight_goal: await dec(row.weight_goal_ct, 'weight_goal') } : {}),
+        // Own record only: a coach never receives body-weight fields. SQL also nulls them for coaches.
+        ...(t === actor ? {
+          weight_goal: await dec(row.weight_goal_ct, 'weight_goal'),
+          body_weight: await dec(row.body_weight_ct, 'body_weight'),
+        } : {}),
       },
     });
   } catch (e) {

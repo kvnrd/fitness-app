@@ -11,7 +11,7 @@
  *   "[Same retention and training sentence as the version in use.]" -> Version B's two sentences
  *   "[Version A or B text.]" -> the Version B body
  */
-import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC } from './policies/policies.generated.ts';
+import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from './policies/policies.generated.ts';
 import { sha256Hex } from './hash.ts';
 
 export const APP_NAME = 'Fitness App';
@@ -50,7 +50,7 @@ export const VERSIONS = {
   aiTeen: 'ai-B-teen-2026-11-15-draft',
   aiParent: 'ai-B-parent-2026-11-15-draft',
   coachPlaceholder: 'coach-placeholder-v1',
-  terms: 'terms-2026-11-15-draft',
+  terms: 'v0.1-draft',
   healthWithAi: 'health-ai-2026-11-15-draft',
   riskAdult: 'risk-2026-11-15-draft',
   riskParent: 'risk-parent-2026-11-15-draft',
@@ -83,12 +83,32 @@ export const HEALTH_POLICY = {
   hash: HEALTH_POLICY_DOC.sha256,
 } as const;
 
+/** Bundled Terms of Service. Version is v0.1-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
+export const TERMS = {
+  id: TERMS_DOC.id,
+  version: 'v0.1-draft' as const,
+  label: TERMS_DOC.version,
+  hash: TERMS_DOC.sha256,
+  preProduction: true,
+} as const;
+
+export const isDraftLegalVersion = (v: string) => /draft|placeholder/i.test(v);
+export const isProductionBuild = process.env.EXPO_PUBLIC_ENV === 'production';
+
+/** A recorded acceptance only counts in production if the bundled Terms are no longer a draft. */
+export function termsAcceptanceCounts(version: string | null | undefined, hash: string | null | undefined): boolean {
+  if (!version || !hash) return false;
+  if (version !== TERMS.version || hash !== TERMS.hash) return false;
+  if (isProductionBuild && TERMS.preProduction) return false;
+  return true;
+}
+
 // ───────────────────────────── Phase 3 onboarding copy ─────────────────────────────
 // Sources: paper/onb_p3.py, paper/onb_dob.py, legal/phase3-review.md, legal/phase4-review.md.
 // Apostrophes are straight (') to match the Phase 2 constants above. Every string is [ATTORNEY] before launch.
 
 /** Create screen: the ONLY checkbox. Not pre-checked. No age clause. */ // [ATTORNEY]
-export const TERMS_CHECKBOX_TEXT = 'I agree to the Terms and Privacy Policy.';
+export const TERMS_CHECKBOX_TEXT = "I agree to the Terms of Service, and I've read the Privacy Policy.";
 
 // Pending 16-17 screen. Body is Counsel verbatim; the title is UI chrome. // [ATTORNEY]
 export const PENDING_TITLE = 'Waiting for a parent';
@@ -303,7 +323,54 @@ export const INVITE_TITLE = 'Invite a parent or guardian'; // [ATTORNEY]
 export const INVITE_SUB = 'We’ll email them a link to review and confirm. We use their email only to send this invite.'; // [ATTORNEY]
 export const INVITE_LABEL = 'Parent or guardian email'; // [ATTORNEY]
 export const INVITE_HINT_OFF = 'Enter their email to send the invite'; // [ATTORNEY]
-export const INVITE_SENT_TITLE = 'Invite sent'; // [ATTORNEY]
-export const INVITE_SENT_BODY_AFTER_EMAIL = '. Next, create your account with Apple, Google or email so they can link to it.'; // [ATTORNEY]
+export const INVITE_SENT_TITLE = 'Next, create your account'; // [ATTORNEY]
+/** The invite is only emailed once the teen's account exists; do not claim a link was already sent. [ATTORNEY] */
+export const INVITE_SENT_BODY_BEFORE_EMAIL = 'We’ll email a link to '; // [ATTORNEY]
+export const INVITE_SENT_BODY_AFTER_EMAIL = ' once your account is created so they can link to it.'; // [ATTORNEY]
 export const INVITE_SENT_NOTE =
-  'Your account stays limited until they accept — no purchases, and no workout or health data yet. If they don’t link within 14 days, we’ll delete the account and this invite. We’ll remind you on day 3 and day 7.'; // [ATTORNEY]
+  "Your account stays limited until they accept: no purchases, and no workout or health data yet. If they don't link within 14 days of when you create your account, we'll delete your account and their email address. We'll remind you on day 3 and day 7."; // [ATTORNEY]
+
+/** 12-month health-consent re-ask. The consent does not expire; we ask the user to confirm or turn it off. [ATTORNEY] */
+export const HEALTH_REASK_TITLE = 'Confirm Health data';
+export const HEALTH_REASK_BODY =
+  "It's been 12 months since you turned Health data on. It stays on unless you turn it off. Please check the details below and confirm you still want it on. If you turn it off, AI planning stops and we delete your health data within 30 days. Free logging stays.";
+export const HEALTH_REASK_BODY_TEEN =
+  "It's been 12 months since you turned Health data on. Please check the details below and confirm you still want it on. Your parent will be asked too.";
+export const HEALTH_REASK_WAITING =
+  'Waiting for your parent to confirm Health data. Nothing changes until then.';
+export const HEALTH_REASK_CONFIRM = 'Yes, keep Health data on';
+export const HEALTH_REASK_TURN_OFF = 'Turn Health data off';
+export const HEALTH_REASK_TURN_OFF_TITLE = 'Turn Health data off?';
+export const HEALTH_REASK_TURN_OFF_WARN =
+  'If you turn it off, AI planning stops and we delete your health data within 30 days. Free logging stays. You can download a copy of your data first.';
+export const HEALTH_REASK_DOWNLOAD_FIRST = 'Download my data first';
+
+/** Settings › Privacy. [ATTORNEY] */
+export const PRIVACY_SETTINGS_INTRO =
+  'Turn Health data, AI planning, and coach sharing on or off here. Each one is a separate choice.';
+export const PRIVACY_SETTINGS_REASK_TITLE = 'Confirm Health data';
+export const PRIVACY_SETTINGS_REASK_BODY =
+  "It's been 12 months since you turned it on. Check that you still want it on, or turn it off.";
+export const PRIVACY_RIGHTS_PLACEHOLDER_NOTE = 'Placeholder — available before launch.';
+export const PRIVACY_RIGHTS_ROW_LABEL = 'Your privacy rights';
+export const PRIVACY_RIGHTS_ROW_SUB =
+  'Get a copy, correct, delete, see who received your data, or appeal a decision.';
+export const PRIVACY_DOWNLOAD_LABEL = 'Download my data';
+export const PRIVACY_DOWNLOAD_SUB = 'Get a copy of your data.';
+export const PRIVACY_DELETE_HEALTH_LABEL = 'Delete my health data';
+export const PRIVACY_DELETE_HEALTH_SUB = 'We delete it within 30 days.';
+export const PRIVACY_DELETE_ACCOUNT_LABEL = 'Delete my account';
+export const PRIVACY_DELETE_ACCOUNT_SUB =
+  'Deletes your account and data, except records the law requires us to keep.';
+export const PRIVACY_COACHING_LABEL = 'Coaching';
+export const PRIVACY_COACHING_SUB = 'Settings › Coaching. Placeholder — available before launch.';
+
+export const TERMS_REACCEPT_TITLE = 'Review the Terms';
+export const TERMS_REACCEPT_SUB = fill("We've updated our Terms. Please read and accept them to keep using [App].");
+export const TERMS_REACCEPT_WAITING = 'Waiting for your parent to review the updated Terms.';
+
+export const NOTIFICATIONS_LOCK_SCREEN_NOTE =
+  "On your lock screen, previews of messages from a parent or coach won't show the message text.";
+
+export const AI_PLAN_PAUSED_ADULT = 'Your AI plan is paused until you update your health screen.';
+export const AI_PLAN_PAUSED_TEEN = 'Your AI plan is paused until you and your parent update your health screen together.';

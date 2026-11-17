@@ -82,6 +82,8 @@ export default function ParentConsentRoute() {
       onChange={setPc}
       busy={busy}
       message={message}
+      onOpenTerms={() => router.push('/legal/terms')}
+      onOpenPrivacy={() => router.push('/legal/privacy')}
       onBack={() => {
         setPendingInviteToken(null);
         if (router.canGoBack()) router.back();

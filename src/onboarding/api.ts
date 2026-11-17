@@ -9,6 +9,8 @@ import { legalTextHash, legalTexts } from '../legal/text.ts';
  * (no emails, tokens, codes or dates ever go to a log). UI gating only; RLS and the functions enforce.
  */
 
+export type HealthScreenStatus = 'missing' | 'due' | 'clearance_needed' | 'ok';
+
 export type OnboardingState = {
   is_minor: boolean;
   linked: boolean;
@@ -19,6 +21,13 @@ export type OnboardingState = {
   /** null for adults. */
   parent_risk_done: boolean | null;
   health_reask_due: boolean;
+  /** Own health-data grant is due for the 12-month re-ask. */
+  health_reask_self_due: boolean;
+  /** Parent health-data grant is due; the teen waits, nothing pauses. */
+  health_reask_parent_due: boolean;
+  /** Derived AI-eligibility gate. null if the server omitted it. */
+  health_screen_status: HealthScreenStatus | null;
+  can_ai_plan: boolean;
 };
 
 const bool = (v: unknown) => v === true;
@@ -31,6 +40,7 @@ export async function myOnboardingState(): Promise<OnboardingState | null> {
     if (error || !data || typeof data !== 'object') return null;
     const d = data as Record<string, unknown>;
     if (typeof d.is_minor !== 'boolean') return null;
+    const hs = d.health_screen_status;
     return {
       is_minor: d.is_minor,
       linked: bool(d.linked),
@@ -40,6 +50,11 @@ export async function myOnboardingState(): Promise<OnboardingState | null> {
       can_train: bool(d.can_train),
       parent_risk_done: typeof d.parent_risk_done === 'boolean' ? d.parent_risk_done : null,
       health_reask_due: bool(d.health_reask_due),
+      health_reask_self_due: bool(d.health_reask_self_due),
+      health_reask_parent_due: bool(d.health_reask_parent_due),
+      health_screen_status:
+        hs === 'missing' || hs === 'due' || hs === 'clearance_needed' || hs === 'ok' ? hs : null,
+      can_ai_plan: bool(d.can_ai_plan),
     };
   } catch {
     return null;
@@ -72,6 +87,7 @@ export type AcceptInviteArgs = {
   token: string;
   attestation: { version: string; hash: string };
   termsVersion: string;
+  termsHash: string;
   risk: { version: string; hash: string };
   privacyVersion?: string | null;
   privacyHash?: string | null;
@@ -86,6 +102,7 @@ export async function acceptParentInvite(a: AcceptInviteArgs): Promise<boolean> 
       p_attestation_version: a.attestation.version,
       p_attestation_hash: a.attestation.hash,
       p_terms_version: a.termsVersion,
+      p_terms_hash: a.termsHash,
       p_risk_version: a.risk.version,
       p_risk_hash: a.risk.hash,
       p_privacy_version: a.privacyVersion ?? null,

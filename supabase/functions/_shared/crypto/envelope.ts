@@ -6,7 +6,7 @@ import { fromUtf8, utf8 } from '../bytes.ts';
 const VERSION = 1;
 const IV_LEN = 12;
 
-export type HealthField = 'injury_notes' | 'health_screen' | 'injury_category' | 'weight_goal';
+export type HealthField = 'injury_notes' | 'health_screen' | 'injury_category' | 'weight_goal' | 'body_weight';
 
 export function fieldAad(userId: string, field: HealthField): Uint8Array {
   return utf8(`fitness-app/health/v${VERSION}/${userId}/${field}`);

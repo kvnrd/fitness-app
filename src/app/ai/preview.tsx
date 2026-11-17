@@ -1,0 +1,40 @@
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { markAiPlanAccepted } from '../../ai/api';
+import { getPlanDraft } from '../../ai/planDraft';
+import { goalLabels, injuryLabel } from '../../ai/quiz';
+import { AiPreviewScreen } from '../../ai/screens/AiPreview';
+import { SAMPLE_PLAN, SAMPLE_REST, SAMPLE_SWAP_NOTE } from '../../ai/screens/samplePlan';
+import { useSession } from '../../auth/SessionProvider';
+
+export default function PreviewRoute() {
+  const { onboarding } = useSession();
+  const draft = getPlanDraft();
+  const teen = !!onboarding?.is_minor;
+  const plan = draft.status === 'ready' ? draft.plan : SAMPLE_PLAN;
+  const quiz = draft.status === 'ready' ? draft.quiz : null;
+  const title = quiz ? goalLabels(quiz.goals, teen).join(' ') : 'Hybrid Strength';
+  const injury = quiz ? injuryLabel(quiz.injury) : 'Knee';
+  const [busy, setBusy] = useState(false);
+
+  async function onStart() {
+    setBusy(true);
+    const ok = await markAiPlanAccepted();
+    setBusy(false);
+    if (!ok && draft.status === 'ready') return;
+    router.replace('/(tabs)');
+  }
+
+  return (
+    <AiPreviewScreen
+      title={title}
+      plan={plan}
+      injuryLabel={injury}
+      swapNote={injury ? SAMPLE_SWAP_NOTE : undefined}
+      restNote={SAMPLE_REST}
+      onBack={() => router.replace('/ai/quiz')}
+      onStart={() => void onStart()}
+      busy={busy}
+    />
+  );
+}
