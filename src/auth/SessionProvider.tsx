@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { checkStoreAgeSharingRevoked, onStoreAgeSignalRevoked } from '../age/storeAgeSignal';
 import { reportStoreSignalRevoked } from '../age/reportStoreRevocation';
 import { DEFAULT_ROLE, isRole, isVerifiedCoach, resolveDevRole, Role } from './session';
-import { deviceFlags, deviceSetupStore } from '../onboarding/deviceStorage';
+import { analyticsInstallId, deviceFlags, deviceSetupStore } from '../onboarding/deviceStorage';
 import { myOnboardingState, type OnboardingState } from '../onboarding/api';
 import { isSupabaseConfigured, supabase } from './supabase';
 
@@ -127,6 +127,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (gone && gone !== userId) {
       void deviceSetupStore.clearForUser(gone).catch(() => {});
       void deviceFlags.clearUser(gone).catch(() => {});
+      void analyticsInstallId.reset().catch(() => {});
     }
   }, [userId]);
 
@@ -158,6 +159,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (uid) {
       await deviceSetupStore.clearForUser(uid).catch(() => {});
       await deviceFlags.clearUser(uid).catch(() => {});
+      await analyticsInstallId.reset().catch(() => {});
     }
     if (supabase) await supabase.auth.signOut().catch(() => {});
     setRole(configured ? DEFAULT_ROLE : resolveDevRole());

@@ -31,9 +31,9 @@ test('drafting-notes block never ships', () => {
 });
 
 test('versions parsed', () => {
-  assert.equal(PRIVACY_POLICY_DOC.version, 'v0.2 DRAFT');
-  assert.equal(HEALTH_POLICY_DOC.version, 'v0.2 DRAFT');
-  assert.equal(TERMS_DOC.version, 'v0.1 DRAFT');
+  assert.equal(PRIVACY_POLICY_DOC.version, 'v0.3 DRAFT');
+  assert.equal(HEALTH_POLICY_DOC.version, 'v0.3 DRAFT');
+  assert.equal(TERMS_DOC.version, 'v0.2 DRAFT');
   assert.match(PRIVACY_POLICY_DOC.title, /Privacy Policy/);
   assert.match(TERMS_DOC.title, /Terms of Service/);
 });

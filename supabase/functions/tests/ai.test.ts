@@ -257,3 +257,29 @@ test('notice: the app shows exactly the same text as the server', () => {
   const app = readFileSync(join(here, '../../../src/ai/notice.ts'), 'utf8');
   assert.ok(app.includes(JSON.stringify(AI_PLAN_NOTICE)), 'src/ai/notice.ts must contain the exact notice');
 });
+
+test('ToS §12: health info, photos and messages never reach the AI prompt or request', () => {
+  const ok = parsePlanRequest({ goal: 'build_strength', experience: 'beginner', equipment: ['dumbbells'], daysPerWeek: 3, sessionMinutes: 45 });
+  assert.ok(ok);
+  assert.equal(parsePlanRequest({ ...ok, notes: 'sore knee after practice' }), null);
+  assert.equal(parsePlanRequest({ ...ok, photo: 's3://photo.jpg' }), null);
+  assert.equal(parsePlanRequest({ ...ok, message: 'hey coach' }), null);
+  assert.equal(parsePlanRequest({ ...ok, health_screen: 'yes' }), null);
+  const req = buildPlanRequest({
+    requestId: 'req-not-a-user-id',
+    goal: 'build_strength',
+    experience: 'beginner',
+    equipment: ['dumbbells'],
+    daysPerWeek: 3,
+    sessionMinutes: 45,
+    ageBand: '18_plus',
+    injuryCategory: 'knee',
+  }, 'claude-test');
+  const blob = JSON.stringify(req);
+  assert.equal(/sore knee|photo\.jpg|hey coach|health_screen|injury notes|email@|user id/i.test(blob), false);
+  assert.equal(blob.includes('injury_category'), true);
+  assert.equal(blob.includes('knee'), true);
+  assert.equal(blob.includes('training_days_per_week'), true);
+  assert.equal(blob.includes('session_minutes'), true);
+  assert.throws(() => assertAllowedRequest({ ...req, messages: [{ role: 'user', content: [{ type: 'image', source: 'x' }] }] }), /non_text/);
+});

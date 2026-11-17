@@ -1,0 +1,18 @@
+# Daily retention purge. Config only — not deployed by this change.
+# The same schedule is applied in supabase/migrations/20261117001100_phase5_ops_rev4.sql
+# when pg_cron is available (same pattern as the hourly pending-minor purge).
+#
+# If pg_cron is not installed, the operator must attach this job in their runner
+# (see docs/runbooks/retention-purge.md).
+
+job_name: retention-purge-daily
+schedule:
+  cron: "20 7 * * *"
+  timezone: UTC
+  description: Every day at 07:20 UTC, after the hourly pending-minor job (minute 15).
+command: "select private.run_retention_purge_cron();"
+timeout: 15m
+expected_max_runtime: 5m
+missed_run_after: 25h
+legal_deadline_days: 30
+shred_scheduled_after_days: 29

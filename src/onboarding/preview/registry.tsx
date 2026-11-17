@@ -207,7 +207,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'train-ai-paused': () => <TrainAiScreen notice="footer" healthScreenPaused />,
   'profile': () => <ProfileScreen name="Jordan" roleLabel="Athlete" notice="footer" />,
   'profile-teen': () => <ProfileScreen teen name="Alex" roleLabel="Athlete" showWeight weightLabel="142 lb" notice="footer" />,
-  // ───── Legal: Terms v0.1-draft ─────
+  // ───── Legal: Terms v0.2-draft ─────
   terms: () => <TermsDocumentScreen />,
   'terms-reaccept': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
   'terms-reaccept-ready': () => <ReacceptTermsScreen checked onChecked={noop} onOpenTerms={noop} onAccept={noop} />,

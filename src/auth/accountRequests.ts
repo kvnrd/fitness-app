@@ -1,3 +1,4 @@
+import { analyticsInstallId } from '../onboarding/deviceStorage';
 import { supabase } from './supabase';
 
 /**
@@ -21,5 +22,9 @@ async function call(fn: 'request_account_deletion' | 'request_data_export'): Pro
   }
 }
 
-export const requestAccountDeletion = () => call('request_account_deletion');
+export async function requestAccountDeletion(): Promise<RequestResult> {
+  const result = await call('request_account_deletion');
+  if (result.ok) await analyticsInstallId.reset().catch(() => {});
+  return result;
+}
 export const requestDataExport = () => call('request_data_export');

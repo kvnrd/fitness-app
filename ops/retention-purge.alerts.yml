@@ -1,0 +1,52 @@
+# Alert rules for the daily retention purge. Placeholder destinations only.
+# Do not put real endpoints, tokens, or secrets in this file.
+
+defaults:
+  severity_destination:
+    warning: "${PURGE_ALERT_WARNING_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-warning}"
+    critical: "${PURGE_ALERT_CRITICAL_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-critical}"
+  page_oncall: "${PURGE_ALERT_ONCALL:-oncall-privacy-placeholder}"
+
+rules:
+  - id: retention-purge-missed-run
+    name: Daily retention purge missed
+    when: "retention_purge_health.missed_run is true"
+    threshold: "No successful run in the last 25 hours (or the job has never succeeded)."
+    severity: critical
+    destination: "${PURGE_ALERT_CRITICAL_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-critical}"
+    page: true
+    note: >
+      The purge {date} on in-app toasts is hidden while the job is not confirmed running
+      (app.photo_purge_deadline_guaranteed() is false). Legal deletion deadline is 30 days.
+
+  - id: retention-purge-overdue-photo-keys
+    name: Overdue photo key shred
+    when: "retention_purge_health.overdue_photo_keys > 0"
+    threshold: "Any photo key with shred_after <= now() that has not been shredded."
+    severity: critical
+    destination: "${PURGE_ALERT_CRITICAL_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-critical}"
+    page: true
+
+  - id: retention-purge-overdue-health-keys
+    name: Overdue health key shred
+    when: "retention_purge_health.overdue_health_keys > 0"
+    threshold: "Any health key still present 29 days after health_data was revoked (litigation holds excluded)."
+    severity: critical
+    destination: "${PURGE_ALERT_CRITICAL_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-critical}"
+    page: true
+
+  - id: retention-purge-run-failed
+    name: Retention purge run failed
+    when: "latest retention_purge_runs.ok is false"
+    threshold: "The most recent run recorded ok = false."
+    severity: critical
+    destination: "${PURGE_ALERT_CRITICAL_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-critical}"
+    page: true
+
+  - id: retention-purge-slow-run
+    name: Retention purge ran slowly
+    when: "finished_at - started_at > 10 minutes"
+    threshold: 10m
+    severity: warning
+    destination: "${PURGE_ALERT_WARNING_WEBHOOK:-https://alerts.example.invalid/hooks/retention-purge-warning}"
+    page: false
