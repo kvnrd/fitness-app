@@ -375,21 +375,26 @@ select tests.ok('rev3: export does not auto-delete photos', not app.photo_export
 select tests.login(null, 'service_role');
 select public.health_register_key(tests.u(122), tests.wk(122), 'local-dev', 'local-dev:test');
 select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-1'));
-select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-2'));
+select public.health_write(tests.u(122), tests.ct('notes'), tests.ct('screen'), tests.ct('cat'), null, array['injury_notes','health_screen','injury_category','body_weight'], tests.ct('bw-2'));
 select tests.logout();
 select tests.ok('rev3: a new teen weight overwrites the previous value; no history row is kept', (
   (select body_weight_ct = tests.ct('bw-2') from public.health_records where user_id = tests.u(122))
   and (select count(*) from public.weigh_ins where user_id = tests.u(122)) = 0));
 
+select tests.ok('rev4: teen had AI planning on before Health was turned off', app.has_consent(tests.u(122), 'ai_vendor'));
 select tests.login(tests.u(124));
 select public.revoke_consent('health_data', tests.u(122));
 select tests.logout();
-select tests.ok('rev3: parent turning Health off deletes the live teen weight immediately',
-  (select body_weight_ct is null from public.health_records where user_id = tests.u(122)));
-select tests.ok('rev3: the teen is notified when the parent caused the deletion', exists (
-  select 1 from public.teen_data_notices n
-   where n.user_id = tests.u(122) and n.kind = 'weight_deleted_by_parent'
-     and n.actor_user_id = tests.u(124)));
+select tests.ok('rev3/rev4: parent turning Health off deletes all live saved health info immediately',
+  (select body_weight_ct is null and injury_notes_ct is null and health_screen_ct is null
+          and injury_category_ct is null and weight_goal_ct is null
+     from public.health_records where user_id = tests.u(122)));
+select tests.ok('rev4: AI planning turns off when the teen''s Health data is turned off',
+  not app.has_consent(tests.u(122), 'ai_vendor') and not app.has_consent(tests.u(122), 'health_data'));
+select tests.ok('rev4: the teen is notified once when the parent caused the deletion, and the notice is kept',
+  (select count(*) = 1 from public.teen_data_notices n
+    where n.user_id = tests.u(122) and n.kind = 'health_deleted_by_parent'
+      and n.actor_user_id = tests.u(124)));
 -- Health key is still present; backups go when the key is shredded (existing 29-day path).
 select tests.ok('rev3: the health key is still scheduled for ordinary withdrawal shred, not dropped instantly', exists (
   select 1 from private.user_data_keys k where k.user_id = tests.u(122)));
@@ -414,7 +419,7 @@ select tests.ok('rev3: the teen turning Health off also clears the live weight',
   (select body_weight_ct is null from public.health_records where user_id = tests.u(122)));
 select tests.ok('rev3: a self-clear does not add a parent-caused notice',
   (select count(*) = 1 from public.teen_data_notices
-    where user_id = tests.u(122) and kind = 'weight_deleted_by_parent'));
+    where user_id = tests.u(122) and kind = 'health_deleted_by_parent'));
 
 select tests.login(tests.u(122));
 select public.record_consent('health_data', 'health-v1');
@@ -440,4 +445,116 @@ select tests.login(tests.u(122));
 select tests.ok('rev3: the teen is told about the parent export', exists (
   select 1 from public.teen_data_notices
    where user_id = tests.u(122) and kind = 'parent_exported_data' and actor_user_id = tests.u(124)));
+select tests.logout();
+
+-- =============================================================== Rev 3 addendum: weigh-in metadata is fully hidden
+-- 120 has an active 1:1 with 121 from the photo tests; share may already be on.
+select tests.login(tests.u(120));
+select public.set_share_body_weight(tests.u(121), false);
+select tests.login(tests.u(121));
+select tests.eq('rev3a: coach count is 0 while sharing is off',
+  format($q$select count(*)::text from public.weigh_ins where user_id = %L$q$, tests.u(120)), '0');
+select tests.eq('rev3a: coach sees no recorded_on or created_at while sharing is off',
+  format($q$select coalesce(min(recorded_on)::text,'') || coalesce(min(created_at)::text,'') from public.weigh_ins where user_id = %L$q$, tests.u(120)), '');
+select tests.ok('rev3a: weigh-ins are not in a realtime publication', not app.weigh_ins_published_realtime());
+select tests.ok('rev3a: no weigh-in last-active or sync signals go out in push', not app.weigh_in_push_signals_enabled());
+select tests.login(tests.u(121));
+select tests.eq('rev3a: the owner-only series does not expose 120''s weigh-ins to the coach',
+  $q$select count(*)::text from public.progress_weight_series('progress')$q$, '0');
+-- Share with 121 only; a second 1:1 coach still sees nothing.
+select tests.login(null, 'service_role');
+insert into public.coach_relationships (coach_id, client_id, status, started_at)
+select tests.u(125), tests.u(120), 'active', now()
+ where not exists (select 1 from public.coach_relationships
+                    where coach_id = tests.u(125) and client_id = tests.u(120) and status = 'active');
+select tests.logout();
+select tests.login(tests.u(120));
+select public.set_share_body_weight(tests.u(121), true);
+select tests.login(tests.u(121));
+select tests.rows('rev3a: the chosen 1:1 coach sees ciphertext after share is on',
+  format('select * from public.weigh_ins where user_id = %L', tests.u(120)), 1);
+select tests.login(tests.u(125));
+select tests.no_rows('rev3a: a different 1:1 coach does not see rows when share is not on for them',
+  format('select * from public.weigh_ins where user_id = %L', tests.u(120)));
+select tests.login(tests.u(120));
+select public.set_share_body_weight(tests.u(121), false);
+select tests.login(tests.u(121));
+select tests.no_rows('rev3a: turning share off cuts access immediately',
+  format('select * from public.weigh_ins where user_id = %L', tests.u(120)));
+select tests.logout();
+
+-- =============================================================== purge health-check + toast guarantee
+-- A due unshed photo key is overdue until the job runs. private.* is only readable after logout (superuser).
+insert into private.photo_data_keys (user_id, wrapped_key, key_provider, kms_key_ref, active, shred_after)
+values (tests.u(123), '\x66666666666666666666666666666666'::bytea, 'local-dev', 'local-dev:overdue', false, now() - interval '1 hour');
+select tests.ok('ops: health check flags an overdue photo shred',
+  (select overdue_photo_keys > 0 from public.retention_purge_health()));
+select tests.ok('ops: the purge date is not guaranteed while a shred is overdue',
+  not app.photo_purge_deadline_guaranteed());
+select tests.login(null, 'service_role');
+select public.run_retention_purge();
+select tests.logout();
+select tests.ok('ops: the job clears the overdue key and is confirmed running',
+  (select healthy and job_confirmed_running and overdue_photo_keys = 0 from public.retention_purge_health()));
+select tests.ok('ops: the purge date may be shown once the daily job is confirmed running',
+  app.photo_purge_deadline_guaranteed());
+-- A stale last success is a missed run; the date must come off.
+update private.retention_purge_runs set started_at = now() - interval '30 hours', finished_at = now() - interval '30 hours'
+ where ok is true;
+select tests.ok('ops: a missed daily run is flagged and drops the guarantee',
+  (select missed_run and not job_confirmed_running from public.retention_purge_health())
+  and not app.photo_purge_deadline_guaranteed());
+select tests.login(null, 'service_role');
+select public.run_retention_purge();
+select tests.logout();
+select tests.ok('ops: a fresh successful run restores the guarantee',
+  app.photo_purge_deadline_guaranteed()
+  and (select healthy from public.retention_purge_health()));
+
+-- =============================================================== Rev 4: Download my data
+select tests.login(tests.u(120));
+select tests.raises('export: the lock must pass before a link is issued',
+  $q$select public.prepare_data_export(false)$q$, 'lock_required');
+select tests.ok('export: a short-lived link is issued after the lock check', (
+  (select public.prepare_data_export(true)) ? 'token'
+  and ((select public.prepare_data_export(true)) ->> 'delivery') = 'short_lived_in_app_link'));
+
+create temporary table if not exists tests_export_link (token text, request_id uuid, package jsonb);
+delete from tests_export_link;
+insert into tests_export_link (token, request_id, package)
+select x.token, x.request_id, public.fetch_data_export(x.token)
+  from jsonb_to_record(public.prepare_data_export(true)) as x(token text, request_id uuid, expires_at timestamptz, delivery text, manifest jsonb);
+select tests.logout();
+select tests.ok('export: the package includes the required categories and not the excluded ones', (
+  (select private.data_export_excluded_ok(package) from tests_export_link)
+  and (select package -> 'included' ?& array[
+         'account_and_settings','training_setup','workouts_sets_prs','ai_plans','health_info',
+         'connected_health_apps','progress_photos','coach_messages','privacy_choices',
+         'who_received_data','purchases','requests'] from tests_export_link)
+  and (select (package -> 'included' -> 'account_and_settings' ? 'birth_date') = false from tests_export_link)
+  and (select (package -> 'included' -> 'workouts_sets_prs' -> 'sets') <> '[]'::jsonb from tests_export_link)
+));
+select tests.ok('export: a rights-request audit row is recorded', exists (
+  select 1 from public.audit_log a
+   where a.actor_id = tests.u(120) and a.action = 'data_export_requested'
+     and a.target_user_id = tests.u(120)
+     and (a.metadata ->> 'rights_request') = 'true'));
+-- Expire the link and confirm fetch is refused.
+update public.data_export_requests
+   set expires_at = now() - interval '1 minute'
+ where id = (select request_id from tests_export_link);
+select tests.login(tests.u(120));
+select tests.raises('export: an expired link cannot be fetched',
+  $q$select public.fetch_data_export((select token from tests_export_link))$q$,
+  'link_expired');
+select tests.logout();
+
+-- A teen package has no photos and does not include the parent''s own account data.
+select tests.login(tests.u(122));
+select tests.ok('export: a teen package has no photos and only a linked-parent flag, not the parent account', (
+  (select (public.prepare_data_export(true) -> 'manifest' -> 'progress_photos') = '[]'::jsonb)
+  and (select ((public.prepare_data_export(true) -> 'manifest' -> 'account_and_settings' ->> 'linked_parent') = 'true')
+           and not ((public.prepare_data_export(true) -> 'manifest')::text ilike '%p5-124%')
+           and not ((public.prepare_data_export(true) -> 'manifest' -> 'account_and_settings') ? 'parent_email'))
+));
 select tests.logout();
