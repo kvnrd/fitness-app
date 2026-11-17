@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { createAnalyticsInstallId } from '../analytics/installId.ts';
 import { createDeviceFlags } from './deviceFlags.ts';
 import { createDeviceSetupStore, type KeyValueAdapter } from './deviceSetupStore.ts';
+import { createTurned18Store } from '../progress/turned18.ts';
 
 /**
  * React Native adapters for deviceSetupStore.
@@ -53,3 +54,5 @@ export const deviceFlags = createDeviceFlags(asyncAdapter, () => ExpoCrypto.rand
 
 /** Crash/analytics install ID only. Reset on sign-out and account deletion. Never joined to the account. */
 export const analyticsInstallId = createAnalyticsInstallId(asyncAdapter, () => ExpoCrypto.randomUUID());
+
+export const turned18Store = createTurned18Store({ storage: asyncAdapter });

@@ -184,10 +184,17 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={inApp}>
           <Stack.Screen name="settings/privacy" />
           <Stack.Screen name="settings/health-reask" />
+          <Stack.Screen name="settings/photo-privacy" />
+          <Stack.Screen name="settings/photo-share" />
+          <Stack.Screen name="settings/data-export" />
+          <Stack.Screen name="photos/opt-in" />
+          <Stack.Screen name="photos/add" />
+          <Stack.Screen name="photos/import-consent" />
         </Stack.Protected>
         <Stack.Protected guard={inAppOk}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workout/[day]" />
+          <Stack.Screen name="workout/recap" />
           <Stack.Screen name="ai" />
           <Stack.Screen name="settings/notifications" />
         </Stack.Protected>

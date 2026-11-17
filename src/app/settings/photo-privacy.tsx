@@ -15,7 +15,8 @@ export default function PhotoPrivacyRoute() {
       cameraRollOn={cameraRollOn}
       coachSharingOn={false}
       onBack={() => router.back()}
-      onOpenOptIn={() => {}}
+      onOpenOptIn={() => router.push('/photos/opt-in')}
+      onCoachSharing={() => router.push('/settings/photo-share')}
       onToggleLock={setLockOn}
       onToggleBlur={setBlurOn}
       onToggleCameraRoll={setCameraRollOn}

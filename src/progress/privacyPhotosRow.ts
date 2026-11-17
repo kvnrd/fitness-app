@@ -1,6 +1,6 @@
 /**
  * Profile › Privacy "Progress photos" row (logic + presentational props).
- * Counsel Phase 5b rev 3 / Kevin: 16–17 row is disabled, no chevron, no action.
+ * Counsel Phase 5b rev 5 / Kevin: 16–17 row is disabled, no chevron, no action.
  */
 import { canUseProgressPhotos } from '../features/progressPhotos.ts';
 import {

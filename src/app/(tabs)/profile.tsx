@@ -3,7 +3,6 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { showTeenProfileWeight } from '../../ai/flow';
 import { useAiPlan } from '../../ai/useAiPlan';
 import { AiNotice } from '../../components/AiNotice';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
@@ -11,6 +10,9 @@ import { Text } from '../../components/ui';
 import { loadConsents } from '../../auth/consents';
 import { useSession } from '../../auth/SessionProvider';
 import { deviceSetupStore } from '../../onboarding/deviceStorage';
+import { HealthPills } from '../../progress/screens/HealthPills';
+import { ProfileBodySection } from '../../progress/screens/ProfileBody';
+import { weightSurfaceState } from '../../progress/weightGate.ts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
 
@@ -57,8 +59,9 @@ export default function ProfileTab() {
   const teen = !!onboarding?.is_minor;
   const [healthSelf, setHealthSelf] = useState(false);
   const [healthParent, setHealthParent] = useState(false);
-  const [hasTarget, setHasTarget] = useState(false);
-  const [weightLabel, setWeightLabel] = useState<string | undefined>();
+  const [trendLabel, setTrendLabel] = useState<string | undefined>();
+  const [unit, setUnit] = useState<string | undefined>();
+  const [goalLabel, setGoalLabel] = useState<string | undefined>();
 
   useEffect(() => {
     if (!user) return;
@@ -69,14 +72,15 @@ export default function ProfileTab() {
       }
     });
     void deviceSetupStore.loadWeightGoal(user.id).then((w) => {
-      setHasTarget(!!w && w.target != null);
-      if (w && w.current != null) setWeightLabel(`${w.current} ${w.unit}`);
+      if (w && w.current != null) {
+        setTrendLabel(String(w.current));
+        setUnit(w.unit);
+      }
+      if (w && w.target != null) setGoalLabel(`Goal · ${w.target} ${w.unit}`);
     }).catch(() => {});
   }, [user]);
 
-  const showWeight = teen
-    ? showTeenProfileWeight({ isMinor: true, healthSelf, healthParent, hasTarget })
-    : healthSelf;
+  const surface = weightSurfaceState({ isMinor: teen, healthSelf, healthParent });
   const name = profile?.display_name?.trim() || 'You';
 
   return (
@@ -113,18 +117,19 @@ export default function ProfileTab() {
           </View>
         </View>
 
+        {teen ? <HealthPills selfOn={healthSelf} parentOn={healthParent} /> : null}
+        <ProfileBodySection
+          surface={surface}
+          trendLabel={trendLabel}
+          unit={unit}
+          goalLabel={goalLabel}
+          accessibilityLabel={surface.showValues && trendLabel ? `Trend weight ${trendLabel} ${unit}` : undefined}
+        />
         <View>
           <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
             Training
           </Text>
           <Row label="Plan" value={state?.planAccepted ? 'AI plan' : 'Free logging'} onPress={state?.planAccepted ? () => router.push('/(tabs)/train') : undefined} />
-          {showWeight ? (
-            <Row
-              label="Body weight"
-              value={weightLabel ?? 'Add'}
-              sub={teen ? 'No goal or target. Hidden on Home. You and your parent both turned Health data on.' : undefined}
-            />
-          ) : null}
         </View>
 
         {isConfigured && isSignedIn ? (

@@ -1,5 +1,5 @@
 /**
- * Counsel-approved Phase 5b rev 3 copy. Word for word. Curly apostrophes only.
+ * Counsel-approved Phase 5b rev 5 copy (rev 3 UI strings plus the rev 5 streak rule). Word for word. Curly apostrophes only.
  * Photo opt-in body below is the hashed consent text (version photos-v2-2026-11-17-draft).
  */
 export const ADD_PHOTOS_BUTTON = 'Add photos' as const;

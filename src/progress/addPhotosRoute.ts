@@ -1,5 +1,5 @@
 /**
- * "Add photos" entry routing. Counsel Phase 5b rev 3 (c).
+ * "Add photos" entry routing. Counsel Phase 5b rev 5 (c).
  */
 import { canUseProgressPhotos, canUploadProgressPhoto } from '../features/progressPhotos.ts';
 import {

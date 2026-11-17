@@ -221,12 +221,12 @@ export default function WorkoutDayScreen() {
             onAdjust={(d) => setRest((cur) => (cur ? { ...cur, remaining: Math.max(0, cur.remaining + d), total: Math.max(cur.total, cur.remaining + d) } : cur))}
             onSkip={() => setRest(null)}
             finishLabel={`Finish workout (${done} of ${total} sets)`}
-            onFinish={() => router.back()}
+            onFinish={() => router.push(`/workout/recap?day=${day}`)}
           />
         ) : null}
         {aurora && total > 0 && done > 0 && !rest ? (
           <View style={[styles.finishOnly, { paddingBottom: insets.bottom + space.md, backgroundColor: colors.glass, borderColor: colors.glassBorder, borderRadius: radius.sheet }]}>
-            <Button label={`Finish workout (${done} of ${total} sets)`} onPress={() => router.back()} />
+            <Button label={`Finish workout (${done} of ${total} sets)`} onPress={() => router.push(`/workout/recap?day=${day}`)} />
           </View>
         ) : null}
 
@@ -241,7 +241,7 @@ export default function WorkoutDayScreen() {
             <Button
               label={ratio >= 1 ? 'Save workout' : `Finish workout (${done} of ${total} sets)`}
               disabled={done === 0}
-              onPress={() => router.back()}
+              onPress={() => router.push(`/workout/recap?day=${day}`)}
             />
           </View>
         ) : null}

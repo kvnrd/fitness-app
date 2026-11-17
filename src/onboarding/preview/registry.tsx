@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { AuroraProgressPreview, AuroraTrainPreview, AuroraWorkoutPreview } from './auroraPreview';
 import { AppearanceSettingsScreen } from '../../settings/screens/AppearanceSettings';
 import { View } from 'react-native';
@@ -55,6 +55,17 @@ import { PrToast } from '../../progress/screens/PrToast';
 import { WorkoutRecapScreen } from '../../progress/screens/WorkoutRecap';
 import { Turned18Card } from '../../progress/screens/Turned18Card';
 import { PhotoPrivacySettingsScreen } from '../../progress/screens/PhotoPrivacySettings';
+import { CoachShareSheet } from '../../progress/screens/CoachShareSheet';
+import { CoachClientListPreview, CoachTeenClientPage } from '../../progress/screens/CoachTeenClient';
+import { DataExportSheet } from '../../progress/screens/DataExportSheet';
+import { HealthPills } from '../../progress/screens/HealthPills';
+import { HomeWeightCard } from '../../progress/screens/HomeWeightCard';
+import { PhotoGalleryScreen } from '../../progress/screens/PhotoGallery';
+import { ProfileBodySection } from '../../progress/screens/ProfileBody';
+import { ProgressChips } from '../../progress/screens/ProgressChips';
+import { ProgressWeightScreen } from '../../progress/screens/ProgressWeight';
+import { WeightGoalSheet } from '../../progress/screens/WeightGoalSheet';
+import { weightSurfaceState } from '../../progress/weightGate.ts';
 
 /**
  * Screen preview registry (dev only; used by app/dev-preview.tsx for screenshots). id → render function with
@@ -62,6 +73,27 @@ import { PhotoPrivacySettingsScreen } from '../../progress/screens/PhotoPrivacyS
  * read real state, never call the server.
  */
 const noop = () => {};
+
+function PreviewPad({ children }: { children: ReactNode }) {
+  return (
+    <ScreenBackground>
+      <View style={{ padding: 24, gap: 16, minHeight: 844 }}>{children}</View>
+    </ScreenBackground>
+  );
+}
+
+const openWeight = weightSurfaceState({ isMinor: true, healthSelf: true, healthParent: true });
+const teenOff = weightSurfaceState({ isMinor: true, healthSelf: false, healthParent: true });
+const parentOff = weightSurfaceState({ isMinor: true, healthSelf: true, healthParent: false });
+const sampleWeight = {
+  trendLabel: '142.6',
+  unit: 'lb',
+  changeLabel: '3.4 lb in 3 months',
+  goalLabel: 'Goal · 138 lb',
+  goalSub: 'About 17 weeks at your current rate',
+  accessibilityLabel: 'Trend weight 142.6 lb, down 3.4 lb over 3 months.',
+};
+
 
 const allNo = (): HealthAnswers => {
   let a = emptyHealthAnswers();
@@ -265,7 +297,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'workout-aurora': () => <AuroraWorkoutPreview />,
   'workout-aurora-empty': () => <AuroraWorkoutPreview empty />,
   'appearance-aurora': () => <AppearanceSettingsScreen onBack={() => {}} />,
-  // ───── Phase 5b (SPEC rev 3) ─────
+  // ───── Phase 5b (SPEC rev 5) ─────
   'add-photos-chooser': () => <AddPhotosChooser onTakePhoto={noop} onChooseFromLibrary={noop} onCancel={noop} />,
   'import-consent': () => <ImportConsentSheet onAgree={noop} onCancel={noop} />,
   'photo-opt-in': () => <PhotoOptInSheet switchOn={false} onSwitchChange={noop} onContinue={noop} onNotNow={noop} />,
@@ -318,6 +350,130 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
       onDeleteAccount={noop}
     />
   ),
+  'coach-share': () => (
+    <PreviewPad>
+      <CoachShareSheet coachFirst="Alex" onNotNow={noop} onContinue={noop} />
+    </PreviewPad>
+  ),
+  'photo-gallery': () => (
+    <PreviewPad>
+      <PhotoGalleryScreen items={[{ id: '1', dateLabel: 'Nov 14' }, { id: '2', dateLabel: 'Oct 29' }]} onAdd={noop} />
+    </PreviewPad>
+  ),
+  'photo-gallery-empty': () => (
+    <PreviewPad>
+      <PhotoGalleryScreen items={[]} onAdd={noop} />
+    </PreviewPad>
+  ),
+  'home-turned-18': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Home</Text>
+      <Turned18Card onNotNow={noop} onLearnMore={noop} />
+    </PreviewPad>
+  ),
+  'progress-weight': () => (
+    <PreviewPad>
+      <Text variant="title" accessibilityRole="header">Progress</Text>
+      <ProgressChips isMinor selected="Weight" onSelect={noop} />
+      <ProgressWeightScreen surface={openWeight} healthSelf healthParent model={sampleWeight} onOpenGoal={noop} />
+    </PreviewPad>
+  ),
+  'progress-weight-empty': () => (
+    <PreviewPad>
+      <Text variant="title" accessibilityRole="header">Progress</Text>
+      <ProgressChips isMinor selected="Weight" onSelect={noop} />
+      <ProgressWeightScreen surface={openWeight} healthSelf healthParent model={null} onLog={noop} onConnectHealth={noop} />
+    </PreviewPad>
+  ),
+  'progress-weight-teen-off': () => (
+    <PreviewPad>
+      <Text variant="title" accessibilityRole="header">Progress</Text>
+      <ProgressChips isMinor selected="Weight" onSelect={noop} />
+      <ProgressWeightScreen surface={teenOff} healthSelf={false} healthParent />
+    </PreviewPad>
+  ),
+  'progress-weight-parent-off': () => (
+    <PreviewPad>
+      <Text variant="title" accessibilityRole="header">Progress</Text>
+      <ProgressChips isMinor selected="Weight" onSelect={noop} />
+      <ProgressWeightScreen surface={parentOff} healthSelf healthParent={false} />
+    </PreviewPad>
+  ),
+  'weight-goal-sheet': () => (
+    <PreviewPad>
+      <ProgressWeightScreen surface={openWeight} healthSelf healthParent model={sampleWeight} />
+      <WeightGoalSheet direction="Lose" targetLabel="138.0 lb" paceLabel="0.5 lb/week" dateLabel="Jan 16" onDirection={noop} onCancel={noop} onSave={noop} />
+    </PreviewPad>
+  ),
+  'home-weight': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Home</Text>
+      <HomeWeightCard
+        surface={openWeight}
+        healthSelf
+        healthParent
+        trendLabel="142.6"
+        unit="lb"
+        goalLabel="Goal · 138 lb"
+        accessibilityLabel="Trend weight 142.6 lb, down 3.4 lb over 3 months."
+        onOpenProgress={noop}
+      />
+    </PreviewPad>
+  ),
+  'home-weight-gated': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Home</Text>
+      <HomeWeightCard surface={parentOff} healthSelf healthParent={false} />
+    </PreviewPad>
+  ),
+  'profile-weight-on': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Profile</Text>
+      <HealthPills selfOn parentOn />
+      <ProfileBodySection
+        surface={openWeight}
+        trendLabel="142.6"
+        unit="lb"
+        goalLabel="Goal · 138 lb"
+        accessibilityLabel="Trend weight 142.6 lb, down 3.4 lb over 3 months."
+      />
+    </PreviewPad>
+  ),
+  'profile-teen-off': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Profile</Text>
+      <HealthPills selfOn={false} parentOn />
+      <ProfileBodySection surface={teenOff} />
+    </PreviewPad>
+  ),
+  'profile-parent-off': () => (
+    <PreviewPad>
+      <Text variant="hero" accessibilityRole="header">Profile</Text>
+      <HealthPills selfOn parentOn={false} />
+      <ProfileBodySection surface={parentOff} />
+    </PreviewPad>
+  ),
+  'export-with-weight': () => (
+    <PreviewPad>
+      <DataExportSheet isMinor hasConnectedApps hasCoach photoCount={0} hasHealthInfo onBack={noop} onSave={noop} />
+    </PreviewPad>
+  ),
+  'export-no-weight': () => (
+    <PreviewPad>
+      <DataExportSheet isMinor hasConnectedApps={false} hasCoach={false} photoCount={0} hasHealthInfo={false} onBack={noop} onSave={noop} />
+    </PreviewPad>
+  ),
+  'studio-clients-sam': () => (
+    <PreviewPad>
+      <CoachClientListPreview name="Sam M." highlighted />
+    </PreviewPad>
+  ),
+  'client-teen-sam': () => (
+    <PreviewPad>
+      <CoachTeenClientPage name="Sam M." planGoal="Build muscle" />
+    </PreviewPad>
+  ),
 };
+
 
 

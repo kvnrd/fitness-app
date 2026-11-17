@@ -34,7 +34,7 @@ const HASH = /^[0-9a-f]{64}$/;
 /** Camera-only consents such as photos-v1 stay valid for camera photos. */
 export const PHOTO_CAMERA_CONSENT_VERSION = 'photos-v1';
 
-/** Revised take-or-import opt-in. Counsel Phase 5b rev 3, hashed body in phase5bCopy.ts. */
+/** Revised take-or-import opt-in. Counsel Phase 5b rev 5, hashed body in phase5bCopy.ts. */
 export const PHOTO_IMPORT_CONSENT_VERSION = 'photos-v2-2026-11-17-draft';
 export const PHOTO_IMPORT_CONSENT_TEXT = PHOTO_OPT_IN_CONSENT_TEXT;
 export const PHOTO_IMPORT_CONSENT_HASH = sha256HexPure(PHOTO_IMPORT_CONSENT_TEXT);

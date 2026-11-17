@@ -30,6 +30,7 @@ export function EqualActions({
   onRight,
   leftA11y,
   rightA11y,
+  equal,
 }: {
   left: string;
   right: string;
@@ -37,6 +38,8 @@ export function EqualActions({
   onRight: () => void;
   leftA11y?: string;
   rightA11y?: string;
+  /** Export sheet: both actions are identical outlines. */
+  equal?: boolean;
 }) {
   const { colors, fonts, radius } = useTheme();
   const btn = (label: string, onPress: () => void, a11y: string, primary: boolean) => (
@@ -51,12 +54,12 @@ export function EqualActions({
         justifyContent: 'center',
         borderRadius: radius.input ?? 12,
         borderWidth: 1,
-        borderColor: primary ? colors.accent : colors.borderStrong,
-        backgroundColor: primary ? colors.accent : 'transparent',
+        borderColor: !equal && primary ? colors.accent : colors.borderStrong,
+        backgroundColor: !equal && primary ? colors.accent : 'transparent',
         paddingHorizontal: space.sm,
       }}
     >
-      <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: primary ? colors.accentInk : colors.text }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: !equal && primary ? colors.accentInk : colors.text }}>{label}</Text>
     </Pressable>
   );
   return (

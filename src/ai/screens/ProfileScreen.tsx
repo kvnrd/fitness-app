@@ -71,7 +71,7 @@ export function ProfileScreen({
   roleLabel = 'Athlete · AI plan',
   showWeight = false,
   weightLabel,
-  weightSub = 'No goal or target. Hidden on Home. You and your parent both turned Health data on.',
+  weightSub,
   notice = 'footer',
   onPlan,
   onWeight,
