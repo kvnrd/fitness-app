@@ -1,6 +1,19 @@
 
 -- Invoker helper: health_read requires service_role, and may raise forbidden when
 -- the coach has no coach_sharing view of the teen. Either way the coach sees no row.
+create or replace function tests.health_records_hidden(p_target uuid)
+returns boolean language plpgsql security invoker as $$
+begin
+  begin
+    return not exists (select 1 from public.health_records where user_id = p_target);
+  exception when insufficient_privilege then
+    return true;
+  when others then
+    if sqlerrm like 'permission denied%' or sqlerrm like 'forbidden%' then return true; end if;
+    raise;
+  end;
+end $$;
+
 create or replace function tests.health_read_empty(p_actor uuid, p_target uuid)
 returns boolean language plpgsql security invoker as $$
 begin
@@ -90,4 +103,121 @@ select tests.login(tests.u(122));
 select tests.raises('phase5b: lose-fat training goal stays adults only',
   $q$select public.save_training_setup('{"goal":"lose"}')$q$,
   'invalid_setup');
+select tests.logout();
+
+
+-- Counsel: if either teen health opt-in is off, store no weight (manual or wearable).
+-- Coaches never read a teen's weight, goal weight, or health info.
+-- 130 already has an auth.users row from phase5.sql (120–130). 131 and 132 do not.
+-- 130 already has an auth.users row from phase5.sql (120–130). 131 and 132 do not.
+insert into auth.users (id, email)
+select tests.u(i), 'p5b-' || i || '@example.invalid' from generate_series(131, 132) i;
+select tests.ok('phase5b: teen 130', (tests.signup(tests.u(130), tests.dob(16)) ->> 'is_minor') = 'true');
+select tests.ok('phase5b: parent 131', (tests.signup(tests.u(131), tests.dob(44)) ->> 'is_minor') = 'false');
+select tests.ok('phase5b: coach 132', (tests.signup(tests.u(132), tests.dob(36)) ->> 'is_minor') = 'false');
+select tests.login(null, 'service_role');
+select public.set_user_role(tests.u(132), 'coach_verified');
+select tests.logout();
+select tests.p4_link(tests.u(130), tests.u(131));
+select tests.p4_dual_health_ai(tests.u(130), tests.u(131));
+select tests.ok('phase5b: 130 has both health opt-ins', app.has_consent(tests.u(130), 'health_data'));
+
+select tests.login(tests.u(130));
+select tests.affected('phase5b: with both opt-ins on, a manual weigh-in is stored',
+  format($q$insert into public.weigh_ins (user_id, recorded_on, weight_ct, unit) values (%L, '2026-11-10', '\x11', 'lb')$q$, tests.u(130)), 1);
+select public.ingest_synced_weight('garmin', '2026-11-11', '\x12', 'lb');
+select tests.ok('phase5b: a Garmin weigh-in is stored when both opt-ins are on',
+  exists (select 1 from public.weigh_ins where user_id = tests.u(130) and recorded_on = '2026-11-11' and source = 'garmin'));
+select public.ingest_synced_weight('apple_health', '2026-11-12', '\x13', 'lb');
+select tests.ok('phase5b: an Apple Health weigh-in is stored when both opt-ins are on',
+  exists (select 1 from public.weigh_ins where user_id = tests.u(130) and recorded_on = '2026-11-12' and source = 'apple_health'));
+select tests.logout();
+
+-- Teen's own Health opt-in off.
+select tests.login(tests.u(130));
+select public.revoke_consent('health_data');
+select tests.logout();
+select tests.ok('phase5b: effective health consent is off when the teen revokes', not app.has_consent(tests.u(130), 'health_data'));
+select tests.login(tests.u(130));
+select tests.raises('phase5b: manual weigh-in is refused when the teen opt-in is off',
+  format($q$insert into public.weigh_ins (user_id, recorded_on, weight_ct, unit) values (%L, '2026-11-13', '\x14', 'lb')$q$, tests.u(130)),
+  'consent_required');
+select tests.raises('phase5b: Garmin weight is refused when the teen opt-in is off',
+  $q$select public.ingest_synced_weight('garmin', '2026-11-13', '\x14', 'lb')$q$,
+  'consent_required');
+select tests.raises('phase5b: Apple Health weight is refused when the teen opt-in is off',
+  $q$select public.ingest_synced_weight('apple_health', '2026-11-13', '\x15', 'lb')$q$,
+  'consent_required');
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.raises('phase5b: health_write body_weight is refused when the teen opt-in is off',
+  format($q$select public.health_write(%L, null, null, null, null, array['body_weight'], '\x16')$q$, tests.u(130)),
+  'consent_required');
+select tests.raises('phase5b: health_write weight_goal is refused when the teen opt-in is off',
+  format($q$select public.health_write(%L, null, null, null, '\x17', array['weight_goal'])$q$, tests.u(130)),
+  'consent_required');
+select tests.logout();
+select tests.ok('phase5b: no weigh-in was stored while the teen opt-in was off',
+  not exists (select 1 from public.weigh_ins where user_id = tests.u(130) and recorded_on >= '2026-11-13'));
+
+-- Restore teen, revoke parent.
+select tests.login(tests.u(130));
+select public.record_consent('health_data', 'health-v1');
+select tests.logout();
+select tests.login(tests.u(131));
+select public.revoke_consent('health_data', tests.u(130));
+select tests.logout();
+select tests.ok('phase5b: effective health consent is off when the parent revokes', not app.has_consent(tests.u(130), 'health_data'));
+select tests.login(tests.u(130));
+select tests.raises('phase5b: manual weigh-in is refused when the parent opt-in is off',
+  format($q$insert into public.weigh_ins (user_id, recorded_on, weight_ct, unit) values (%L, '2026-11-14', '\x18', 'lb')$q$, tests.u(130)),
+  'consent_required');
+select tests.raises('phase5b: Garmin weight is refused when the parent opt-in is off',
+  $q$select public.ingest_synced_weight('garmin', '2026-11-14', '\x18', 'lb')$q$,
+  'consent_required');
+select tests.logout();
+
+-- Restore both, give 132 a cleared 1:1 and coach_sharing, then assert the coach sees nothing.
+select tests.login(tests.u(131));
+select public.record_consent('health_data', 'health-v1', tests.u(130));
+select tests.login(tests.u(130));
+select public.record_consent('health_data', 'health-v1');
+select tests.logout();
+select tests.ok('phase5b: both opt-ins are on again', app.has_consent(tests.u(130), 'health_data'));
+select tests.svc_write(tests.u(130), 'notes-130', 'screen-130');
+select tests.login(null, 'service_role');
+select public.health_write(tests.u(130), null, null, null, tests.ct('goal-130'), array['weight_goal']);
+select tests.logout();
+select tests.ok('phase5b: a teen may store a weight goal when both opt-ins are on',
+  exists (select 1 from public.health_records where user_id = tests.u(130) and weight_goal_ct = tests.ct('goal-130')));
+select private.upsert_minors_attestation(tests.u(132), null, 'coach-attest-minors-v1', tests.h('8'));
+select tests.login(null, 'service_role');
+select public.set_coach_nsopw(tests.u(132), 'passed', 'nsopw-test-132');
+select public.set_coach_minor_training(tests.u(132), 'training-test-132');
+insert into public.coach_relationships (coach_id, client_id, status, started_at)
+values (tests.u(132), tests.u(130), 'active', now());
+select tests.logout();
+select tests.login(tests.u(131));
+select public.record_consent('coach_sharing', 'coach-v1', tests.u(130));
+select tests.logout();
+select tests.login(tests.u(130));
+select public.record_consent('coach_sharing', 'coach-v1');
+select tests.logout();
+
+select tests.login(tests.u(132));
+select tests.eq('phase5b: coach 132 sees no teen weigh-ins',
+  format($q$select count(*)::text from public.weigh_ins where user_id = %L$q$, tests.u(130)), '0');
+select tests.eq('phase5b: coach 132 cannot read the teen weight series',
+  $q$select count(*)::text from public.progress_weight_series('progress')$q$, '0');
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.ok('phase5b: health_read for coach 132 of teen 130 returns no health or weight fields',
+  tests.health_read_empty(tests.u(132), tests.u(130)));
+select tests.logout();
+select tests.ok('phase5b: shares_body_weight_with is false for teen 130',
+  not app.shares_body_weight_with(tests.u(130), tests.u(132)));
+
+select tests.login(tests.u(132));
+select tests.ok('phase5b: coach 132 cannot read the teen health_records row',
+  tests.health_records_hidden(tests.u(130)));
 select tests.logout();

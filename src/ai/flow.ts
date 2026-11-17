@@ -60,13 +60,22 @@ export function aiNoticeVariant(s: Pick<AiPlanState, 'planAccepted' | 'firstSess
   return s.firstSessionDone ? 'footer' : 'banner';
 }
 
-/** 16–17: no body-weight card or trend on Home. Profile weight only with both health opt-ins and no target. */
+/**
+ * Option 3 / SPEC rev 2: teens see a Home weight card (open or gated).
+ * Adults still get the legacy Home line only when they are not a minor.
+ */
 export function showHomeWeight(isMinor: boolean): boolean {
-  return !isMinor;
+  return true;
 }
 
-export function showTeenProfileWeight(opts: { isMinor: boolean; healthSelf: boolean; healthParent: boolean; hasTarget: boolean }): boolean {
-  return opts.isMinor && opts.healthSelf && opts.healthParent && !opts.hasTarget;
+/** Profile Body section: both health opt-ins for 16–17; a goal no longer hides it. */
+export function showTeenProfileWeight(opts: {
+  isMinor: boolean;
+  healthSelf: boolean;
+  healthParent: boolean;
+  hasTarget?: boolean;
+}): boolean {
+  return opts.isMinor && opts.healthSelf && opts.healthParent;
 }
 
 /** The health-screen re-screen being overdue pauses AI only. Consent re-ask never sets this. */

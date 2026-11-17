@@ -283,3 +283,24 @@ test('ToS §12: health info, photos and messages never reach the AI prompt or re
   assert.equal(blob.includes('session_minutes'), true);
   assert.throws(() => assertAllowedRequest({ ...req, messages: [{ role: 'user', content: [{ type: 'image', source: 'x' }] }] }), /non_text/);
 });
+
+test('goal weight is never sent to Anthropic, for every user', () => {
+  for (const ageBand of ['16_17', '18_plus'] as const) {
+    const req = buildPlanRequest({
+      requestId: 'req-not-a-user-id',
+      goal: 'build_strength',
+      experience: 'beginner',
+      equipment: ['dumbbells'],
+      daysPerWeek: 3,
+      sessionMinutes: 45,
+      ageBand,
+      injuryCategory: 'knee',
+    }, 'claude-test');
+    const blob = JSON.stringify(req);
+    assert.equal(blob.includes('weight_goal'), false);
+    assert.equal(/goal_weight|weightGoal|target_weight|138 lb/i.test(blob), false);
+  }
+  const ok = parsePlanRequest({ goal: 'build_strength', experience: 'beginner', equipment: ['dumbbells'], daysPerWeek: 3, sessionMinutes: 45 });
+  assert.ok(ok);
+  assert.equal(parsePlanRequest({ ...ok, weight_goal: { direction: 'Lose', target: 138, unit: 'lb' } }), null);
+});

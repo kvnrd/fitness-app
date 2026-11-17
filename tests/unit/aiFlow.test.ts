@@ -34,12 +34,12 @@ test('notice shrinks after the first session and never disappears; wording is fi
   assert.equal(AI_PLAN_NOTICE_SHORT, 'Made with AI. It can be wrong. Not medical advice.');
 });
 
-test('teen Home hides weight; Profile weight needs both opt-ins and no target', () => {
-  assert.equal(showHomeWeight(true), false);
+test('teen Home can show a weight card; Profile Body needs both opt-ins and allows a goal', () => {
+  assert.equal(showHomeWeight(true), true);
   assert.equal(showHomeWeight(false), true);
   assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: true, hasTarget: false }), true);
+  assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: true, hasTarget: true }), true);
   assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: false, hasTarget: false }), false);
-  assert.equal(showTeenProfileWeight({ isMinor: true, healthSelf: true, healthParent: true, hasTarget: true }), false);
   assert.equal(showTeenProfileWeight({ isMinor: false, healthSelf: true, healthParent: true, hasTarget: false }), false);
 });
 
