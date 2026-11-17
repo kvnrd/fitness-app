@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { minControlSize } from '../../theme/tokens';
@@ -87,8 +88,13 @@ export function prToastCopy(model: PrToastModel): { title: string; meta: string;
   };
 }
 
+/** SPEC: left/right 12px; top 52px on the phone frame (safe-area inset + 12). */
+const TOAST_SIDE_INSET = 12;
+const TOAST_TOP_GAP = 12;
+
 export function PrToast({ model, onPress }: { model: PrToastModel; onPress?: () => void }) {
   const { colors, fonts, radius } = useTheme();
+  const insets = useSafeAreaInsets();
   const copy = prToastCopy(model);
   return (
     <Pressable
@@ -96,6 +102,8 @@ export function PrToast({ model, onPress }: { model: PrToastModel; onPress?: () 
       accessibilityRole="button"
       accessibilityLabel={copy.accessibilityLabel}
       style={{
+        marginTop: insets.top + TOAST_TOP_GAP,
+        marginHorizontal: TOAST_SIDE_INSET,
         minHeight: minControlSize,
         flexDirection: 'row',
         alignItems: 'center',
