@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { ScreenBackground, screenScrollContentStyle } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { minControlSize, space } from '../../theme/tokens';
@@ -86,7 +86,7 @@ export function PhotoPrivacySettingsScreen({
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 16 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[screenScrollContentStyle(colors.bg), { paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 16 }]}>
         <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" style={{ alignSelf: 'flex-start', minHeight: minControlSize, justifyContent: 'center' }}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>

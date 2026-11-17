@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { screenRootStyle } from '../components/ScreenAtmosphere';
 import { PREVIEW_SCREENS } from '../onboarding/preview/registry';
 import { FullHeightContext } from '../onboarding/ui/previewMode';
 import { isAuroraPreset, isThemeFamily, CARBON_BG, useTheme } from '../theme/ThemeProvider';
@@ -51,8 +52,15 @@ function Preview() {
     // The navigator clamps its screens to the viewport; the screenshot script opens a window taller than any screen and crops to this height.
     const t = setInterval(() => {
       if (document.fonts && document.fonts.status !== 'loaded') return; // web fonts first, or the text reflows afterwards
-      const el = document.getElementById('preview-full'); // set by OnbScreen in full mode: height:auto, so it is the real content height
-      if (el) document.body.setAttribute('data-full-height', String(Math.ceil(el.getBoundingClientRect().bottom + window.scrollY)));
+      const el = document.getElementById('preview-full');
+      if (el) {
+        const h = Math.max(
+          Math.ceil(el.scrollHeight),
+          Math.ceil(el.getBoundingClientRect().bottom + window.scrollY),
+          Math.ceil(document.documentElement.scrollHeight),
+        );
+        document.body.setAttribute('data-full-height', String(h));
+      }
     }, 300);
     return () => clearInterval(t);
   }, [grow]);
@@ -62,6 +70,16 @@ function Preview() {
     const prevHtml = document.documentElement.style.background;
     document.body.style.background = colors.bg;
     document.documentElement.style.background = colors.bg;
+    document.body.style.minHeight = '100%';
+    document.documentElement.style.minHeight = '100%';
+    document.body.style.height = '100%';
+    document.documentElement.style.height = '100%';
+    const root = document.getElementById('root');
+    if (root) {
+      root.style.background = colors.bg;
+      root.style.minHeight = '100%';
+      root.style.height = '100%';
+    }
     return () => {
       document.body.style.background = prevBody;
       document.documentElement.style.background = prevHtml;
@@ -75,5 +93,13 @@ function Preview() {
     return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
   }
   if (!render) return <Redirect href="/" />;
-  return grow ? <FullHeightContext.Provider value><View nativeID="preview-full" style={{ minHeight: 844, backgroundColor: colors.bg }}>{render()}</View></FullHeightContext.Provider> : render();
+  return grow ? (
+    <FullHeightContext.Provider value>
+      <View nativeID="preview-full" style={screenRootStyle(colors.bg)}>
+        {render()}
+      </View>
+    </FullHeightContext.Provider>
+  ) : (
+    render()
+  );
 }

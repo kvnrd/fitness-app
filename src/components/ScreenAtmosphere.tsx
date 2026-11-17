@@ -41,6 +41,27 @@ function svgStop(color: string, opacity = 1): { stopColor: string; stopOpacity: 
 }
 
 
+
+/** Viewport-filling root. On web, 100vh covers tall capture windows so the theme
+ *  canvas never gives way to the default light page background. */
+export function screenRootStyle(backgroundColor: string): ViewStyle {
+  return {
+    flex: 1,
+    flexGrow: 1,
+    minHeight: Platform.OS === 'web' ? ('100vh' as unknown as number) : '100%',
+    backgroundColor,
+  };
+}
+
+/** ScrollView contentContainer: grow to the parent height with the same canvas. */
+export function screenScrollContentStyle(backgroundColor: string): ViewStyle {
+  return {
+    flexGrow: 1,
+    minHeight: '100%',
+    backgroundColor,
+  };
+}
+
 /**
  * Static screen background: accent glow + vignette + grain. Three layers, no animation,
  * pointerEvents none. Mount once behind the navigator. Re-renders only on mode/accent/size change.
@@ -76,8 +97,9 @@ function ScreenAtmosphereImpl() {
         <Rect x={0} y={0} width={layerW} height={g.layerHeight} fill={`url(#${glowId})`} />
       </Svg>}
 
-      {family === 'aurora' && colors.effects.glows
-        ? colors.effects.glows.map((c, i) => {
+      {family === 'aurora' && colors.effects.glows ? (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {colors.effects.glows.map((c, i) => {
             const pos = [
               { top: -80, left: -90, size: 320 },
               { top: 140, left: 230, size: 260 },
@@ -96,8 +118,9 @@ function ScreenAtmosphereImpl() {
                 <Rect x={0} y={0} width={pos.size} height={pos.size} fill={`url(#${id})`} />
               </Svg>
             );
-          })
-        : null}
+          })}
+        </View>
+      ) : null}
 
       {/* Vignette: two elliptical radials, percentages of the screen box */}
       <Svg pointerEvents="none" width={width} height={height} style={StyleSheet.absoluteFill}>
@@ -155,6 +178,7 @@ const styles = StyleSheet.create({
   // stays behind content on web (a zIndex:0 absolute layer can paint over in-flow siblings).
   layer: {
     ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
   },
 });
 
@@ -168,9 +192,9 @@ export const ScreenAtmosphere = memo(ScreenAtmosphereImpl);
 export function ScreenBackground({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={screenRootStyle(colors.bg)}>
       <ScreenAtmosphere />
-      <View style={{ flex: 1, zIndex: 1 }}>{children}</View>
+      <View style={[screenRootStyle('transparent'), { zIndex: 1 }]}>{children}</View>
     </View>
   );
 }

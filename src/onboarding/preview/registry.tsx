@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { AiNotice } from '../../components/AiNotice';
 import { PolicyScreen } from '../../components/PolicyScreen';
 import { HEALTH_POLICY_DOC } from '../../legal/policies/policies.generated';
-import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { ScreenBackground, screenScrollContentStyle } from '../../components/ScreenAtmosphere';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import { presetGym, toggleItem } from '../equipment';
@@ -75,9 +75,10 @@ import { weightSurfaceState } from '../../progress/weightGate.ts';
 const noop = () => {};
 
 function PreviewPad({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
   return (
     <ScreenBackground>
-      <View style={{ padding: 24, gap: 16, minHeight: 844 }}>{children}</View>
+      <View style={[screenScrollContentStyle(colors.bg), { padding: 24, gap: 16 }]}>{children}</View>
     </ScreenBackground>
   );
 }
@@ -298,22 +299,36 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'workout-aurora-empty': () => <AuroraWorkoutPreview empty />,
   'appearance-aurora': () => <AppearanceSettingsScreen onBack={() => {}} />,
   // ───── Phase 5b (SPEC rev 5) ─────
-  'add-photos-chooser': () => <AddPhotosChooser onTakePhoto={noop} onChooseFromLibrary={noop} onCancel={noop} />,
-  'import-consent': () => <ImportConsentSheet onAgree={noop} onCancel={noop} />,
-  'photo-opt-in': () => <PhotoOptInSheet switchOn={false} onSwitchChange={noop} onContinue={noop} onNotNow={noop} />,
+  'add-photos-chooser': () => (
+    <PreviewPad>
+      <AddPhotosChooser onTakePhoto={noop} onChooseFromLibrary={noop} onCancel={noop} />
+    </PreviewPad>
+  ),
+  'import-consent': () => (
+    <PreviewPad>
+      <ImportConsentSheet onAgree={noop} onCancel={noop} />
+    </PreviewPad>
+  ),
+  'photo-opt-in': () => (
+    <PreviewPad>
+      <PhotoOptInSheet switchOn={false} onSwitchChange={noop} onContinue={noop} onNotNow={noop} />
+    </PreviewPad>
+  ),
   'pr-toast': () => (
-    <PrToast
-      model={{
-        kind: 'heaviest_lift',
-        exercise: 'Bench press',
-        load: '185',
-        unit: 'lb',
-        reps: 5,
-        delta: '5',
-        prevLoad: '180',
-        prevReps: 5,
-      }}
-    />
+    <PreviewPad>
+      <PrToast
+        model={{
+          kind: 'heaviest_lift',
+          exercise: 'Bench press',
+          load: '185',
+          unit: 'lb',
+          reps: 5,
+          delta: '5',
+          prevLoad: '180',
+          prevReps: 5,
+        }}
+      />
+    </PreviewPad>
   ),
   'workout-recap': () => (
     <WorkoutRecapScreen
@@ -333,7 +348,11 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
       onDone={noop}
     />
   ),
-  'turned-18': () => <Turned18Card onNotNow={noop} onLearnMore={noop} />,
+  'turned-18': () => (
+    <PreviewPad>
+      <Turned18Card onNotNow={noop} onLearnMore={noop} />
+    </PreviewPad>
+  ),
   'photo-privacy': () => <PhotoPrivacySettingsScreen optedIn={false} onBack={noop} onOpenOptIn={noop} />,
   'settings-privacy-teen-photos': () => (
     <PrivacySettingsScreen
