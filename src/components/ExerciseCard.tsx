@@ -16,15 +16,16 @@ function lastLabel(exercise: Exercise, prev?: SetLog) {
 }
 
 /** One exercise as a ledger entry: name and target, coach's cue, then a row per set. */
-export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: Exercise; index: number }) {
-  const { colors, fonts } = useTheme();
+export function ExerciseCard({ day, exercise, index, onChecked }:{ day: DayKey; exercise: Exercise; index: number; onChecked?: (exercise: Exercise, index: number, done: boolean) => void }) {
+  const { colors, fonts, family, minControlSize } = useTheme();
   const { logs, previous, updateSet, toggleSetDone, locked } = useAppStore();
   const [open, setOpen] = useState(index === 0);
   const rows = rowsFor(logs[day], exercise);
   const done = rows.filter((r) => r.done).length;
   const complete = done === exercise.sets;
-  // Many fields on a phone: drop the Last column (it still shows as the placeholder).
-  const compact = exercise.fields.length >= 3;
+  // Classic v2: many fields on a phone drop the Last column (it still shows as the placeholder).
+  // Aurora always shows a readable Last column, solid type.
+  const compact = family !== 'aurora' && exercise.fields.length >= 3;
   const unit = exercise.kind === 'cardio' ? (exercise.sets === 1 ? 'effort' : 'rounds') : 'sets';
 
   return (
@@ -79,7 +80,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                   {LOG_FIELDS[f].short}
                 </Text>
               ))}
-              <View style={styles.colCheck} />
+              <View style={[styles.colCheck, { minWidth: minControlSize, minHeight: minControlSize }]} />
             </View>
 
             {rows.map((row, i) => {
@@ -107,7 +108,7 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                         selectionColor={colors.accentInk}
                         style={[
                           styles.input,
-                          { fontFamily: fonts.displayBold, color: colors.text, backgroundColor: colors.surface },
+                          { fontFamily: fonts.displayBold, color: colors.text, backgroundColor: family === 'aurora' ? colors.inputFill : colors.surface, borderRadius: family === 'aurora' ? 12 : radius.input },
                           compact && { fontSize: 20 },
                         ]}
                       />
@@ -116,7 +117,9 @@ export function ExerciseCard({ day, exercise, index }: { day: DayKey; exercise: 
                   <Pressable
                     onPress={() => {
                       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      const next = !row.done;
                       toggleSetDone(day, exercise, i);
+                      onChecked?.(exercise, i, next);
                     }}
                     accessibilityRole="checkbox"
                     disabled={locked}

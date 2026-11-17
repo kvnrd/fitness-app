@@ -17,6 +17,8 @@ interface AppStore {
   previous: Record<string, SetLog[]>;
   updateSet: (day: DayKey, exercise: Exercise, index: number, field: LogField, value: string) => void;
   toggleSetDone: (day: DayKey, exercise: Exercise, index: number) => void;
+  /** Preview / tests: replace the in-memory log map. */
+  replaceLogs: (next: AppStore['logs']) => void;
   addExercise: (day: DayKey, exercise: Exercise) => void;
   removeExercise: (day: DayKey, exerciseId: string) => void;
   updateDay: (day: DayKey, patch: Partial<Pick<Program['days'][DayKey], 'title' | 'focus' | 'rest'>>) => void;
@@ -74,6 +76,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       previous: previousMock,
       updateSet: (day, exercise, index, field, v) => !locked && patchRow(day, exercise, index, (row) => ({ ...row, [field]: v })),
       toggleSetDone: (day, exercise, index) => !locked && patchRow(day, exercise, index, (row) => ({ ...row, done: !row.done })),
+      replaceLogs: (next) => setLogs(next),
       addExercise: (day, exercise) =>
         setProgram((p) => ({
           ...p,
