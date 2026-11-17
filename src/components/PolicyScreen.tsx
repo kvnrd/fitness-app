@@ -16,7 +16,7 @@ export function PolicyScreen({
   note,
 }: {
   doc: { version: string; sha256: string; body: string };
-  /** Extra draft / pre-production line shown under the version (Terms v0.2-draft). */
+  /** Extra draft / pre-production line shown under the version (Terms v0.4-draft). */
   note?: string;
 }) {
   const { colors, radius: r } = useTheme();

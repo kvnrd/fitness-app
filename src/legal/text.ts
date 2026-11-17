@@ -11,7 +11,7 @@
  *   "[Same retention and training sentence as the version in use.]" -> Version B's two sentences
  *   "[Version A or B text.]" -> the Version B body
  */
-import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from './policies/policies.generated.ts';
+import { COACH_TERMS_DOC, HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from './policies/policies.generated.ts';
 import { sha256Hex } from './hash.ts';
 
 export const APP_NAME = 'Fitness App';
@@ -50,7 +50,7 @@ export const VERSIONS = {
   aiTeen: 'ai-B-teen-2026-11-16-draft',
   aiParent: 'ai-B-parent-2026-11-16-draft',
   coachPlaceholder: 'coach-placeholder-v1',
-  terms: 'v0.2-draft',
+  terms: 'v0.4-draft',
   healthWithAi: 'health-ai-2026-11-15-draft',
   riskAdult: 'risk-2026-11-15-draft',
   riskParent: 'risk-parent-2026-11-15-draft',
@@ -62,7 +62,7 @@ export const VERSIONS = {
   coachAttestMinors: 'coach-attest-minors-2026-11-16-draft',
 } as const;
 
-// ───────────────────────────── Policies (Counsel privacy/health v0.3 DRAFT, Terms v0.2 DRAFT) ─────────────────────────────
+// ───────────────────────────── Policies (Counsel privacy/health v0.4 DRAFT, Terms v0.4 DRAFT, Coach Terms v0.1 DRAFT) ─────────────────────────────
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/^-|-$/g, '');
 
@@ -83,12 +83,20 @@ export const HEALTH_POLICY = {
   hash: HEALTH_POLICY_DOC.sha256,
 } as const;
 
-/** Bundled Terms of Service. Version is v0.2-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
+/** Bundled Terms of Service. Version is v0.4-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
 export const TERMS = {
   id: TERMS_DOC.id,
-  version: 'v0.2-draft' as const,
+  version: 'v0.4-draft' as const,
   label: TERMS_DOC.version,
   hash: TERMS_DOC.sha256,
+  preProduction: true,
+} as const;
+
+export const COACH_TERMS = {
+  id: COACH_TERMS_DOC.id,
+  version: 'coach-terms-v0.1-draft' as const,
+  label: COACH_TERMS_DOC.version,
+  hash: COACH_TERMS_DOC.sha256,
   preProduction: true,
 } as const;
 
@@ -100,6 +108,13 @@ export function termsAcceptanceCounts(version: string | null | undefined, hash: 
   if (!version || !hash) return false;
   if (version !== TERMS.version || hash !== TERMS.hash) return false;
   if (isProductionBuild && TERMS.preProduction) return false;
+  return true;
+}
+
+export function coachTermsAcceptanceCounts(version: string | null | undefined, hash: string | null | undefined): boolean {
+  if (!version || !hash) return false;
+  if (version !== COACH_TERMS.version || hash !== COACH_TERMS.hash) return false;
+  if (isProductionBuild && COACH_TERMS.preProduction) return false;
   return true;
 }
 

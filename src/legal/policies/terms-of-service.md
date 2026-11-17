@@ -1,12 +1,29 @@
 # [App] Terms of Service
 
-**Version:** [v0.2 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 16, 2026 (draft)
+**Version:** [v0.4 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 17, 2026 (draft)
 
 ---
 
 > ## Drafting notes for Engineer and attorney (delete this block before publishing)
 >
 > **Changelog**
+> - **v0.4 (Nov 17, 2026, Counsel):** teen safeguards Kevin declined, his Phase 6 decisions, and the WeatherKit notice, in one re-hash. Aligned with Privacy Policy and Health policy v0.4.
+>   - **§4:** the teen list now says no "Lose fat" goal instead of "no weight-loss or calorie goals" (Kevin declined the teen weight safeguards; "Lose fat" stays adults-only). A teen can block or report a coach without parent approval, and the parent sees only "Coaching ended."
+>   - **§7:** the teen AI line no longer promises "no weight-loss, calorie, body-size or bulking targets." It now describes the minors’ safety filter that Anthropic’s Usage Policy requires for products serving minors. [ATTORNEY]
+>   - **§9:** "verified" isn’t a background check; NSOPW checks for coaches of 16–17 users; [Company] reviews every application; the 30-day deletion rule (a request ends coaching and starts the clock; turning off sharing counts as a request); day-31 and day-45 enforcement. [ATTORNEY]
+>   - **§10:** NCMEC wording covers enticement and trafficking (18 U.S.C. §2258A); reporting to [App] doesn’t replace a report to DFPS or the police.
+>   - **§13:** repeat-infringer policy (3 upheld notices in 12 months closes the account, §512(i)(1)(A)), the §512(f) warning, and counter-notice elements and timing (§512(g)). [ATTORNEY]
+>   - **§16:** Apple WeatherKit "real-time weather guidance" notice (Apple Developer Program License Agreement, Attachment 8 §2.2). [ATTORNEY]
+>   - **Engineer:** bump `TERMS` to `v0.4-draft` and re-hash.
+> - **v0.3 (Nov 17, 2026, Counsel):** Kevin’s Nov 17 decisions; aligned with Privacy Policy and Health policy v0.4.
+>   - **§18(c):** Kevin chose arbitration (former Option B). Binding individual arbitration with a class-action and jury waiver, small-claims carve-out, 30-day opt-out, consumer fee protections, mass-arbitration batching, public-injunction severance, and a note that 16–17 users may be able to disaffirm. Option A’s court venue stays only as the fallback forum. [ATTORNEY]
+>   - **Top notice:** now names arbitration and the class-action waiver.
+>   - **§4:** a parent can’t download a teen’s data (Kevin: no parent export); one-time note at 18.
+>   - **§9:** coaches must delete client data within [30] days after coaching ends or on request, under the Coach Terms [ATTORNEY].
+>   - **§11:** import or upload progress photos only of yourself.
+>   - **§15:** Garmin’s terms apply to a linked Garmin account.
+>   - **§20:** material changes to §18(c) can be rejected.
+>   - **Engineer:** bump `TERMS` to `v0.3-draft` and re-hash.
 > - **v0.2 (Nov 16, 2026, Counsel):** aligned with Privacy Policy and Health policy v0.3.
 >   - **§7:** AI planning pauses while the 12-month health re-screen is due.
 >   - **§12:** the content license no longer reaches health info, progress photos or messages for AI training or analytics. Before, "improve the Service" conflicted with the policies’ "never used to train AI / in analytics."
@@ -21,7 +38,7 @@
 >
 > **Attorney review (a licensed Texas attorney must review before launch):**
 > 1. **§6 Assumption of risk and release** — express-negligence and fair-notice compliance (*Dresser Indus. v. Page Petroleum*, 853 S.W.2d 505 (Tex. 1993)); conspicuousness (Tex. Bus. & Com. Code §1.201(b)(10)); scope of what can be released; effect for 16–17 (a parent can’t waive a minor’s injury claims, *Munoz v. II Jaz Inc.*, 863 S.W.2d 207 (Tex. App. 1993); limitations runs from 18, Civ. Prac. & Rem. Code §16.001).
-> 2. **§18 Disputes** — whether to use arbitration and a class waiver at all [OPEN: Kevin decides], and if so the provider, rules, fees, opt-out, small-claims carve-out, and mass-arbitration terms.
+> 2. **§18 Disputes** — Kevin chose arbitration (Nov 17, 2026). Confirm the provider ([AAA Consumer Arbitration Rules] or [JAMS Consumer Arbitration Minimum Standards]), the fee terms, the opt-out mechanics, the mass-arbitration batching, the class-waiver severance and public-injunction carve-out, enforceability against 16–17 users (disaffirmance) and parents, the Federal Arbitration Act basis, and Apple minimum terms.
 > 3. **§16–§17 Disclaimers, limitation of liability, indemnity** — enforceability for consumers, Texas DTPA limits on waivers (Tex. Bus. & Com. Code §17.42), and Apple minimum term 5 (the EULA may not limit liability beyond what the law permits).
 > 4. **§4 Minors and parents** — parent as contracting party, voidability of minors’ contracts (*Dairyland Cnty. Mut. v. Roman*, 498 S.W.2d 154 (Tex. 1973)), Texas SB 2420 (Bus. & Com. Code ch. 121) consent and good-faith reliance.
 > 5. **§9–§10 Coaching marketplace** — independent-contractor and seller-of-record framing, Stripe direct charges, refund terms, platform-fee refund [OPEN].
@@ -29,7 +46,7 @@
 > 7. **§13 Copyright / DMCA** — designated-agent registration with the U.S. Copyright Office (17 U.S.C. §512(c)(2)).
 > 8. **§12 User content license** and the Consumer Review Fairness Act (15 U.S.C. §45b): no term may restrict honest reviews.
 >
-> **Placeholders:** [App]; [Company] = [Kevin’s legal name] until the LLC is formed, then [LLC name] (no LLC exists yet); [mailing address]; [phone]; privacy@[domain] and support@[domain]; [website URL]; [Effective date]; [Coach Terms] link; [DMCA agent name, address, email, registration no.]; [Arbitration: YES/NO].
+> **Placeholders:** [App]; [Company] = [Kevin’s legal name] until the LLC is formed, then [LLC name] (no LLC exists yet); [mailing address]; [phone]; privacy@[domain] and support@[domain]; [website URL]; [Effective date]; [Coach Terms] link; [DMCA agent name, address, email, registration no.]; [arbitration provider and rules]; [Texas county] (fallback court venue).
 >
 > **Consistency notes:** All three documents now use privacy@[domain]. Fill in the real domain in all three at the same time. Nothing in these Terms is a consent to health data, AI, or coach sharing; those stay separate switches (RCW 19.373.010; Tex. Bus. & Com. Code §541.001(6)(A)).
 >
@@ -41,7 +58,7 @@
 
 ---
 
-**Please read these Terms carefully. Section 6 includes an assumption of risk and a release of claims, including claims for our own negligence. Section 18 explains how disputes are resolved.**
+**Please read these Terms carefully. Section 6 includes an assumption of risk and a release of claims, including claims for our own negligence. Section 18 requires most disputes to be resolved by binding individual arbitration, not in court or as a class action, unless you opt out within 30 days.**
 
 ## 1. Who we are and what these Terms cover
 
@@ -66,8 +83,10 @@ The Service is offered only in the United States. You must not use it if you are
 - **Pending accounts.** Until a parent links, the teen’s account is limited. If no parent links within 14 days after the account is created, we delete the account and the parent’s email.
 - **No purchases** until the parent link is active. For 1:1 coaching, the parent is the customer.
 - **Both must agree.** Health data, AI planning, coach sharing and similar features turn on only when both the teen and the parent opt in. Either can turn them off.
-- **Extra protections** apply to 16–17, as described in our Privacy Policy, including text-only coach chat that the parent can read, no progress photos, form checks shared only as skeleton and numbers, no weight-loss or calorie goals, and live sessions only with the parent invited and never recorded.
-- **At 18,** the account becomes an adult account, and the teen may need to accept these Terms in their own name.
+- **Extra protections** apply to 16–17, as described in our Privacy Policy, including text-only coach chat that the parent can read, no progress photos, form checks shared only as skeleton and numbers, no "Lose fat" goal, and live sessions only with the parent invited and never recorded.
+- **Blocking or reporting a coach.** A 16–17 user can block or report a coach without a parent’s approval, and it takes effect right away. It ends coaching, and the parent sees only that coaching ended, not the reason, unless our trust and safety team decides the teen’s safety requires telling them.
+- **Your data.** The parent can view the teen’s data in Parent Settings and ask us to delete it, but can’t download a copy. The teen can download their own data.
+- **At 18,** the account becomes an adult account. We show a one-time note explaining what changes, and the new adult may need to accept these Terms in their own name.
 
 ## 5. Not medical advice
 
@@ -102,7 +121,7 @@ The health screen in [App] is a self-reported check. Your answers and any cleara
 - If you turn on AI planning, [App] uses an AI provider (Anthropic) to create and adapt plans, as described in our Privacy Policy. AI planning needs health info turned on, and it pauses while your health screen is due for its 12-month update; your saved plan stays but stops adapting.
 - **AI plans are made by a computer, not a person. They can be wrong, incomplete, or unsuitable for you.** Every AI plan is labeled "Made with AI." Check that a plan fits you, and stop and see a professional if anything hurts.
 - The AI uses an injury category only to avoid or swap exercises. **It doesn’t diagnose, treat, or build rehab plans,** and you shouldn’t rely on it for that.
-- For 16–17, AI plans never include weight-loss, calorie, body-size or bulking targets, or supplement suggestions.
+- For 16–17, AI plans go through an extra safety filter for minors. They never include supplement suggestions or content that promotes restrictive eating, purging or compensatory exercise. [ATTORNEY: kept because Anthropic’s Usage Policy requires extra safeguards for products serving minors; see phase5-review.md › "Teen safeguards declined (Nov 17)".]
 - Safety filters may block or change a plan. We don’t promise any particular result, such as strength, weight, or body-composition changes.
 - You may not use the AI features to generate content unrelated to your training, or to try to get around safety filters.
 
@@ -118,13 +137,14 @@ The health screen in [App] is a self-reported check. Your answers and any cleara
 
 ## 9. Coaching marketplace
 
-- **Coaches are independent.** Coaches on [App] are independent contractors who run their own businesses. They are not our employees, agents, or partners. We don’t control how they coach, set their hours, or direct their methods. We verify certifications only as described in the app ("verified" means what the app says it means), and we don’t guarantee any coach’s skill or results.
+- **Coaches are independent.** Coaches on [App] are independent contractors who run their own businesses. They are not our employees, agents, or partners. We don’t control how they coach, set their hours, or direct their methods. [Company] reviews every coach application. We verify certifications only as described in the app ("verified" means what the app says it means). Verified isn’t a background check. We check coaches approved for 16–17 users against the national sex offender public registry (NSOPW). We don’t run criminal background checks, and we don’t guarantee any coach’s skill or results.
 - **The coach is the seller.** For 1:1 coaching, **the coach is the seller of record**. You buy coaching from the coach, not from us. Payments are processed by Stripe as charges on the coach’s own Stripe account. Stripe’s terms also apply. We charge coaches a platform fee.
 - **Refunds and chargebacks** are the coach’s responsibility. Refunds follow the coach’s offer and the standard client terms shown before you buy [ATTORNEY/OPEN: whether the platform fee is refunded]. For 16–17, the parent is the customer and may cancel any time, with prorated refunds, and receives an immediate refund if a safety report about the coach is upheld.
 - **Coaches don’t give medical advice.** They can’t diagnose or treat injuries or conditions, or present themselves as doctors, physical therapists, or dietitians unless licensed.
 - **What coaches see** depends on your coach-sharing choices (see the Privacy Policy). Coaches never see a 16–17 user’s health info, and they see an adult’s health answers only if the adult chooses to share them.
 - **Stay on [App].** Clients and coaches must keep communication, payment, and live sessions with 16–17 users in [App]. For 16–17, off-platform contact of any kind is prohibited.
 - **Coach Terms.** Coaches must also accept our [Coach Terms] and coach attestation, which control if they conflict with these Terms on coach obligations.
+- **Coaches must delete client data.** Under the [Coach Terms], a coach must delete any client data they hold outside [App], including progress photos, weigh-ins and other health info, within 30 days after coaching ends, and confirm each item in [App]. Asking your coach to delete your data ends coaching right away and starts the 30 days, and turning off coach sharing counts as a request to delete what you had shared. The coach loses access in [App] right away. A coach who hasn’t confirmed by day 31 can’t take new clients until they do, and a coach who still hasn’t confirmed by day 45 is suspended. [ATTORNEY]
 
 ## 10. Safety rules for minors
 
@@ -133,7 +153,8 @@ Everyone must follow these rules. Breaking them can lead to immediate removal an
 - No sexual, romantic, or grooming conduct toward anyone under 18, and no requests for photos, personal contact details, or meetings.
 - Coach chat with 16–17 users is text only, visible to the parent, filtered, and reviewed by people when flagged. Messages aren’t sent between 10 pm and 7 am. Don’t try to get around these protections.
 - Live sessions with 16–17 users happen only in [App], with the parent invited, and are never recorded by anyone.
-- We report child sexual abuse material to NCMEC (18 U.S.C. §2258A) and suspected child abuse or neglect to Texas authorities (Tex. Fam. Code ch. 261). Coaches have their own reporting duty under Texas law.
+- We report apparent child sexual exploitation, including child sexual abuse material, enticement or trafficking of a minor, to NCMEC (18 U.S.C. §2258A), and suspected child abuse or neglect to Texas authorities (Tex. Fam. Code ch. 261). Coaches have their own reporting duty under Texas law.
+- Reporting to [App] doesn’t replace a report to DFPS or the police.
 - Use the report and block tools to tell us about anything unsafe. If someone is in immediate danger, call 911.
 
 ## 11. Acceptable use
@@ -145,6 +166,7 @@ You agree not to:
 - give or ask for medical diagnoses or treatment through the Service;
 - post fake reviews, or pay or pressure anyone for reviews;
 - upload content you don’t have the right to share, or other people’s personal information without permission;
+- take, import or upload progress photos of anyone other than yourself;
 - scrape, copy, reverse engineer, or overload the Service, or get around rate limits, age checks, or security;
 - create accounts with false ages or for someone else (except a parent linking to their teen’s account), or share your account;
 - use the Service for any commercial purpose other than coaching through the coaching features;
@@ -166,7 +188,19 @@ If you believe content on [App] infringes your copyright, send a notice under 17
 
 [DMCA agent name] · [Company] · [mailing address] · [dmca@[domain]] · [phone]
 
-Your notice must include your signature, a description of the work, where the content is in [App], your contact information, a statement of good-faith belief that the use isn’t authorized, and a statement, under penalty of perjury, that your notice is accurate and that you’re the owner or authorized to act for the owner. We may remove the content, notify the user, and accept counter-notices as the law provides. We terminate repeat infringers’ accounts in appropriate cases.
+Your notice must include your signature, a description of the work, where the content is in [App], your contact information, a statement of good-faith belief that the use isn’t authorized, and a statement, under penalty of perjury, that your notice is accurate and that you’re the owner or authorized to act for the owner. If you knowingly and materially misrepresent that content is infringing, or that it was removed by mistake, you may be liable for damages, including costs and attorneys’ fees (17 U.S.C. §512(f)).
+
+We may remove or disable the content and notify the user who posted it.
+
+**Counter-notices.** If you think your content was removed by mistake or misidentification, you can send our designated agent a counter-notice (17 U.S.C. §512(g)(3)) that includes:
+- your physical or electronic signature;
+- what was removed and where it appeared before it was removed;
+- a statement under penalty of perjury that you have a good-faith belief it was removed by mistake or misidentification;
+- your name, address and phone number, and a statement that you consent to the jurisdiction of the federal district court for your address (or, if you’re outside the US, any judicial district where we may be found) and that you’ll accept service of process from the person who sent the notice.
+
+We send a copy to the person who sent the notice. We restore the content 10 to 14 business days after we receive the counter-notice, unless they first tell us they’ve filed a court action to stop the activity (§512(g)(2)).
+
+**Repeat infringers.** We close the accounts of repeat infringers. Three upheld copyright notices against an account within 12 months closes that account (17 U.S.C. §512(i)(1)(A)). [ATTORNEY: review the strike policy and the counter-notice process.]
 
 ## 14. Our app and license
 
@@ -188,11 +222,15 @@ If you got [App] from Apple’s App Store, you and we both acknowledge and agree
 8. Questions, complaints, or claims about [App] go to [Company] at the contact details in §21.
 9. Apple and Apple’s subsidiaries are **third-party beneficiaries** of these Terms, and when you accept these Terms, Apple will have the right (and will be deemed to have accepted the right) to enforce them against you as a third-party beneficiary.
 
-If you got [App] from Google Play, Google Play’s terms also apply to your download and purchases.
+If you got [App] from Google Play, Google Play’s terms also apply to your download and purchases. If you connect a Garmin account, Garmin’s terms and privacy notice apply to your Garmin account.
 
 ## 16. Disclaimers
 
 TO THE FULLEST EXTENT THE LAW ALLOWS, THE SERVICE IS PROVIDED **"AS IS" AND "AS AVAILABLE."** WE DISCLAIM ALL IMPLIED WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DON’T PROMISE THAT THE SERVICE OR ANY PLAN WILL BE ERROR-FREE, UNINTERRUPTED, OR SUITED TO YOUR HEALTH OR GOALS, OR THAT YOU’LL GET ANY PARTICULAR RESULT. WE’RE NOT RESPONSIBLE FOR WHAT COACHES OR OTHER USERS DO OR SAY. Some states don’t allow these disclaimers, so some may not apply to you.
+
+**Weather.** Local weather for outdoor cardio comes from Apple Weather. YOUR USE OF THIS REAL TIME WEATHER GUIDANCE APPLICATION OR WEBSITE IS AT YOUR SOLE RISK. WEATHER DATA MAY NOT BE ACCURATE. Don’t rely on it for safety or emergencies.
+
+> [ATTORNEY: Apple Developer Program License Agreement, Attachment 8 §2.2 requires this notice for "real-time weather guidance" apps; included to be safe.]
 
 ## 17. Limitation of liability and indemnity
 
@@ -210,10 +248,19 @@ TO THE FULLEST EXTENT THE LAW ALLOWS, THE SERVICE IS PROVIDED **"AS IS" AND "AS 
 
 **(b) Governing law.** Texas law governs these Terms, without regard to conflict-of-law rules, except where federal law applies or the law of your state of residence gives you protections that can’t be waived.
 
-**(c) Where claims are heard.** [OPEN: Kevin to decide on arbitration (yes/no); ATTORNEY to draft.]
+**(c) Binding individual arbitration.** [ATTORNEY: review this whole subsection before launch.]
 
-- **Option A, no arbitration:** Claims are brought in the state or federal courts located in [Texas county], Texas, and you and we consent to their jurisdiction, except that you may bring a claim in small-claims court in your county of residence, and the law of your state may let you sue where you live.
-- **Option B, arbitration:** [Placeholder only. If chosen: individual binding arbitration with [provider] under its consumer rules; small-claims carve-out; we pay filing fees above a set amount; a 30-day opt-out after you first accept; class-action and jury waiver; mass-arbitration procedures; severability if the class waiver fails; no limit on public injunctive relief where the law requires; notice of changes with the right to reject.]
+1. **Agreement to arbitrate.** You and we agree that any dispute, claim or controversy arising out of or relating to these Terms or the Service ("Dispute") will be resolved by **binding individual arbitration**, not in court, except as listed in (2). The Federal Arbitration Act governs this subsection. An arbitrator, not a court, decides questions about the scope and enforceability of this subsection, except that a court decides (5) (class waiver) and (8) (mass filings).
+2. **Exceptions.** Either of us may (a) bring an individual claim in small-claims court in your county of residence or in [Texas county], Texas, if it qualifies; (b) ask a court for an injunction to stop infringement or misuse of intellectual property; and (c) report anything to a government agency. Nothing here limits the safety reporting in §10.
+3. **Rules and provider.** Arbitration is run by [AAA under its Consumer Arbitration Rules / JAMS under its Consumer Arbitration Minimum Standards] in effect when the claim is filed. Hearings take place by video or phone, or in person in your county of residence if you prefer. The arbitrator can award the same individual relief a court could, and must follow these Terms and the law.
+4. **Costs.** For a claim you bring, you pay no more of the filing fee than you would pay to file in court, and we pay the rest of the filing, administration and arbitrator fees. Each side pays its own lawyers unless the law or the rules allow the arbitrator to shift fees. We won’t seek our fees from you unless the arbitrator finds your claim frivolous.
+5. **No class actions and no jury.** **You and we each give up the right to a jury trial and to bring or join a class, collective or representative action.** Claims are decided only on an individual basis. If this class-action waiver is found unenforceable for a claim, that claim (and only that claim) goes to court under (9), and the rest of this subsection still applies.
+6. **Public injunctive relief.** If the law doesn’t allow a claim for public injunctive relief to be arbitrated, that claim goes to court under (9), after the individual arbitration ends.
+7. **30-day opt-out.** You may opt out of this subsection within **30 days** after you first accept these Terms by emailing support@[domain] with "Arbitration opt-out" in the subject and your name and account email. Opting out doesn’t affect anything else in these Terms. For a 16–17 account, the parent may opt out for the account.
+8. **Mass filings.** If 25 or more similar claims are filed by or with the help of the same lawyers or group, they may be administered in batches under the provider’s mass-arbitration procedures, and the time to resolve them is extended while that happens. [ATTORNEY: batch size and procedure.]
+9. **Court forum.** Any Dispute that goes to court under this section is heard in the state or federal courts located in [Texas county], Texas, and you and we consent to their jurisdiction, except that the law of your state may let you sue where you live.
+10. **Users under 18.** If you’re 16 or 17, the law may let you cancel (disaffirm) this agreement to arbitrate, and this subsection doesn’t claim to take away that right. A parent who accepts these Terms agrees to arbitrate the parent’s own claims. [ATTORNEY: confirm effect of disaffirmance and of the parent’s acceptance.]
+11. **Changes.** If we make a material change to this subsection, you may reject it by emailing us within 30 days of the change; your Disputes then stay under the last version you accepted.
 
 **(d) Time limit.** [ATTORNEY: whether to include a contractual limitations period. Don’t shorten minors’ limitations periods (Civ. Prac. & Rem. Code §16.001).]
 
@@ -226,7 +273,7 @@ TO THE FULLEST EXTENT THE LAW ALLOWS, THE SERVICE IS PROVIDED **"AS IS" AND "AS 
 
 ## 20. Changes to these Terms
 
-We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. While a re-acceptance is pending, you can still use your privacy settings, download your data, and delete your account. Changes don’t apply to disputes that started before the change. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
+We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. While a re-acceptance is pending, you can still use your privacy settings, download your data, and delete your account. Changes don’t apply to disputes that started before the change, and you can reject a material change to §18(c) as it explains. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
 
 ## 21. General
 

@@ -18,7 +18,7 @@ import { LinkButton } from '../../onboarding/ui/OnbText';
 import { useTheme } from '../../theme/ThemeProvider';
 
 const DRAFT_NOTE =
-  'This is a pre-production draft (v0.2-draft). Placeholders such as [Company] are still open. You will be asked to accept again before launch.';
+  'This is a pre-production draft (v0.4-draft). Placeholders such as [Company] are still open. You will be asked to accept again before launch.';
 
 export function ReacceptTermsScreen({
   checked,

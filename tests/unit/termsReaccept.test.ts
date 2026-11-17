@@ -7,7 +7,7 @@ test('signup checkbox wording is exact and uses a curly apostrophe', () => {
   assert.equal(TERMS_CHECKBOX_TEXT, 'I agree to the Terms of Service, and I’ve read the Privacy Policy.');
   assert.equal(TERMS_CHECKBOX_TEXT.includes("'"), false);
   assert.equal(TERMS_CHECKBOX_TEXT.includes('\u2019'), true);
-  assert.equal(TERMS.version, 'v0.2-draft');
+  assert.equal(TERMS.version, 'v0.4-draft');
 });
 
 test('ToS §20: a pending terms re-acceptance never blocks privacy settings, export, or deletion', () => {

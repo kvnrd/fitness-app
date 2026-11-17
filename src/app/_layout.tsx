@@ -206,6 +206,7 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="legal/privacy" />
         <Stack.Screen name="legal/health-privacy" />
         <Stack.Screen name="legal/terms" />
+        <Stack.Screen name="legal/coach-terms" />
         {/* Dev-only screen preview: always registered outside guards, but the route redirects home unless __DEV__ && EXPO_PUBLIC_SCREEN_PREVIEW === '1'. */}
         <Stack.Screen name="dev-preview" />
       </Stack>
