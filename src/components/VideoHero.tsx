@@ -12,12 +12,50 @@ function Player({ uri }: { uri: string }) {
   return <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" nativeControls />;
 }
 
-/** The coach's walkthrough. Poster until a real upload exists. */
+/** The coach's walkthrough. Poster until a real upload exists. Aurora: compact 48 pt row. */
 export function VideoHero({ day, trainerName }: { day: WorkoutDay; trainerName: string }) {
-  const { colors } = useTheme();
+  const { colors, family, fonts } = useTheme();
   const [tapped, setTapped] = useState(false);
   const video = day.video;
   if (!video) return null;
+  const aurora = family === 'aurora';
+
+  if (aurora) {
+    return (
+      <Pressable
+        onPress={() => setTapped(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`Play ${video.title}, ${video.durationLabel}`}
+        style={[
+          styles.compact,
+          {
+            backgroundColor: colors.glass,
+            borderColor: colors.glassBorder,
+            minHeight: 48,
+            borderRadius: 24,
+          },
+        ]}
+      >
+        <View style={[styles.compactPlay, { backgroundColor: colors.accent, width: 36, height: 36, borderRadius: 18 }]}>
+          <Ionicons name="play" size={20} color={colors.accentText} style={{ marginLeft: 2 }} />
+        </View>
+        {tapped && video.uri ? (
+          <View style={{ flex: 1, height: 48 }}>
+            <Player uri={video.uri} />
+          </View>
+        ) : (
+          <>
+            <Text variant="small" style={{ fontFamily: fonts.bodySemi }}>
+              Video
+            </Text>
+            <Text variant="label" color={colors.textSecondary}>
+              {video.durationLabel}
+            </Text>
+          </>
+        )}
+      </Pressable>
+    );
+  }
 
   return (
     <View style={{ gap: space.sm }}>
@@ -71,4 +109,15 @@ const styles = StyleSheet.create({
   },
   duration: { position: 'absolute', right: space.sm, bottom: space.xs, fontVariant: ['tabular-nums'] },
   notice: { position: 'absolute', left: space.sm, top: space.xs },
+  compact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 16,
+    paddingLeft: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 48,
+  },
+  compactPlay: { alignItems: 'center', justifyContent: 'center' },
 });
+

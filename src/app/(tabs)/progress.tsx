@@ -1,19 +1,22 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTabBar';
+import { HeroNumeral } from '../../components/HeroNumeral';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, SectionHeader, Text } from '../../components/ui';
+import { SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS } from '../../data/types';
+import { shortDay } from '../../theme/dayLabels.ts';
 import { rowsFor, useAppStore } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAiPlan } from '../../ai/useAiPlan';
 import { AiNotice } from '../../components/AiNotice';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
-import { ThemeMode, radius, space } from '../../theme/tokens';
+import { radius, space } from '../../theme/tokens';
 
 /** Lightweight weekly summary; real history comes with the backend. */
 export default function ProgressScreen() {
-  const { colors, fonts } = useTheme();
+  const { colors, fonts, family, radius: r } = useTheme();
   const insets = useSafeAreaInsets();
+  const aurora = family === 'aurora';
   const { program, logs } = useAppStore();
   const { notice } = useAiPlan();
 
@@ -39,17 +42,38 @@ export default function ProgressScreen() {
     <ScreenBackground>
     <ScrollView
       style={{ flex: 1, backgroundColor: 'transparent' }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg, paddingBottom: space['4xl'] + (aurora ? AURORA_TAB_BAR_RESERVE + insets.bottom : 0) }]}
     >
-      <Text variant="hero" accessibilityRole="header">
+      {aurora ? <Text variant="small" color={colors.textSecondary}>{program.weekLabel}</Text> : null}
+      <Text variant={aurora ? 'title' : 'hero'} accessibilityRole="header">
         This week
       </Text>
 
+      {aurora ? (
+        <View style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: StyleSheet.hairlineWidth, borderRadius: r.hero, padding: 20, gap: 8 }}>
+          <Text variant="label" color={colors.textSecondary}>Volume lifted</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+            <HeroNumeral variant="stamp">{volume.toLocaleString()}</HeroNumeral>
+            <Text variant="body" color={colors.textSecondary}>lb</Text>
+          </View>
+          <View style={[styles.stats, { borderTopColor: colors.glassBorder, marginTop: 8 }]}>
+            <View style={styles.stat}>
+              <HeroNumeral variant="hero">{String(sets)}</HeroNumeral>
+              <Text variant="label" color={colors.textSecondary}>sets logged</Text>
+            </View>
+            <View style={styles.stat}>
+              <HeroNumeral variant="hero">{String(Math.round(cardioKcal))}</HeroNumeral>
+              <Text variant="label" color={colors.textSecondary}>cardio kcal</Text>
+            </View>
+          </View>
+        </View>
+      ) : (
       <View style={[styles.stats, { borderTopColor: colors.border }]}>
         <Stat value={String(sets)} label="sets logged" />
         <Stat value={volume.toLocaleString()} label="lb lifted" />
         <Stat value={String(Math.round(cardioKcal))} label="cardio kcal" />
       </View>
+      )}
 
       <View>
         <SectionHeader title="Sets by day" />
@@ -60,14 +84,13 @@ export default function ProgressScreen() {
                 <View style={[styles.bar, { height: `${(daySets / max) * 100}%`, backgroundColor: colors.accent }]} />
               </View>
               <Text style={{ fontFamily: fonts.displayBold, fontSize: 16 }} color={colors.textMuted}>
-                {DAY_LABELS[d].short[0]}
+                {shortDay(d, family)}
               </Text>
             </View>
           ))}
         </View>
       </View>
 
-      <Appearance />
 
       <Text variant="small" color={colors.textMuted}>
         Check off sets on the Train tab and they add up here. Full history and personal records come once accounts are connected.
@@ -75,52 +98,6 @@ export default function ProgressScreen() {
           {notice === 'footer' ? <AiNotice variant="footer" /> : null}
     </ScrollView>
     </ScreenBackground>
-  );
-}
-
-const MODE_OPTIONS: { mode: ThemeMode; label: string }[] = [
-  { mode: 'system', label: 'System' },
-  { mode: 'dark', label: 'Dark' },
-  { mode: 'light', label: 'Light' },
-];
-
-/** Compact theme controls: mode and one of the preset accents. */
-function Appearance() {
-  const { colors, mode, setMode, accent, setAccent, accents, resolvedScheme } = useTheme();
-  const current = accents.find((a) => a.key === accent);
-  return (
-    <View style={{ gap: space.md }}>
-      <SectionHeader title="Appearance" />
-      <View style={styles.optionRow}>
-        {MODE_OPTIONS.map((o) => (
-          <Chip key={o.mode} label={o.label} active={mode === o.mode} onPress={() => setMode(o.mode)} />
-        ))}
-      </View>
-      <View style={styles.optionRow}>
-        {accents.map((a) => {
-          const roles = a.modes[resolvedScheme];
-          const selected = a.key === accent;
-          return (
-            <Pressable
-              key={a.key}
-              onPress={() => setAccent(a.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`${a.name} accent`}
-              accessibilityState={{ selected }}
-              hitSlop={4}
-              style={[styles.swatchRing, { borderColor: selected ? colors.text : 'transparent' }]}
-            >
-              <View style={[styles.swatch, { backgroundColor: roles.accent, borderColor: colors.borderStrong }]}>
-                {selected ? <Ionicons name="checkmark" size={18} color={roles.accentText} /> : null}
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Text variant="small" color={colors.textSecondary}>
-        {current?.name}
-      </Text>
-    </View>
   );
 }
 

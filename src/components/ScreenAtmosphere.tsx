@@ -46,7 +46,7 @@ function svgStop(color: string, opacity = 1): { stopColor: string; stopOpacity: 
  * pointerEvents none. Mount once behind the navigator. Re-renders only on mode/accent/size change.
  */
 function ScreenAtmosphereImpl() {
-  const { colors, resolvedScheme: scheme } = useTheme();
+  const { colors, family, resolvedScheme: scheme } = useTheme();
   const { width, height } = useWindowDimensions();
   const uid = useId().replace(/:/g, '');
   const glowId = `v2-bg-glow-${uid}`;
@@ -57,8 +57,8 @@ function ScreenAtmosphereImpl() {
 
   return (
     <View pointerEvents="none" style={styles.layer}>
-      {/* Glow: ellipse 50%×50% at 30% 45% of the layer, alpha → 0 at 70% */}
-      <Svg
+      {/* Glow: ellipse 50%×50% at 30% 45% of the layer, alpha → 0 at 70%. Aurora uses the three blob glows instead. */}
+      {family === 'aurora' ? null : <Svg
         pointerEvents="none"
         width={layerW}
         height={g.layerHeight}
@@ -74,7 +74,30 @@ function ScreenAtmosphereImpl() {
           </RadialGradient>
         </Defs>
         <Rect x={0} y={0} width={layerW} height={g.layerHeight} fill={`url(#${glowId})`} />
-      </Svg>
+      </Svg>}
+
+      {family === 'aurora' && colors.effects.glows
+        ? colors.effects.glows.map((c, i) => {
+            const pos = [
+              { top: -80, left: -90, size: 320 },
+              { top: 140, left: 230, size: 260 },
+              { top: 560, left: 60, size: 300 },
+            ][i] ?? { top: 200, left: 40, size: 280 };
+            const id = `${glowId}-blob-${i}`;
+            const stop = svgStop(c, colors.effects.glowAlpha);
+            return (
+              <Svg key={id} pointerEvents="none" width={pos.size} height={pos.size} style={{ position: 'absolute', top: pos.top, left: pos.left }}>
+                <Defs>
+                  <RadialGradient id={id} cx="50%" cy="50%" r="50%">
+                    <Stop offset={0} stopColor={stop.stopColor} stopOpacity={stop.stopOpacity} />
+                    <Stop offset={1} stopColor={stop.stopColor} stopOpacity={0} />
+                  </RadialGradient>
+                </Defs>
+                <Rect x={0} y={0} width={pos.size} height={pos.size} fill={`url(#${id})`} />
+              </Svg>
+            );
+          })
+        : null}
 
       {/* Vignette: two elliptical radials, percentages of the screen box */}
       <Svg pointerEvents="none" width={width} height={height} style={StyleSheet.absoluteFill}>
@@ -102,8 +125,9 @@ function ScreenAtmosphereImpl() {
 }
 
 function Grain({ scheme }: { scheme: ColorScheme }) {
-  const opacity = background.grain.opacity[scheme];
-  const mixBlendMode = background.grain.blend[scheme];
+  const { colors } = useTheme();
+  const opacity = colors.effects.grainOpacity ?? background.grain.opacity[scheme];
+  const mixBlendMode = (colors.effects.grainBlend ?? background.grain.blend[scheme]) as 'screen' | 'multiply';
 
   if (Platform.OS === 'web') {
     const style = {

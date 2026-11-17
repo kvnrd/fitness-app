@@ -4,9 +4,12 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { healthScreenAiPaused } from '../../ai/flow';
 import { useAiPlan } from '../../ai/useAiPlan';
+import { AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTabBar';
+import { HeroNumeral } from '../../components/HeroNumeral';
 import { todayKey } from '../../components/WeekStrip';
 import { Button, ProgressBar, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey } from '../../data/types';
+import { shortDay } from '../../theme/dayLabels.ts';
 import { WORKOUTS_LOCKED_NOTICE } from '../../onboarding/copy';
 import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -21,18 +24,24 @@ function plural(n: number, word: string) {
 }
 
 function Today({ day }: { day: DayKey }) {
-  const { colors } = useTheme();
+  const { colors, family, radius } = useTheme();
   const { program, locked } = useAppStore();
   const w = program.days[day];
   const { ratio, done, total } = useDayProgress(day);
   const action = w.rest ? 'View recovery plan' : ratio >= 1 ? 'Review workout' : ratio > 0 ? 'Continue workout' : 'Start workout';
 
-  return (
+  const inner = (
     <View style={{ gap: space.lg }}>
       <View style={{ gap: space.xs }}>
-        <Text variant="stamp" accessibilityRole="header">
-          {DAY_LABELS[day].long}
-        </Text>
+        {family === 'aurora' ? (
+          <HeroNumeral variant="stamp" accessibilityRole="header">
+            {DAY_LABELS[day].long}
+          </HeroNumeral>
+        ) : (
+          <Text variant="stamp" accessibilityRole="header">
+            {DAY_LABELS[day].long}
+          </Text>
+        )}
         <Text variant="title">{w.title}</Text>
         <Text variant="body" color={colors.textSecondary}>
           {w.rest
@@ -44,10 +53,24 @@ function Today({ day }: { day: DayKey }) {
       {total > 0 ? <ProgressBar ratio={ratio} /> : null}
     </View>
   );
+  if (family !== 'aurora') return inner;
+  return (
+    <View style={{ backgroundColor: colors.glass, borderColor: colors.glassBorder, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.hero, padding: 20, gap: space.sm }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text variant="label" style={{ fontWeight: '600' }}>Today</Text>
+        {total > 0 ? (
+          <Text variant="label" color={colors.textSecondary}>
+            {done} of {total} sets logged
+          </Text>
+        ) : null}
+      </View>
+      {inner}
+    </View>
+  );
 }
 
 function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
-  const { colors, fonts } = useTheme();
+  const { colors, fonts, family } = useTheme();
   const { program } = useAppStore();
   const w = program.days[day];
   const { ratio } = useDayProgress(day);
@@ -60,7 +83,7 @@ function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
       style={({ pressed }) => [styles.dayRow, { borderTopColor: colors.border }, pressed && { backgroundColor: colors.surfaceSunken }]}
     >
       <Text style={[styles.dayName, { fontFamily: fonts.displayBold }]} color={isToday ? colors.text : colors.textMuted}>
-        {DAY_LABELS[day].short}
+        {shortDay(day, family)}
       </Text>
       <Text variant="bodyStrong" color={w.rest ? colors.textSecondary : colors.text} style={{ flex: 1 }} numberOfLines={1}>
         {w.title}
@@ -83,7 +106,7 @@ function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
 }
 
 export default function TrainScreen() {
-  const { colors, fonts } = useTheme();
+  const { colors, fonts, family, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const { program, locked } = useAppStore();
   const { start, notice, state } = useAiPlan();
@@ -100,7 +123,7 @@ export default function TrainScreen() {
     <ScreenBackground>
     <ScrollView
       style={{ flex: 1, backgroundColor: 'transparent' }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + space.md, paddingBottom: space['4xl'] + (family === 'aurora' ? AURORA_TAB_BAR_RESERVE + insets.bottom : 0) }]}
     >
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
@@ -139,7 +162,7 @@ export default function TrainScreen() {
       ) : null}
       {hasAi && notice === 'banner' ? <AiNotice /> : null}
 
-      {!hasAi ? (
+      {!hasAi && process.env.EXPO_PUBLIC_SCREEN_PREVIEW !== '1' ? (
         <Button label="Build an AI plan" onPress={start} />
       ) : null}
 
