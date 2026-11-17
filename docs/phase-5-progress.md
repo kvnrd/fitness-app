@@ -18,9 +18,9 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 - `exclude_from_prs` drops a set from e1RM / PR detection only. Volume still counts it when it is inside the input limits.
 
 ### Units
-- Canonical storage: set-log weights are pounds, distances are metres, time is seconds, power is watts.
-- Profile prefs stay lb/kg and mi/km. Conversion helpers are in `src/progress/units.ts`. Defaults are lb and mi, in `public.progress_settings`.
-- Rowing splits ignore the distance pref and stay per 500 m.
+- **Approved:** canonical storage is pounds and miles (`set_logs.weight`, `set_logs.distance`). Time is seconds, power is watts.
+- Display follows the user setting (lb/kg and mi/km). Conversion helpers are in `src/progress/units.ts`. Defaults are lb and mi, in `public.progress_settings`.
+- Rowing splits ignore the distance pref and stay per 500 m (miles are converted to metres only for that math).
 
 ### Adult weight goal and the Free Home weight card
 - The adult weight *goal* may still stay on the device until Health data is on (approved goal line).
@@ -30,7 +30,7 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 
 ### e1RM formula
 - Configurable between Epley (`w × (1 + reps/30)`) and Brzycki (`w × 36 / (37 − reps)`).
-- **Default: Epley with a 10-rep cap.** This is Kevin's open decision and can be changed in `progress_settings` (and the TS defaults) without a schema rewrite. The cap must stay between 1 and 36 so Brzycki remains defined.
+- **Approved default: Epley with a 10-rep cap.** Brzycki remains available as a setting in `progress_settings` (and the TS defaults). The cap must stay between 1 and 36 so Brzycki remains defined.
 
 ### Progress photos
 - Hidden for everyone under 18 (`canUseProgressPhotos`). The server still rejects 16–17 uploads even as the service role (`photo_upload_not_allowed`). Video upload is also blocked for everyone in this phase (`upload_progress_video`).
@@ -83,7 +83,7 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 - Never included: IP/device hashes (available on a separate request only); the pepper or any keys; other people's data; safety, moderation or NCMEC records; security logs; AI prompts.
 - Delivery is a short-lived in-app signed link (15 minutes), only after the photo/app lock check passes (`lock_required` otherwise). Fetching an expired link raises `link_expired`.
 - The request is logged as a rights request (`audit_log.data_export_requested` with `rights_request: true`).
-- Parent export of teen data stays behind `PARENT_CAN_EXPORT_TEEN_DATA` / `app.parent_can_export_teen_data()`. The existing `request_data_export()` queue stub is unchanged.
+- **Approved:** a parent cannot export a teen's data. `PARENT_CAN_EXPORT_TEEN_DATA` and `app.parent_can_export_teen_data()` are false. `parent_export_teen_data` and `prepare_data_export(..., p_for_user)` refuse with `parent_export_not_allowed`. The teen's own Download my data path is unchanged.
 - Sheet rows are shown or hidden by whether that data exists, not by age (`dataExportLabelsFor`). The exception is Photos, which never appears for 16–17s. An adult with 0 photos also hides that row. The footer stays the single security-logs line; there is no separate crash-reports line.
 
 ### Weigh-in visibility (Rev 3 addendum)
@@ -109,17 +109,19 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 - When the photos row is shown: "One ZIP file with your data and photos. Data is in common file formats (JSON and CSV)."
 - When the photos row is hidden (16–17s, or an adult with 0 photos): "One ZIP file with your data. Data is in common file formats (JSON and CSV)."
 
-## Kevin flags (not yet decided)
+## Kevin decisions
 
-These are config flags in `src/progress/phase5Flags.ts` so the rest of the logic can land without a UI. Defaults follow Counsel's recommendation / the drawn option, and can be flipped without a schema rewrite.
+Recorded in `src/progress/phase5Flags.ts` and `docs/phase-5-progress.md`. Flipping a flag later still avoids a schema rewrite, but parent export also needs a Counsel policy sync (the published drafts still describe parent download).
 
-| Flag | Default | Meaning |
+| Flag / item | Decision | Notes |
 |---|---|---|
 | `PHOTO_LOCK_MODE` | `'default_on_setting'` | Lock is a default-on setting. Flip to `'always_on'` to remove the off switch. |
-| `CAMERA_ROLL_SAVE_OPTION` | `true` | Keep the "save copies to camera roll" option, default off. Flip to `false` to drop the row and always report "Not in your camera roll". If dropped, the opt-in and policy hashes must be bumped and the "camera roll aren't affected" line must come out. |
-| `TEEN_WEIGHT_PROFILE_ONLY` | `true` | Teen weight, if it exists, is Profile-only (Counsel's recommendation). |
-| `TEEN_WEIGHT_EXISTS` | `true` | Whether teen weight exists at all (Rev 3). Flip to `false` to hide even the Profile current value. |
-| `PARENT_CAN_EXPORT_TEEN_DATA` | `true` | Whether a parent can export a teen's data, with the teen notified (Rev 3). Counsel recommended yes. Teens have no photos, so this covers other teen data. Mirrored by `app.parent_can_export_teen_data()`. |
+| `CAMERA_ROLL_SAVE_OPTION` | `true`, user default off | Keep the "save copies to camera roll" option. `DEFAULT_CAMERA_ROLL_COPIES` is `false`. Flip the flag to `false` to drop the row and always report "Not in your camera roll". If dropped, the opt-in and policy hashes must be bumped and the "camera roll aren't affected" line must come out. |
+| `TEEN_WEIGHT_PROFILE_ONLY` | `true` | Teen weight, if it exists, is Profile-only. |
+| `TEEN_WEIGHT_EXISTS` | `true` | Teen weight exists as a Profile current value. Flip to `false` to hide even that. |
+| `PARENT_CAN_EXPORT_TEEN_DATA` | `false` | A parent cannot export a teen's data. Server RPCs refuse. Counsel recommended yes; the published policy drafts still say the parent can download a copy — do not edit those texts here; Counsel needs to sync. |
+| e1RM | Epley, 10-rep cap | Brzycki remains a setting. The cap must stay between 1 and 36 so Brzycki remains defined. |
+| Units | Stored in lb and miles | Display follows the user setting (lb/kg, mi/km). |
 
 ## Counsel answers applied
 
@@ -141,14 +143,14 @@ Counsel's published Privacy Policy v0.3 DRAFT, Consumer Health Data Privacy Poli
 ## Open questions
 
 ### For Kevin
-1. **e1RM formula (still open).** This pass defaults to Epley with a 10-rep cap and offers Brzycki as a setting. Confirm or change that default before the Progress UI ships.
-2. Photos notes, still open: show a one-time "Photos are now available" note at 18, or stay silent until the user finds the feature?
-3. Confirm canonical storage (pounds and metres in `set_logs`) now that almost no production logs exist.
-4. Accept only JPEG for now (so metadata can be stripped), or do we need HEIC / PNG in v1?
-5. **Photo lock:** always on, or a default-on setting? (Flag: `PHOTO_LOCK_MODE`.)
-6. **Camera-roll save option:** keep it (default off) or drop it? (Flag: `CAMERA_ROLL_SAVE_OPTION`.)
-7. **Teen weight:** Profile-only current value, or none? (Flags: `TEEN_WEIGHT_EXISTS`, `TEEN_WEIGHT_PROFILE_ONLY`.)
-8. **Parent export of teen data,** with the teen notified? Counsel recommended yes. (Flag: `PARENT_CAN_EXPORT_TEEN_DATA`.)
+1. ~~**e1RM formula.**~~ Approved: Epley with a 10-rep cap; Brzycki remains a setting.
+2. Photos notes, still open: show a one-time "Photos are now available" note at 18, or stay silent until the user finds the feature? (Later, separate branch.)
+3. ~~Canonical storage.~~ Approved: pounds and miles in `set_logs`, displayed per user setting.
+4. Accept only JPEG for now (so metadata can be stripped), or do we need HEIC / PNG in v1? (Later, separate branch.)
+5. ~~**Photo lock.**~~ Approved: `PHOTO_LOCK_MODE = 'default_on_setting'`.
+6. ~~**Camera-roll save option.**~~ Approved: keep the option, default off.
+7. ~~**Teen weight.**~~ Approved: Profile-only current value (`TEEN_WEIGHT_EXISTS` and `TEEN_WEIGHT_PROFILE_ONLY` stay true).
+8. ~~**Parent export of teen data.**~~ Approved: no. Server path refuses. Counsel still needs to sync the published policy drafts, which currently promise parent download.
 9. The coach-deletion clause in the Coach Terms (still open from Rev 2).
 10. Lose fat on the adult AI quiz (carried forward).
 
