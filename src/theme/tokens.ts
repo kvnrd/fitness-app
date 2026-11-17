@@ -11,11 +11,26 @@ import type { TextStyle } from 'react-native';
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type ColorScheme = 'dark' | 'light';
 
+/** Visual system. Default remains Classic v2 (Carbon / Concrete / Champagne). */
+export type ThemeFamily = 'v2' | 'aurora';
+export const THEME_FAMILIES = ['v2', 'aurora'] as const;
+
+/** Aurora palettes. Midnight and Grove are a dark/light pair. */
+export const AURORA_PRESETS = ['midnight', 'grove', 'berry', 'chrome', 'custom'] as const;
+export type AuroraPreset = (typeof AURORA_PRESETS)[number];
+
 export const ACCENT_KEYS = ['champagne', 'volt', 'orange', 'blue', 'red', 'cyan', 'mono'] as const;
 export type AccentKey = (typeof ACCENT_KEYS)[number];
 
 export const DEFAULT_MODE: ThemeMode = 'system';
 export const DEFAULT_ACCENT: AccentKey = 'champagne';
+export const DEFAULT_FAMILY: ThemeFamily = 'v2';
+export const DEFAULT_AURORA_PRESET: AuroraPreset = 'midnight';
+/** Hue shown on the Appearance wheel for Midnight (appearance-aurora-midnight). */
+export const DEFAULT_CUSTOM_HUE = 273;
+
+/** Minimum control hit target (width and height), in pt. */
+export const minControlSize = 44;
 
 // ───────────────────────── Neutrals ─────────────────────────
 
@@ -37,6 +52,12 @@ export type Neutrals = {
 export type Effects = {
   grainOpacity: number;
   glowAlpha: number;
+  /** Aurora: blend mode for the grain overlay. v2 uses background.grain.blend by scheme. */
+  grainBlend?: 'screen' | 'multiply';
+  /** Aurora frosted-glass card fill (rgba). */
+  glass?: string;
+  /** Aurora glow blob colours. */
+  glows?: Metal;
 };
 
 export const neutrals: Record<ColorScheme, Neutrals> = {
@@ -403,6 +424,44 @@ export const radius = {
 } as const;
 
 export type RadiusKey = keyof typeof radius;
+
+/**
+ * Aurora radii. v2 `radius` is unchanged (card 16, sheet 24, input 8).
+ * Theme.radius uses this set only when the family is Aurora.
+ */
+export const auroraRadius = {
+  chip: 4,
+  tile: 8,
+  input: 12,
+  card: 24,
+  hero: 32,
+  tab: 32,
+  sheet: 46,
+  pill: 999,
+} as const;
+
+export type ResolvedRadius = {
+  chip: number;
+  tile: number;
+  input: number;
+  card: number;
+  /** Train today / hero glass card. v2 falls back to `card`. */
+  hero: number;
+  tab: number;
+  sheet: number;
+  pill: number;
+};
+
+export const v2Radius: ResolvedRadius = {
+  chip: radius.chip,
+  tile: radius.tile,
+  input: radius.input,
+  card: radius.card,
+  hero: radius.card,
+  tab: radius.card,
+  sheet: radius.sheet,
+  pill: radius.pill,
+};
 
 // ───────────────────────── Typography ─────────────────────────
 
