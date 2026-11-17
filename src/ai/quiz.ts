@@ -32,7 +32,7 @@ export const QUIZ_GOAL_CAP = 'Up to 2';
 export const QUIZ_INJURY_CAP = 'One only';
 export const QUIZ_GENERATE = 'Generate plan';
 export const QUIZ_PRIVACY =
-  'Anthropic, our AI provider, receives only your goals, experience, equipment, training days and session length, age range, and an injury category, never your name, email, photos, location, or injury notes. The category is used only to avoid or swap exercises, not to build a rehab or treatment plan.';
+  'Anthropic, our AI provider, receives only your goals, experience, equipment, age range, training schedule (days and session length), and an injury category, never your name, email, photos, location, or injury notes. The category is used only to avoid or swap exercises, not to build a rehab or treatment plan.';
 
 export const EXPERIENCE_OPTIONS: readonly { id: AiExperience; label: string }[] = [
   { id: 'beginner', label: 'New' },

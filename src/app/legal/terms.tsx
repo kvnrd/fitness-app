@@ -2,7 +2,7 @@ import { PolicyScreen } from '../../components/PolicyScreen';
 import { TERMS_DOC } from '../../legal/policies/policies.generated';
 import { isProductionBuild } from '../../legal/text';
 
-/** [ATTORNEY] Counsel Terms of Service, bundled as v0.1-draft. Public text; mounted outside every auth guard. */
+/** [ATTORNEY] Counsel Terms of Service, bundled as v0.2-draft. Public text; mounted outside every auth guard. */
 export default function TermsRoute() {
   const note = isProductionBuild
     ? undefined

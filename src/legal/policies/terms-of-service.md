@@ -1,12 +1,23 @@
 # [App] Terms of Service
 
-**Version:** [v0.1 DRAFT] · **Effective date:** [Effective date] · **Last updated:** [Date]
+**Version:** [v0.2 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 16, 2026 (draft)
 
 ---
 
 > ## Drafting notes for Engineer and attorney (delete this block before publishing)
 >
-> Drafted by Counsel on Nov 16, 2026. This is general legal information, not formal legal representation. Sources: `legal/phase2-legal-answers.md`, `legal/phase3-review.md`, `legal/phase4-review.md`, `legal/privacy-policy.md` (v0.2 DRAFT), `legal/consumer-health-data-privacy-policy.md` (v0.2 DRAFT), `monetization-notes.md`, repo `docs/phase-3-onboarding.md` (branch `phase-3-onboarding`). Law checked Nov 16, 2026: Apple "Instructions for Minimum Terms of Developer’s End-User License Agreement" (apple.com/legal/internet-services/itunes/dev/minterms/); Tex. Bus. & Com. Code ch. 541 (statutes.capitol.texas.gov); 16 CFR 312.10 (eCFR).
+> **Changelog**
+> - **v0.2 (Nov 16, 2026, Counsel):** aligned with Privacy Policy and Health policy v0.3.
+>   - **§7:** AI planning pauses while the 12-month health re-screen is due.
+>   - **§12:** the content license no longer reaches health info, progress photos or messages for AI training or analytics. Before, "improve the Service" conflicted with the policies’ "never used to train AI / in analytics."
+>   - **§20:** a pending re-accept never blocks privacy rights (TDPSA §541.054).
+>   - **Build hooks:** the acceptance log uses the IP hash and device hash; the checkbox wording is now "I agree to the Terms of Service, and I’ve read the Privacy Policy."
+>   - **Notes:** the contact-email note is updated.
+>   - **Apostrophes:** curly (’) throughout.
+>   - **Engineer:** bump `TERMS` from `v0.1-draft` and re-hash.
+> - **v0.1 (Nov 16, 2026, Counsel):** first draft.
+>
+> Drafted by Counsel on Nov 16, 2026. This is general legal information, not formal legal representation. Sources: `legal/phase2-legal-answers.md`, `legal/phase3-review.md`, `legal/phase4-review.md`, `legal/privacy-policy.md` (v0.3 DRAFT), `legal/consumer-health-data-privacy-policy.md` (v0.3 DRAFT), `legal/phase4-build-answers.md`, `legal/phase5-review.md`, `monetization-notes.md`, repo `docs/phase-3-onboarding.md` (branch `phase-3-onboarding`). Law checked Nov 16, 2026: Apple "Instructions for Minimum Terms of Developer’s End-User License Agreement" (apple.com/legal/internet-services/itunes/dev/minterms/); Tex. Bus. & Com. Code ch. 541 (statutes.capitol.texas.gov); 16 CFR 312.10 (eCFR).
 >
 > **Attorney review (a licensed Texas attorney must review before launch):**
 > 1. **§6 Assumption of risk and release** — express-negligence and fair-notice compliance (*Dresser Indus. v. Page Petroleum*, 853 S.W.2d 505 (Tex. 1993)); conspicuousness (Tex. Bus. & Com. Code §1.201(b)(10)); scope of what can be released; effect for 16–17 (a parent can’t waive a minor’s injury claims, *Munoz v. II Jaz Inc.*, 863 S.W.2d 207 (Tex. App. 1993); limitations runs from 18, Civ. Prac. & Rem. Code §16.001).
@@ -20,12 +31,12 @@
 >
 > **Placeholders:** [App]; [Company] = [Kevin’s legal name] until the LLC is formed, then [LLC name] (no LLC exists yet); [mailing address]; [phone]; privacy@[domain] and support@[domain]; [website URL]; [Effective date]; [Coach Terms] link; [DMCA agent name, address, email, registration no.]; [Arbitration: YES/NO].
 >
-> **Consistency notes:** The privacy policies still list a provisional Gmail contact. Switch all three documents to the same domain alias at the same time. Nothing in these Terms is a consent to health data, AI, or coach sharing; those stay separate switches (RCW 19.373.010; Tex. Bus. & Com. Code §541.001(6)(A)).
+> **Consistency notes:** All three documents now use privacy@[domain]. Fill in the real domain in all three at the same time. Nothing in these Terms is a consent to health data, AI, or coach sharing; those stay separate switches (RCW 19.373.010; Tex. Bus. & Com. Code §541.001(6)(A)).
 >
 > **Build hooks for Engineer:**
 > - **Version and hash:** bundle this file like the policies (`npm run policies` style): strip this drafting block, compute SHA-256 of the published text, and expose `{version, hash}`. Replace `terms-placeholder-v0` in `complete_signup` and `accept_parent_link`; the server should reject a missing hash once Terms exist. Route: `/legal/terms`; add it to Train › Account › Privacy/Legal rows, the paywall, the coach application, and Parent Settings.
-> - **Acceptance logging:** one append-only `consent_events` row of type `terms` per acceptance: user ID, actor (adult, parent, coach), the teen’s account ID for parent acceptances, version, hash, timestamp, IP, device, app version. Separate rows for the release in §6 are not needed (it’s part of the Terms), but the §6 heading must render as shown.
-> - **Where it appears in onboarding:** (1) adults: the Terms checkbox on Create (2 of 8), and on Apple/Google sign-up a Terms checkbox before account creation; (2) 16–17: the teen’s Create checkbox may stay, logged with actor `teen`, but the binding acceptance is the **parent’s** as contracting party on the Parent consent screen ("Confirm and link"), logged with the teen’s account ID; the teen’s account stays pending until then; (3) coaches: the coach application accepts these Terms plus the [Coach Terms]; (4) material changes: show a re-accept screen (§20) and log a new row. The Terms checkbox is never combined with the health, AI, coach-sharing or risk items.
+> - **Acceptance logging:** one append-only `consent_events` row of type `terms` per acceptance: user ID, actor (adult, parent, coach), the teen’s account ID for parent acceptances, version, hash, timestamp, IP hash and device hash (keyed with a pepper kept outside the database), app version. Archive the exact text in `legal_text_versions`. Separate rows for the release in §6 are not needed (it’s part of the Terms), but the §6 heading must render as shown.
+> - **Where it appears in onboarding:** (1) adults: the Terms checkbox on Create (2 of 8), and on Apple/Google sign-up a Terms checkbox before account creation; (2) 16–17: the teen’s Create checkbox may stay, logged with actor `teen`, but the binding acceptance is the **parent’s** as contracting party on the Parent consent screen ("Confirm and link"), logged with the teen’s account ID; the teen’s account stays pending until then; (3) coaches: the coach application accepts these Terms plus the [Coach Terms]; (4) material changes: show a re-accept screen (§20) and log a new row. The Terms checkbox is never combined with the health, AI, coach-sharing, photo or risk items. Its wording, everywhere: "I agree to the Terms of Service, and I’ve read the Privacy Policy." The re-accept screen never blocks Settings › Privacy, data export or account deletion.
 > - **Pre-launch:** any test acceptances recorded under `terms-placeholder-v0` don’t count. Require re-acceptance of v1.0 before production.
 
 ---
@@ -88,7 +99,7 @@ The health screen in [App] is a self-reported check. Your answers and any cleara
 
 ## 7. AI-generated plans
 
-- If you turn on AI planning, [App] uses an AI provider (Anthropic) to create and adapt plans, as described in our Privacy Policy. AI planning needs health info turned on.
+- If you turn on AI planning, [App] uses an AI provider (Anthropic) to create and adapt plans, as described in our Privacy Policy. AI planning needs health info turned on, and it pauses while your health screen is due for its 12-month update; your saved plan stays but stops adapting.
 - **AI plans are made by a computer, not a person. They can be wrong, incomplete, or unsuitable for you.** Every AI plan is labeled "Made with AI." Check that a plan fits you, and stop and see a professional if anything hurts.
 - The AI uses an injury category only to avoid or swap exercises. **It doesn’t diagnose, treat, or build rehab plans,** and you shouldn’t rely on it for that.
 - For 16–17, AI plans never include weight-loss, calorie, body-size or bulking targets, or supplement suggestions.
@@ -142,7 +153,7 @@ You agree not to:
 ## 12. Your content
 
 - You keep ownership of what you create in [App] (workouts, notes, messages, reviews, videos, and other content).
-- You give us a non-exclusive, royalty-free, worldwide license to host, store, process, display, and transmit your content **only to run and improve the Service for you and to keep it safe**, and as our Privacy Policy describes. For public content you choose to post (such as reviews or a coach profile), the license also covers showing it to other users. The license ends when you delete the content or your account, except for copies we must keep for legal or safety reasons, as the Privacy Policy explains.
+- You give us a non-exclusive, royalty-free, worldwide license to host, store, process, display, and transmit your content **only to run and improve the Service for you and to keep it safe**, and as our Privacy Policy describes. We never use your health info, progress photos or messages to train AI or for analytics. For public content you choose to post (such as reviews or a coach profile), the license also covers showing it to other users. The license ends when you delete the content or your account, except for copies we must keep for legal or safety reasons, as the Privacy Policy explains.
 - We don’t use your content for advertising, and we don’t sell it.
 - You’re responsible for your content and confirm you have the rights to share it.
 - Coaches give us the same license for their profiles and coaching content, plus the right to show their public profile in [App].
@@ -215,7 +226,7 @@ TO THE FULLEST EXTENT THE LAW ALLOWS, THE SERVICE IS PROVIDED **"AS IS" AND "AS 
 
 ## 20. Changes to these Terms
 
-We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. Changes don’t apply to disputes that started before the change. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
+We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. While a re-acceptance is pending, you can still use your privacy settings, download your data, and delete your account. Changes don’t apply to disputes that started before the change. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
 
 ## 21. General
 

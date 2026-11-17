@@ -30,7 +30,7 @@ export const HEALTH_TEXT = fill(
 const AI_TITLE = 'Use AI to build my plan.';
 /** AI vendor, Version B (no ZDR yet). Switch to Version A only after Anthropic confirms ZDR in writing. */
 export const AI_TEXT_VERSION_B =
-  "Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.";
+  "Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.";
 const AI_B_BODY = AI_TEXT_VERSION_B.slice(AI_TITLE.length + 1);
 const AI_B_RETENTION_AND_TRAINING =
   "Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer.";
@@ -40,17 +40,17 @@ export const AI_TEXT_TEEN = `${AI_TITLE} ${AI_B_BODY} Your parent must also agre
 
 /** Parent's AI box for their teen. */
 export const AI_TEXT_PARENT = fill(
-  `Let [App] send Anthropic, our AI provider, your teen’s goals, experience, equipment, age range, and injury category (no name, email, photos, or location) to create and adapt your teen’s plan. ${AI_B_RETENTION_AND_TRAINING} Your teen must also agree. You or your teen can turn it off anytime; your teen’s saved plan stays but stops adapting.`,
+  `Let [App] send Anthropic, our AI provider, your teen’s goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) to create and adapt your teen’s plan. ${AI_B_RETENTION_AND_TRAINING} Your teen must also agree. You or your teen can turn it off anytime; your teen’s saved plan stays but stops adapting.`,
 );
 
 /** Policy versions recorded with each grant. Draft ids until Counsel/attorney sign off. */
 export const VERSIONS = {
   health: 'health-2026-11-15-draft',
-  aiB: 'ai-B-2026-11-15-draft',
-  aiTeen: 'ai-B-teen-2026-11-15-draft',
-  aiParent: 'ai-B-parent-2026-11-15-draft',
+  aiB: 'ai-B-2026-11-16-draft',
+  aiTeen: 'ai-B-teen-2026-11-16-draft',
+  aiParent: 'ai-B-parent-2026-11-16-draft',
   coachPlaceholder: 'coach-placeholder-v1',
-  terms: 'v0.1-draft',
+  terms: 'v0.2-draft',
   healthWithAi: 'health-ai-2026-11-15-draft',
   riskAdult: 'risk-2026-11-15-draft',
   riskParent: 'risk-parent-2026-11-15-draft',
@@ -62,7 +62,7 @@ export const VERSIONS = {
   coachAttestMinors: 'coach-attest-minors-2026-11-16-draft',
 } as const;
 
-// ───────────────────────────── Policies (Counsel v0.2 DRAFT) ─────────────────────────────
+// ───────────────────────────── Policies (Counsel privacy/health v0.3 DRAFT, Terms v0.2 DRAFT) ─────────────────────────────
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/^-|-$/g, '');
 
@@ -83,10 +83,10 @@ export const HEALTH_POLICY = {
   hash: HEALTH_POLICY_DOC.sha256,
 } as const;
 
-/** Bundled Terms of Service. Version is v0.1-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
+/** Bundled Terms of Service. Version is v0.2-draft: acceptances are pre-production and must be repeated before launch. [ATTORNEY] */
 export const TERMS = {
   id: TERMS_DOC.id,
-  version: 'v0.1-draft' as const,
+  version: 'v0.2-draft' as const,
   label: TERMS_DOC.version,
   hash: TERMS_DOC.sha256,
   preProduction: true,
@@ -217,7 +217,7 @@ export function parentHealthText(n: ParentNames = {}): string {
 export function parentAiText(n: ParentNames = {}): string {
   const teen = teenOf(n);
   return fill(
-    `Let [App] send Anthropic, our AI provider, ${poss(teen)} goals, experience, equipment, age range, and injury category (no name, email, photos, or location) to create and adapt ${poss(teen)} plan. ${AI_B_RETENTION_AND_TRAINING} ${cap(teen)} must also agree. You or ${teen} can turn it off anytime; ${poss(teen)} saved plan stays but stops adapting.`,
+    `Let [App] send Anthropic, our AI provider, ${poss(teen)} goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) to create and adapt ${poss(teen)} plan. ${AI_B_RETENTION_AND_TRAINING} ${cap(teen)} must also agree. You or ${teen} can turn it off anytime; ${poss(teen)} saved plan stays but stops adapting.`,
   );
 }
 

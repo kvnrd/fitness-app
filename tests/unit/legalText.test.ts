@@ -26,9 +26,9 @@ test('policy refs carry version + 64-hex hash', () => {
   for (const p of [PRIVACY_POLICY, HEALTH_POLICY]) {
     assert.match(p.hash, /^[0-9a-f]{64}$/);
     assert.ok(p.version.length >= 1 && p.version.length <= 64);
-    assert.match(p.version, /v0\.2-draft$/);
+    assert.match(p.version, /v0\.3-draft$/);
   }
-  assert.equal(TERMS.version, 'v0.1-draft');
+  assert.equal(TERMS.version, 'v0.2-draft');
   assert.equal(TERMS.preProduction, true);
   assert.match(TERMS.hash, /^[0-9a-f]{64}$/);
   assert.notEqual(PRIVACY_POLICY.hash, HEALTH_POLICY.hash);

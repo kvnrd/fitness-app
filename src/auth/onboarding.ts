@@ -25,7 +25,7 @@ export type { DateParts };
 export { toIsoDate } from '../onboarding/dob.ts';
 
 /**
- * [ATTORNEY] Terms are bundled as v0.1-draft. Acceptances are pre-production and must be repeated
+ * [ATTORNEY] Terms are bundled as v0.2-draft. Acceptances are pre-production and must be repeated
  * before launch (a production build will not count a draft acceptance).
  */
 export async function completeSignup(birthDateIso: string, displayName: string, store: StoreAgeSignal | null): Promise<SignupResult> {

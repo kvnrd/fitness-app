@@ -7,11 +7,11 @@
 
 select private.put_legal_text_version(
   $legal$terms$legal$,
-  $legal$v0.1-draft$legal$,
-  $legal$8bafd6815f47c47c43ae56130192c9384e75902cbb08b4df9a6341bd4335008c$legal$,
+  $legal$v0.2-draft$legal$,
+  $legal$fc702c61b1d73e1f5ebd33bb6eb49e1258eb418a203c962566f334b6031a7139$legal$,
   $legal$# [App] Terms of Service
 
-**Version:** [v0.1 DRAFT] · **Effective date:** [Effective date] · **Last updated:** [Date]
+**Version:** [v0.2 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 16, 2026 (draft)
 
 ---
 
@@ -73,7 +73,7 @@ The health screen in [App] is a self-reported check. Your answers and any cleara
 
 ## 7. AI-generated plans
 
-- If you turn on AI planning, [App] uses an AI provider (Anthropic) to create and adapt plans, as described in our Privacy Policy. AI planning needs health info turned on.
+- If you turn on AI planning, [App] uses an AI provider (Anthropic) to create and adapt plans, as described in our Privacy Policy. AI planning needs health info turned on, and it pauses while your health screen is due for its 12-month update; your saved plan stays but stops adapting.
 - **AI plans are made by a computer, not a person. They can be wrong, incomplete, or unsuitable for you.** Every AI plan is labeled "Made with AI." Check that a plan fits you, and stop and see a professional if anything hurts.
 - The AI uses an injury category only to avoid or swap exercises. **It doesn’t diagnose, treat, or build rehab plans,** and you shouldn’t rely on it for that.
 - For 16–17, AI plans never include weight-loss, calorie, body-size or bulking targets, or supplement suggestions.
@@ -127,7 +127,7 @@ You agree not to:
 ## 12. Your content
 
 - You keep ownership of what you create in [App] (workouts, notes, messages, reviews, videos, and other content).
-- You give us a non-exclusive, royalty-free, worldwide license to host, store, process, display, and transmit your content **only to run and improve the Service for you and to keep it safe**, and as our Privacy Policy describes. For public content you choose to post (such as reviews or a coach profile), the license also covers showing it to other users. The license ends when you delete the content or your account, except for copies we must keep for legal or safety reasons, as the Privacy Policy explains.
+- You give us a non-exclusive, royalty-free, worldwide license to host, store, process, display, and transmit your content **only to run and improve the Service for you and to keep it safe**, and as our Privacy Policy describes. We never use your health info, progress photos or messages to train AI or for analytics. For public content you choose to post (such as reviews or a coach profile), the license also covers showing it to other users. The license ends when you delete the content or your account, except for copies we must keep for legal or safety reasons, as the Privacy Policy explains.
 - We don’t use your content for advertising, and we don’t sell it.
 - You’re responsible for your content and confirm you have the rights to share it.
 - Coaches give us the same license for their profiles and coaching content, plus the right to show their public profile in [App].
@@ -200,7 +200,7 @@ TO THE FULLEST EXTENT THE LAW ALLOWS, THE SERVICE IS PROVIDED **"AS IS" AND "AS 
 
 ## 20. Changes to these Terms
 
-We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. Changes don’t apply to disputes that started before the change. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
+We may update these Terms. We’ll post the new version with a new effective date. For **material changes**, we’ll give you notice in the app or by email at least [30] days before they take effect, and ask you to accept them again; for 16–17 accounts, we’ll ask the parent. If you don’t agree, you can stop using the Service and delete your account before the change takes effect. While a re-acceptance is pending, you can still use your privacy settings, download your data, and delete your account. Changes don’t apply to disputes that started before the change. Changes to a privacy consent (health, AI, coach sharing) always need a new opt-in, never just acceptance of new Terms.
 
 ## 21. General
 
@@ -221,11 +221,11 @@ $legal$
 
 select private.put_legal_text_version(
   $legal$privacy_policy$legal$,
-  $legal$privacy-policy-v0.2-draft$legal$,
-  $legal$ea5d1f0dd6c23ab651da1391068658d33aba56e2cc3660fafeb83cd233a7a54c$legal$,
+  $legal$privacy-policy-v0.3-draft$legal$,
+  $legal$a8190bf430dfcdd202aa64948b2b1a209074bbd5dc99d30d63317ff6bcafd595$legal$,
   $legal$# [App] Privacy Policy
 
-**Version:** [v0.2 DRAFT] · **Effective date:** [Effective date] · **Last updated:** [Date]
+**Version:** [v0.3 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 16, 2026 (draft)
 
 ---
 
@@ -235,13 +235,14 @@ select private.put_legal_text_version(
 
 Health information gets extra protection. Our **[Consumer Health Data Privacy Policy](/consumer-health-data-privacy-policy)** covers it in detail and is part of this policy.
 
-Questions: krodriguez0720@gmail.com · [mailing address].
+Questions: privacy@[domain] · [mailing address].
 
 ## 2. The short version
 
 - We **don’t sell** your personal information, we **don’t use it for targeted ads**, we **don’t share it for advertising**, and the app has **no advertising SDKs**.
 - Health info (like body weight or injury notes) is collected only if you turn it on. It’s off by default, encrypted, and never used for ads.
-- AI planning is a separate switch, also off by default. If you turn it on, our AI provider, Anthropic, gets only your goals, experience, equipment, age range and an injury category. It never gets your name, email, photos, location or notes.
+- AI planning is a separate switch, also off by default, and it works only while health info is on. If you turn it on, our AI provider, Anthropic, gets only your goals, experience, equipment, training schedule (days and session length), age range and an injury category. It never gets your name, email, photos, location or notes.
+- Progress photos (18+) are a separate opt-in, off by default. They’re encrypted, never used for ads, analytics or AI, and shared with a coach only if you pick them and turn on photo sharing.
 - Wearable and health-app data (like Apple Health or Health Connect) is a separate switch, off by default, connected one source at a time. It’s never sold, never used for ads, and never sent to our AI provider.
 - Location is off by default. We ask for approximate location only when you open a feature that needs it, and never in the background. Precise GPS for run tracking (when available) is a separate choice, used only while you record a run.
 - A coach sees your data only if you turn on coach sharing.
@@ -263,10 +264,10 @@ Questions: krodriguez0720@gmail.com · [mailing address].
 | Date of birth (used once, then discarded) | The date you enter on the first screen | To check you’re old enough. We **don’t save** your date of birth. We keep only a general age range (an "age band") and, for 16–17, the date you turn 18. |
 | Account details | Email address, password (stored hashed by our auth provider), name if you add one | To create and secure your account and contact you about it. |
 | Parent invite (16–17 only) | Your parent’s email address | Only to send the invite. Deleted if the parent doesn’t link within 14 days. |
-| Training setup | Training style, days per week, gyms and equipment, units, app color, optional lift maxes, Hyrox race date | To build your plan and show the app the way you like. |
+| Training setup | Training style, days per week, session length, gyms and equipment, units, app color, optional lift maxes, Hyrox race date | To build your plan and show the app the way you like. |
 | Workout logs | Exercises, sets, reps, loads, cardio, personal records, swaps and their reasons | To give you the logging, history and charts you asked for. |
 | Health info (**only if you turn it on**) | Body weight, measurements, injury and pain notes, health-screen answers, form-check numbers, training data used for your health profile | To build and adjust your workouts, show progress, and keep plans safe. See the [Consumer Health Data Privacy Policy](/consumer-health-data-privacy-policy). |
-| Progress photos (**18+ only, optional**) | Front, side and back photos you take in the app | To show your progress privately. Location data is stripped. [OPEN: consent mechanism, see drafting note 5.] |
+| Progress photos (**18+ only, optional**) | Front, side and back photos you take in the app | To show your progress privately, and to a 1:1 coach only for photos you pick. **Separate opt-in:** the first time you open Progress photos, you choose whether to turn on "Allow progress photos." It’s off by default and separate from Health data, AI planning and coach sharing. Sharing photos with your coach is another separate opt-in that you can turn off anytime. Location and device details are removed before upload. Photos are never used for ads, analytics or AI. Turning photos off deletes them (see §15). More in §5.2. |
 | Form-check videos (**optional**) | Short videos of a lift | Analyzed on your phone. Adults’ saved videos stay on the phone unless shared with a 1:1 coach. 16–17: the video is deleted right after analysis and never uploaded. |
 | Messages | Chat with your 1:1 coach (text only for 16–17) | To provide coaching. |
 | Consent and safety choices | Your switch settings, your risk acknowledgement, parent attestation | To prove what you agreed to and when. |
@@ -275,10 +276,10 @@ Questions: krodriguez0720@gmail.com · [mailing address].
 ### 4.2 Information collected automatically
 
 - **Device and app info:** device type, operating system, app version, language, crash and error logs, and IP address. We use this to run, secure and fix the app.
-- **Security and consent records:** IP address, device and timestamp when you sign in, give or withdraw consent, or make a privacy request.
+- **Security and consent records:** when you give or withdraw consent, accept our Terms, or make a privacy request, we record the time, the version of the text you saw, your app version, and a one-way coded (hashed) version of your IP address and device ID, not the addresses themselves. Our hosting and sign-in providers also see your IP address when you use [App] and keep it in security logs for a limited time [OPEN: the Supabase log retention for our plan].
 - **A no-personal-data device flag:** if someone is turned away for age, we set a flag on that device so the form can’t be retried. It contains no personal information.
 
-- **[PROVISIONAL] Crash reports and basic product analytics:** which screens and features are used, app performance and crashes. These are handled by us or by a service provider working only for us [OPEN: vendor names]. Analytics events never include health info, wearable data, precise location or routes, and we don’t track you across other companies’ apps or websites. You can turn product analytics off in Settings › Privacy › Share usage analytics. 16–17: product analytics stay off; only crash reports are collected.
+- **[PROVISIONAL] Crash reports and basic product analytics:** which screens and features are used, app performance and crashes. These are handled by us or by a service provider working only for us [OPEN: vendor names]. Analytics events never include health info, wearable data, precise location or routes, and we don’t track you across other companies’ apps or websites. You can turn product analytics off in Settings › Privacy › Share usage analytics. 16–17: product analytics stay off; only crash reports are collected. **Crash reports and analytics events aren’t tied to your account:** they carry no user ID, name or email, at most a random install ID that resets when you sign out or delete your account, and we don’t try to link them back to you. They never include progress photos.
 
 The app has **no advertising SDKs**, and we **don’t share any data for advertising**.
 
@@ -297,7 +298,7 @@ The app has **no advertising SDKs**, and we **don’t share any data for adverti
 - Your raw date of birth (after the age check).
 - Location in the background, except during a run you’re recording with run tracking (when available). See §4.5.
 - Health-app or wearable data you haven’t connected.
-- Biometric identifiers. Face ID or fingerprint unlock happens on your phone; we never receive it. Pose tracking for form checks runs on your phone, face points are discarded, and we don’t use face recognition.
+- Biometric identifiers. Face ID or fingerprint unlock happens on your phone; we never receive it. Pose tracking for form checks runs on your phone, face points are discarded, and we don’t use face recognition. We don’t extract face or body measurements from progress photos.
 - Your contacts or photo library (we use only photos you take in [App]).
 
 ### 4.5 Location
@@ -336,6 +337,22 @@ You can choose to connect Apple Health (HealthKit), Google Health Connect, or a 
 - Disconnect a source any time in Settings › Privacy (or in Apple Health / Health Connect). Reading stops right away, and we delete data from that source within 30 days.
 - 16–17: the teen and the parent must both opt in, and coaches never see it.
 
+### 5.2 Progress photos (18+ only)
+
+- **Separate opt-in, off by default.** The first time you open Progress photos, you choose whether to turn on "Allow progress photos." It’s separate from Health data, AI planning and coach sharing. 16–17 users can’t take or upload progress photos; the feature opens at 18.
+- **What we keep:** the photos you take in [App] and the date you took them. We remove location and device details before upload.
+- **Protection:** photos are encrypted on your phone before upload and served only through short-lived links. In the app, they’re locked behind Face ID, your fingerprint or your phone’s passcode [PENDING KEVIN: photo lock, always on or on by default].
+- **Never:** used for ads, analytics, crash reports or AI, or sent to Anthropic. We don’t extract face or body measurements from photos, and we don’t use face detection or face recognition on them.
+- **Sharing with a coach** is another separate opt-in, offered only when you have an active 1:1 coach. The coach sees only photos you pick, in the app, with no downloads, and each one is watermarked with your initials. We can’t block screenshots. Shared photos go through an automated safety check. Turn sharing off anytime; the coach loses access right away.
+- **Turning photos off or deleting them:** turning progress photos off stops new photos and deletes the ones you’ve taken, and we offer you a copy first. Deleted photos are removed from your phone right away and from our servers and backups within 30 days; we destroy their encryption keys so backup copies can’t be read. You can download your photos anytime (Settings › Privacy › Download my data, or Photo privacy › Download my photos). A downloaded copy isn’t locked or encrypted, and we can’t delete it.
+- **Camera roll** [PENDING KEVIN: camera-roll option]: saving copies to your camera roll is off by default. Copies there aren’t locked or encrypted, and we can’t delete them.
+
+### 5.3 Health screen and 12-month check-ins
+
+- Before an AI plan, we ask a short set of health questions written in our own words (not an official questionnaire). If an answer suggests you check with a professional first, you can confirm you’re cleared with a checkbox; we never ask for a doctor’s note or medical records.
+- We ask you to update the health screen every 12 months and whenever you change an injury or condition. **AI planning pauses until you do**; your saved plan stays but stops adapting, and logging and coaching continue. For 16–17, the teen and the parent update it together.
+- Every 12 months we also ask whether you still want Health data on. It stays on until you turn it off; the check-in never switches it off by itself.
+
 ## 6. How we use information
 
 We use personal information to:
@@ -353,12 +370,12 @@ We **don’t** sell personal information, use it for targeted ads, or use it for
 
 ## 7. AI planning (Anthropic)
 
-AI planning is a **separate switch, off by default**. You can use [App] without it.
+AI planning is a **separate switch, off by default**. You can use [App] without it. **It needs the health switch on**, because it checks your health-screen answers and uses any injury you add to avoid or swap exercises, and those answers are health info. It also pauses while your health screen is due for its 12-month update (§5.3).
 
 **If you turn it on:**
 
-- We send Anthropic, our AI provider, your **goals, experience, equipment, age range and an injury category**, with a random ID that changes every request.
-- We **never** send your name, email, user ID, photos, location, run routes, wearable or health-app data, or free-text notes.
+- We send Anthropic, our AI provider, your **goals, experience, equipment, training schedule (days and session length), age range and an injury category**, with a random ID that changes every request. From your health info, Anthropic receives only the injury category.
+- We **never** send your name, email, user ID, progress photos, location, run routes, wearable or health-app data, health-screen answers, measurements, weight, or free-text notes.
 - Anthropic processes this data only for us, under its Commercial Terms and Data Processing Addendum, and **doesn’t train its AI on it**.
 - **Anthropic deletes it within 30 days**, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer.
 - The AI uses the injury category **only to avoid or swap exercises**. It never builds rehab or treatment plans.
@@ -378,7 +395,7 @@ These companies process data **for us, under contract**, and only as we instruct
 |---|---|---|
 | Supabase | Hosting, database, sign-in | All account and app data (health info is stored encrypted) |
 | [KMS provider] | Key management | Encryption keys only, not your data |
-| Anthropic | AI planning (only if you turn it on) | Goals, experience, equipment, age range, injury category, random request ID |
+| Anthropic | AI planning (only if you turn it on) | Goals, experience, equipment, training schedule (days and session length), age range, injury category, random request ID |
 | Apple and Google | Sign-in (if chosen), in-app purchases, age signals, app distribution | Sign-in identity, purchase status, age range |
 | Stripe | Payments for 1:1 coaching, parent card verification, identity checks for coaches and for parents of minors in 1:1 | Payment and verification details (Stripe also acts under its own privacy policy for payments) |
 | [Email provider] | Sending account, parent-invite and service emails | Email address, message content |
@@ -386,8 +403,8 @@ These companies process data **for us, under contract**, and only as we instruct
 | [Push notification provider] [OPEN] | Push notifications | Device token, notification text |
 | [Safety-moderation and image hash-matching vendor] [OPEN] | Safety filters on minors’ coach chats; hash matching on coach-shared images | Message text, shared images |
 | [Subscription-management vendor] [OPEN, only if used] | Receipt checking for Pro | Purchase records, an app user ID |
-| [Analytics vendor] [OPEN] [PROVISIONAL] | Basic product analytics (you can turn it off) | Feature and screen usage, app version, device type; no health info, wearable data, precise location or routes |
-| [Crash-reporting vendor] [OPEN] [PROVISIONAL] | Crash and error reports | Crash logs, device and app version |
+| [Analytics vendor] [OPEN] [PROVISIONAL] | Basic product analytics (you can turn it off) | Feature and screen usage, app version, device type, a random install ID; no user ID, name or email, and no health info, photos, wearable data, precise location or routes |
+| [Crash-reporting vendor] [OPEN] [PROVISIONAL] | Crash and error reports | Crash logs, device and app version, a random install ID; no user ID, name or email, and no photos |
 | [Map provider] [OPEN] (when run tracking is available) | Showing route maps | Map area being viewed; route points inside privacy zones are never sent |
 
 Apple Health, Health Connect and wearables are **sources** you connect, not companies we send your data to.
@@ -398,14 +415,15 @@ Apple Health, Health Connect and wearables are **sources** you connect, not comp
 
 Coaches are **independent** businesses, not our employees. A coach sees your data only if you turn on coach sharing for that coach, which is a separate switch from the health switch.
 
-- **Adults:** your coach can see your workouts, history, PRs, charts, the health items you choose, any progress photos you pick, and any form-check videos you share. No downloads. Run routes (when available) are shared only if you choose to share them, with privacy zones applied. Wearable data isn’t shared with coaches.
+- **Adults:** your coach can see your workouts, history, PRs, charts, the health items you choose, and any form-check videos you share. Progress photos need a separate photo-sharing opt-in for that coach, and then the coach sees only the photos you pick, watermarked with your initials. No downloads. Run routes (when available) are shared only if you choose to share them, with privacy zones applied. Wearable data isn’t shared with coaches.
 - **16–17:** your coach can see workouts, history, PRs, charts, and form checks as skeleton and numbers only. Run routes (when available) only if the teen and the parent both opt in, and then only distance, pace and a map with privacy zones applied, never the start or end point. Coaches **never** see a minor’s health info or wearable data (weight, measurements, injury or pain notes, health-screen answers), never get videos, and get no photos. The teen and the parent must both agree.
-- Turn it off any time in Settings › Coaching; access stops immediately.
+- **Without sharing, coaches see nothing of your health info**, not even whether, when or how often you added something (for example, weigh-ins).
+- Turn it off any time in Settings › Coaching (photo sharing in Photo privacy or on any shared photo); access stops immediately.
 - [OPEN: coach deletion on request. Only if the coach terms require it, add: "Coaches must delete your data when asked, under our coach terms." Until then, don’t promise it.]
 
 ### 8.3 Your parent (16–17)
 
-A linked parent can see your data and consent history, and everything your coach sees. Your parent can read your coach chat. You’ll be told whenever your parent changes a setting or consent.
+A linked parent can see your data and consent history, and everything your coach sees. Your parent can read your coach chat. You’ll be told whenever your parent changes a setting or consent. [PENDING KEVIN: parent export] Your parent can also download a copy of your data from Parent Settings, and you’ll be told when they do ("Your parent downloaded a copy of your data."). The copy contains your data only, not your parent’s.
 
 ### 8.4 Legal, safety and business reasons
 
@@ -428,13 +446,14 @@ We may disclose information:
 - **Pending account:** until a parent links, the account holds only your email, age band, the date you turn 18, the parent’s invite email and the invite status. Setup answers (training style, gym, units) stay **on your phone** and upload only once the link is active. No health info, workouts or purchases until then.
 - **14-day limit:** if no parent links within 14 days, we delete the account and the parent’s email. We use the parent’s email only to send the invite.
 - **Parent is the contracting party.** The parent agrees to the Terms and this policy, and is the customer for any purchase. No purchases until the link is active.
-- **Both must agree.** Health info, AI planning and coach sharing each turn on only when **both** the teen and the parent opt in. Either can turn any of them off.
-- **Parent can view** the teen’s data and consent history, and the teen is notified when the parent changes anything.
+- **Both must agree.** Health info, AI planning and coach sharing each turn on only when **both** the teen and the parent opt in. Either can turn any of them off. AI planning also needs health info on, and the teen and parent update the health screen together.
+- **Parent can view** the teen’s data and consent history, and the teen is notified when the parent changes anything. [PENDING KEVIN: parent export] The parent can download a copy of the teen’s data, and the teen is told.
 - **Extra protections for 16–17:**
   - no progress photos;
   - form checks shared only as skeleton and numbers, never video (the video is deleted on the phone right after analysis);
   - coach chat is text only, and the parent can read it;
   - no weight-loss or calorie goals;
+  - **body weight** [PENDING KEVIN: teen weight]: no weight card, trend or chart anywhere in the app. Only an optional current value in Profile, with no goal or chart, and only while both the teen and the parent have health info on. If either turns health info off, or the teen clears it, the weight is deleted: from the app right away, and from our servers and backups within 30 days. The teen is told when a parent’s change deleted it, and if it’s turned back on, it starts empty;
   - live sessions only with a parent invite, and never recorded;
   - coaches never see the teen’s health info;
   - **wearables and health apps:** connecting requires both the teen and the parent to opt in; never shared with coaches;
@@ -445,7 +464,7 @@ We may disclose information:
 
 ## 10. Children under 16
 
-[App] isn’t for anyone under 16. If someone under 16 tries to sign up, we show a generic message and save nothing they entered (we keep only a total count of turned-away sign-ups). We don’t knowingly collect personal information from children under 13. If we learn we have, we delete it. Contact krodriguez0720@gmail.com if you think we have.
+[App] isn’t for anyone under 16. If someone under 16 tries to sign up, we show a generic message and save nothing they entered (we keep only a total count of turned-away sign-ups). We don’t knowingly collect personal information from children under 13. If we learn we have, we delete it. Contact privacy@[domain] if you think we have.
 
 ## 11. Payments
 
@@ -468,7 +487,8 @@ If you apply to coach on [App], we also collect: your name, contact details, cer
 
 - Data is encrypted in transit (TLS) and at rest.
 - Health info uses per-user encryption keys, wrapped by [KMS provider] and used only by our server. The database holds only encrypted data and wrapped keys.
-- Progress photos are encrypted on your phone before upload and served only through short-lived links. Photos are locked behind Face ID or your passcode in the app.
+- Progress photos are encrypted on your phone before upload and served only through short-lived links. In the app they’re locked behind Face ID, your fingerprint or your passcode [PENDING KEVIN: photo lock]. When photos are deleted, we destroy their encryption keys.
+- IP addresses and device IDs in consent records are stored only as keyed one-way hashes; the key is kept outside our database.
 - Access by our staff and processors is limited to what’s needed, and logged.
 
 No system is perfectly secure. See §18 for what we do if something goes wrong.
@@ -478,8 +498,8 @@ No system is perfectly secure. See §18 for what we do if something goes wrong.
 | Information | How long |
 |---|---|
 | Account data, workout logs, settings | While your account is open. After you delete your account, we delete it within 45 days; backups expire within 6 months. |
-| Health info | Until you turn the health switch off or delete it (then deleted within 30 days), or you delete your account. |
-| Progress photos (18+) | Until you delete them; then removed from phone, server and backups within 30 days. |
+| Health info | Until you turn the health switch off or delete it (then deleted within 30 days), or you delete your account. 16–17 body weight: deleted the same way when either the teen or the parent turns health info off, or the teen clears it [PENDING KEVIN: teen weight]. |
+| Progress photos (18+) | Until you delete them or turn photos off; then removed from your phone right away and from our servers and backups within 30 days. Copies you saved to your camera roll aren’t affected. [PENDING KEVIN: camera-roll option] |
 | Adult form-check videos | On your phone; auto-deleted after 90 days unless starred. Shared copies are deleted from our server when you unshare or delete your account. |
 | 16–17 form-check videos | Deleted on the phone right after analysis; never uploaded. |
 | Pending 16–17 account and parent’s email | Deleted on day 14 if the parent hasn’t linked. |
@@ -487,7 +507,7 @@ No system is perfectly secure. See §18 for what we do if something goes wrong.
 | Raw app store age signal | Deleted once the check is done. |
 | Turned-away under-16 sign-ups | No personal information kept. |
 | Data sent to Anthropic | Deleted by Anthropic within 30 days (up to 2 years if its safety checks flag a request, or longer if the law requires). |
-| Consent records (version, text hash, timestamps) | Life of the account + 4 years; for minors, at least until their 22nd birthday. |
+| Consent records (version, text hash, timestamps, hashed IP and device ID, app version) | Life of the account + 4 years; for minors, at least until their 22nd birthday. |
 | Privacy-rights and deletion request logs | At least 24 months (we aim for 4 years). |
 | Coach access logs | 2 years. |
 | Minor safety records (flags, reports, chat kept for safety review) | Until the minor’s 22nd birthday or 4 years, whichever is later. Legal holds override. |
@@ -495,7 +515,8 @@ No system is perfectly secure. See §18 for what we do if something goes wrong.
 | Wearable and health-app data | Until you disconnect the source, turn the switch off, or delete your account; then deleted within 30 days. |
 | Approximate location | [OPEN: proposed: not stored on our servers beyond the request; cached on your phone at most 24 hours.] |
 | Run routes (when available) | [OPEN: proposed: kept while your account is active; deleted within 30 days after you delete the route or your account.] |
-| Analytics and crash data [PROVISIONAL] | [OPEN: proposed: 13 months for analytics events, 90 days for crash reports.] |
+| Analytics and crash data [PROVISIONAL] | Not linked to your account. [OPEN: proposed: 13 months for analytics events, 90 days for crash reports.] |
+| IP addresses in our hosting and sign-in providers’ security logs | [OPEN: the Supabase log retention for our plan] |
 | Adult coach chat after coaching ends | [OPEN] |
 | Payment and tax records | [OPEN: set with CPA] |
 
@@ -503,14 +524,31 @@ No system is perfectly secure. See §18 for what we do if something goes wrong.
 
 **Everyone, wherever you live in the US, can:**
 
-- see and download your data (Settings › Privacy › Export);
+- see and download your data (Settings › Privacy › Download my data; see below);
 - correct it (in the app, or ask us);
 - delete it, or your whole account (Settings › Account › Delete account);
-- turn the health, wearable, location, AI and coach-sharing switches off any time, and turn off product analytics [PROVISIONAL];
+- turn the health, wearable, location, AI, coach-sharing, progress-photo and photo-sharing switches off any time, and turn off product analytics [PROVISIONAL];
 - delete any run route, or all of them (when available);
 - get a list of the companies we’ve shared your data with.
 
 We won’t treat you differently, charge you more or give you a worse service for using these rights. (If you turn off health info or AI, features that need them, like an adaptive AI plan, stop working; the free logging tier always stays.)
+
+**What "Download my data" includes:** one ZIP file, with data in common formats (JSON and CSV):
+- your account and settings (email, name, age range and the date you turn 18; we don’t keep your date of birth);
+- your training setup;
+- workouts, sets and PRs;
+- your AI quiz answers and AI plans;
+- health info you’ve saved, including the injury category and plan changes we made from it;
+- data from connected health apps and wearables;
+- run routes (when available);
+- progress photos (18+), with location and device details removed;
+- messages with your coach;
+- your privacy choices (every consent and switch change, with the date and the exact text you saw);
+- who received your data;
+- purchases recorded with us;
+- requests you’ve sent us.
+
+Some records aren’t in the file: security logs, other people’s information (including another client’s data or a coach’s or parent’s own account data), and safety and child-protection records we must keep confidential. The hashed IP and device codes in your consent records aren’t in the file, but you can ask for them. Crash reports and analytics events aren’t linked to your account, so we can’t find them for a request; Texas law doesn’t require us to re-link them (Tex. Bus. & Com. Code §541.106(b)). Ask us through Your privacy rights about anything else.
 
 **Texas residents** (Texas Data Privacy and Security Act, Tex. Bus. & Com. Code ch. 541): you can confirm and access your data, correct it, delete it, get a portable copy, and opt out of sale, targeted ads and profiling (§541.051). We don’t sell personal information, do targeted ads or do that kind of profiling, so there’s nothing to opt out of, but you can still ask. We process sensitive data, like health info, precise location or data of a known child, only with consent.
 
@@ -523,13 +561,13 @@ We won’t treat you differently, charge you more or give you a worse service fo
 ## 17. How to make a request, and how to appeal
 
 - **In the app:** Settings › Privacy › Your privacy rights.
-- **By email:** krodriguez0720@gmail.com (you don’t need the app or a new account).
+- **By email:** privacy@[domain] (you don’t need the app or a new account).
 
 We’ll confirm it’s you, usually through your signed-in account or a code sent to your account email. If we can’t confirm it with reasonable effort, we may ask for more information. An authorized agent may opt out on your behalf if we can verify their authority.
 
 We’ll respond within **45 days**. If we need more time, we may extend once by up to 45 more days and will tell you why within the first 45 days. Requests are free up to twice a year.
 
-**Appeals:** if we turn down your request, you can appeal by tapping "Appeal this decision" in the app or emailing krodriguez0720@gmail.com with "Appeal" in the subject. We’ll answer in writing within **45 days**, with our reasons. If we deny your appeal, you can complain to your state attorney general:
+**Appeals:** if we turn down your request, you can appeal by tapping "Appeal this decision" in the app or emailing privacy@[domain] with "Appeal" in the subject. We’ll answer in writing within **45 days**, with our reasons (Texas law allows up to 60; we use 45 for everyone). If we deny your appeal, you can complain to your state attorney general:
 
 - Texas: https://www.texasattorneygeneral.gov/consumer-protection/file-consumer-complaint
 - Washington: https://www.atg.wa.gov/file-complaint
@@ -548,7 +586,7 @@ Notices will say what happened, what information was involved, what you can do, 
 
 - **No ads:** the app has no advertising SDKs, we don’t share data for advertising, and we don’t do targeted advertising.
 - **No cross-app tracking:** we don’t track you across other companies’ apps or websites, so the app doesn’t show Apple’s tracking prompt.
-- **[PROVISIONAL] Analytics:** we collect crash reports and basic product analytics, either ourselves or through a service provider working only for us [OPEN: vendor names]. Events never include health info, wearable data, precise location or routes. Turn product analytics off in Settings › Privacy › Share usage analytics. 16–17: crash reports only.
+- **[PROVISIONAL] Analytics:** we collect crash reports and basic product analytics, either ourselves or through a service provider working only for us [OPEN: vendor names]. Events never include health info, wearable data, precise location or routes. Crash reports and analytics events carry no user ID, name or email, only at most a random install ID that resets when you sign out or delete your account, and we don’t try to link them back to you. Turn product analytics off in Settings › Privacy › Share usage analytics. 16–17: crash reports only.
 - **Website:** uses only cookies needed to run it [Engineer: confirm when the site is built]. [OPEN: if website analytics are added, update this section and the health policy §9 first.] If your browser sends a Global Privacy Control signal, we treat it as an opt-out of sale and targeted ads (which we don’t do anyway).
 
 ## 20. Where we process data
@@ -561,17 +599,17 @@ We’ll post updates here and change the version and date at the top. For materi
 
 ## 22. Contact
 
-[Company] · [mailing address] · krodriguez0720@gmail.com
+[Company] · [mailing address] · privacy@[domain]
 $legal$
 );
 
 select private.put_legal_text_version(
   $legal$health_policy$legal$,
-  $legal$health-policy-v0.2-draft$legal$,
-  $legal$28388ba2b9da0c7b87a8347cecb1022966d0e422e1574218baf9e672ba188407$legal$,
+  $legal$health-policy-v0.3-draft$legal$,
+  $legal$3c3902bc217232b2b3b2c9c00b2b25c5273f88b74f6110e9c02864381ab12a2a$legal$,
   $legal$# [App] Consumer Health Data Privacy Policy
 
-**Version:** [v0.2 DRAFT] · **Effective date:** [Effective date] · **Last updated:** [Date]
+**Version:** [v0.3 DRAFT] · **Effective date:** [Effective date] · **Last updated:** Nov 16, 2026 (draft)
 
 ---
 
@@ -587,22 +625,22 @@ Consumer health data is personal information that is linked or reasonably linkab
 
 ## 3. Health data we collect, and why
 
-We collect the health data below **only if you turn on the "Save my health info" switch**, except where noted. It’s off by default.
+We collect the health data below **only if you turn on the "Save my health info" switch**, except progress photos, which have their own opt-in (§3.3). Both are off by default.
 
 | Category | Examples | Why we collect it and how we use it |
 |---|---|---|
-| Body weight | Weight entries, weight trend, weight goal | Show your progress; set loads and plans that fit you. (16–17: no weight-loss or calorie goals.) |
+| Body weight | Weight entries, weight trend, weight goal | Show your progress; set loads and plans that fit you. (16–17: only an optional current value in Profile, with no goal, trend or chart, and no weight-loss or calorie goals [PENDING KEVIN: teen weight].) |
 | Body measurements | Waist, chest, arms and similar | Show your progress. |
 | Injury and pain notes | Injuries you list, "pain" swap reasons, notes | Avoid or swap exercises that may not fit you; keep plans safe. Never used to diagnose or treat. |
-| Health-screen answers | Answers to the pre-plan health questions (PAR-Q style) | Flag when to see a professional before training; keep plans safe. |
+| Health-screen answers | Answers to our short pre-plan health questions (written in our own words; not an official questionnaire), and your clearance checkbox if you confirm one | Flag when to see a professional before training; keep plans safe. Required before AI planning, and updated every 12 months or when you change an injury or condition. We never ask for a doctor’s note or medical records. |
 | Form-check numbers | Rep counts, joint angles, depth, bar path, flagged reps, skeleton replay | Show technique feedback and track progress. The video itself is analyzed on your phone. |
 | Training data in your health profile | Workout history and performance used together with the items above | Build and adjust your workouts. |
-| Progress photos (18+ only) | Front, side and back photos taken in [App] | Show your progress privately. [OPEN: consent mechanism; see drafting note 5.] |
+| Progress photos (18+ only) | Front, side and back photos taken in [App] | Show your progress privately, and to a 1:1 coach only for photos you pick. Collected only after you turn on "Allow progress photos" (a separate opt-in, off by default). Sharing with a coach needs its own opt-in. Turning photos off deletes them from our servers and backups within 30 days. |
 | Inferences | An injury category; plan adjustments made because of your health info | Build safer plans. |
 
 **Basic workout logs** (exercises, sets, reps, loads) are stored even with the switch off, because they’re needed for the logging feature you asked for. They’re used only for logging, history and charts unless you turn the health switch on.
 
-**We don’t collect:** health-app or wearable data you haven’t connected; location in the background except during a run you’re recording (when available); biometric identifiers (Face ID stays on your phone; pose tracking runs on your phone and discards face points; we don’t use face recognition); diagnoses or medical records from providers; reproductive or sexual health data. [Engineer: make sure no connected source reads reproductive or sexual health types.]
+**We don’t collect:** health-app or wearable data you haven’t connected; location in the background except during a run you’re recording (when available); biometric templates (we don’t extract face or body measurements from photos or use face recognition; Face ID stays on your phone; pose tracking runs on your phone and discards face points). Progress photos that show your face may count as biometric data under Washington law, so we treat them as consumer health data and collect them only with your opt-in. We also don’t collect diagnoses or medical records from providers, or reproductive or sexual health data. [Engineer: make sure no connected source reads reproductive or sexual health types.]
 
 ### 3.1 Health apps and wearables (separate switch, off by default)
 
@@ -630,6 +668,15 @@ These limits follow Apple’s App Review Guidelines 5.1.2(vi) and 5.1.3 and Goog
 - Precise location is "sensitive data" under Texas law and is used only with your consent.
 - Turning location off stops collection. You can delete one route or all routes any time.
 
+### 3.3 Progress photos (18+ only, separate opt-in)
+
+- **Opt-in:** the first time you open Progress photos, you choose whether to turn on "Allow progress photos." It’s off by default and separate from Health data, AI planning and coach sharing. No photos for 16–17.
+- **What we keep:** the photos and the date you took them. Location and device details are removed before upload.
+- **Protection:** encrypted on your phone before upload; locked in the app behind Face ID, your fingerprint or your passcode [PENDING KEVIN: photo lock].
+- **Never:** used for ads, analytics, crash reports or AI, or sent to Anthropic. No face detection, face recognition, or face or body measurements.
+- **Coach:** only photos you pick, after a separate photo-sharing opt-in for that coach (§7.2).
+- **Turning off or deleting:** turning photos off deletes them, and we offer a copy first. Deleted photos are removed from your phone right away and from our servers and backups within 30 days; we destroy their encryption keys. Copies you saved to your camera roll, or downloaded, aren’t affected, and we can’t delete them [PENDING KEVIN: camera-roll option].
+
 ## 4. Where it comes from
 
 - **You:** what you enter or record in [App].
@@ -647,7 +694,7 @@ We use health data **only** to:
 - build, adjust and show your workouts and progress;
 - keep plans safe (for example, steering away from exercises that may not fit an injury);
 - show your data to your coach, **only** if you turn on coach sharing (§7.2);
-- send AI planning a limited injury category, **only** if you also turn on AI planning (§8). Wearable data, location and routes are never sent to AI;
+- send AI planning a limited injury category, **only** if you also turn on AI planning (§8), which works only while this switch is on. Wearable data, progress photos, location and routes are never sent to AI;
 - secure the service, keep required records, and comply with the law.
 
 **How it’s processed:** stored by Supabase in encrypted form, with per-user keys held in [KMS provider] and used only by our server; served to you, your parent (16–17) and, if you choose, your coach.
@@ -656,7 +703,7 @@ We use health data **only** to:
 
 - sell health data;
 - use it for advertising or share it with advertisers, data brokers, employers or insurers (the app has no advertising SDKs);
-- use it in analytics, or use health-app or wearable data for data mining;
+- use it, including progress photos, in analytics or crash reports, or use health-app or wearable data for data mining;
 - use it to train AI, ours or anyone else’s;
 - use it for any new purpose without asking you first.
 
@@ -664,11 +711,13 @@ We use health data **only** to:
 
 - **Collection:** the "Save my health info" switch on the Privacy & safety screen. It shows what we collect, why, who receives it, and how to turn it off before anything is collected.
 - **Sharing with a coach:** a separate "Share with my coach" switch.
-- **AI planning:** a separate "Use AI to build my plan" switch.
+- **AI planning:** a separate "Use AI to build my plan" switch. It needs the health switch on, because it uses your health-screen answers. It pauses while your health screen is due for its 12-month update.
+- **Progress photos (18+):** a separate "Allow progress photos" opt-in at first use. Sharing photos with a coach is another separate opt-in for each coach.
 - **Health apps and wearables:** a separate "Connect health apps and wearables" switch, then a per-source connection.
 - **Precise run GPS (when available):** a separate opt-in for precise and background location.
 - All switches are **off by default**. You can keep using [App]’s free logging with them all off. No switch is bundled with our Terms.
-- **Turning a switch off:** go to Settings › Privacy (or Settings › Coaching for coach sharing). Collection or sharing stops right away. If you turn off health info, we delete your health data within 30 days. We’ll offer you an export first.
+- **Turning a switch off:** go to Settings › Privacy (or Settings › Coaching for coach sharing). Collection or sharing stops right away. If you turn off health info, we delete your health data within 30 days. If you turn off progress photos, we delete them from your phone right away and from our servers and backups within 30 days. We’ll offer you an export first.
+- **12-month check-in:** every 12 months we ask whether you still want Health data on. Your consent doesn’t expire; it stays on until you turn it off.
 - **16–17:** each switch turns on only when **both** you and your parent agree. Either of you can turn it off. You’ll be told when your parent changes anything.
 
 ## 7. Who we share health data with
@@ -681,13 +730,12 @@ Processors may use health data only on our instructions, under a binding contrac
 |---|---|---|
 | Supabase | Cloud hosting and database | All health data, stored encrypted |
 | [KMS provider] | Encryption key management | Keys only; no health data |
-| Anthropic | AI service provider (only if you turn on AI planning) | Injury category only (plus non-health items: goals, experience, equipment, age range) |
+| Anthropic | AI service provider (only if you turn on AI planning) | Injury category only (plus non-health items: goals, experience, equipment, training schedule (days and session length), age range) |
 | [Email provider] | Email delivery | None (account and service emails only) |
 | [Live video/voice provider] [OPEN] | Live coaching check-ins | Whatever you say or show in a live session; never recorded for 16–17 |
-| [Safety-moderation and image hash-matching vendor] [OPEN] | Child-safety screening | Coach-shared images and minors’ chat text, if they contain health details |
-
+| [Safety-moderation and image hash-matching vendor] [OPEN] | Child-safety screening | Coach-shared images, including progress photos you share, and minors’ chat text, if they contain health details |
 | [Map provider] [OPEN] (when run tracking is available) | Route maps | Map area only; route points inside privacy zones are never sent |
-| [Analytics vendor] / [Crash-reporting vendor] [OPEN] [PROVISIONAL] | Product analytics and crash reports | **None.** Health data is excluded from analytics and crash reports. |
+| [Analytics vendor] / [Crash-reporting vendor] [OPEN] [PROVISIONAL] | Product analytics and crash reports | **None.** Health data and photos are excluded from analytics and crash reports, which aren’t tied to your account. |
 
 Apple Health, Health Connect and wearables are sources you connect; we don’t send your data to them. We have **no advertising partners**.
 
@@ -695,15 +743,16 @@ Apple Health, Health Connect and wearables are sources you connect; we don’t s
 
 Coaches are independent businesses. A coach gets health data **only** if you turn on coach sharing for that coach.
 
-- **Adults:** the health items you choose, any progress photos you pick, form-check videos you share, and run routes you choose to share (zones applied, when available). Viewed in the app only, no downloads. Wearable data isn’t shared with coaches.
+- **Adults:** the health items you choose, progress photos you pick (only after a separate photo-sharing opt-in for that coach; each is watermarked with your initials), form-check videos you share, and run routes you choose to share (zones applied, when available). Viewed in the app only, no downloads. Wearable data isn’t shared with coaches.
 - **16–17:** coaches **never** see weight, measurements, injury or pain notes, health-screen answers or wearable data, never get videos, and get no photos. Run routes (when available) only if the teen and parent both opt in, and only distance, pace and a zoned map, never the start or end point. They may see form checks as skeleton and numbers only, if both the teen and the parent agree.
+- **Without sharing, a coach sees nothing of your health data**, not even whether, when or how often you added something (for example, weigh-ins).
 - Turn sharing off any time; access ends immediately.
 - If you ask us to delete your health data, we notify the coach too.
 - [OPEN: only if coach terms require it, add: "Coaches must delete your data when asked, under our coach terms."]
 
 ### 7.3 Others
 
-- **Your parent (16–17):** can view your data and consent history.
+- **Your parent (16–17):** can view your data and consent history. [PENDING KEVIN: parent export] Your parent can also download a copy of your data from Parent Settings, and you’ll be told.
 - **Legal and safety:** when the law requires it, or to report child sexual abuse material to NCMEC or suspected child abuse to Texas authorities.
 - **Business transfer:** if [App] is sold or merged, the new owner must keep these promises or ask your consent.
 
@@ -716,7 +765,8 @@ You can ask for a list of every third party and processor that has received your
 ## 8. AI planning and Anthropic
 
 - **Off by default.** Only if you turn on AI planning.
-- Anthropic, our AI provider, receives your **goals, experience, equipment, age range and an injury category**, with a random ID that changes every request. From your health data, it receives **only an injury category**, never your notes, measurements, photos, name, email, user ID or location.
+- **Needs Health data on**, and pauses while your health screen is due for its 12-month update.
+- Anthropic, our AI provider, receives your **goals, experience, equipment, training schedule (days and session length), age range and an injury category**, with a random ID that changes every request. From your health data, it receives **only an injury category**, never your notes, measurements, weight, health-screen answers, photos, name, email, user ID or location.
 - Anthropic processes it **only for us**, under its Commercial Terms and Data Processing Addendum, and **doesn’t train its AI on it**.
 - **Anthropic deletes it within 30 days**, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer.
 - The AI uses the injury category **only to avoid or swap exercises**. It never builds rehab or treatment plans, and its plans aren’t medical advice.
@@ -725,12 +775,12 @@ You can ask for a list of every third party and processor that has received your
 
 ## 9. Tracking across websites and apps
 
-No third party collects your health data over time or across websites or apps through [App] or our website. The app has **no advertising SDKs** and no cross-app tracking. [PROVISIONAL] We use crash reports and basic product analytics, handled by us or by a service provider working only for us [OPEN: vendors]; they never include health data, wearable data, precise location or routes, and you can turn product analytics off in Settings › Privacy.
+No third party collects your health data over time or across websites or apps through [App] or our website. The app has **no advertising SDKs** and no cross-app tracking. [PROVISIONAL] We use crash reports and basic product analytics, handled by us or by a service provider working only for us [OPEN: vendors]; they never include health data, progress photos, wearable data, precise location or routes, and you can turn product analytics off in Settings › Privacy. They carry no user ID, name or email, only at most a random install ID that resets when you sign out or delete your account, and we don’t try to link them back to you.
 
 ## 10. How we protect it
 
 - Encrypted in transit and at rest, with per-user keys wrapped in [KMS provider], separate from our database.
-- Progress photos are encrypted on your phone before upload, locked behind Face ID or passcode in the app, and served only through short-lived links.
+- Progress photos are encrypted on your phone before upload, locked behind Face ID, fingerprint or passcode in the app [PENDING KEVIN: photo lock], and served only through short-lived links. Deleting them destroys their encryption keys.
 - Access is limited to the people and processors who need it to provide what you asked for, and access is logged. Coach access logs are kept 2 years.
 - You can change health data any time in the app, or ask us to correct it.
 
@@ -738,7 +788,7 @@ No third party collects your health data over time or across websites or apps th
 
 You have the right to:
 
-1. **Confirm and access:** find out whether we collect, share or sell your health data (we don’t sell it), get a copy, and get a list of all third parties and affiliates we’ve shared it with, with a way to contact each.
+1. **Confirm and access:** find out whether we collect, share or sell your health data (we don’t sell it), get a copy, and get a list of all third parties and affiliates we’ve shared it with, with a way to contact each. Settings › Privacy › Download my data gives you one ZIP file with your health info (including the injury category and plan changes we inferred from it), data from connected health apps, progress photos (18+), your privacy choices with the exact text you saw, and who received your data, along with the rest of your account data (see the Privacy Policy §16). It leaves out security logs, other people’s information, and confidential safety records; ask us for anything else.
 2. **Withdraw consent** to our collection and sharing of your health data at any time.
 3. **Delete** your health data. We delete it from all our systems and tell every processor, coach and other recipient to delete it too. Backup copies are deleted within 6 months.
 4. **Correct** inaccurate health data.
@@ -748,13 +798,13 @@ You have the right to:
 ## 12. How to use your rights
 
 - **In the app:** Settings › Privacy › Your privacy rights (or Parent Settings for parents of 16–17 users).
-- **By email:** krodriguez0720@gmail.com. You don’t need to create an account.
+- **By email:** privacy@[domain]. You don’t need to create an account.
 
 **Verifying it’s you:** we use your signed-in account, or send a code to your account email. If we can’t verify you with reasonable effort, we may ask for more information.
 
 **Timing:** we respond within **45 days** of receiving your request. If we need more time, we may extend once by up to 45 more days and will tell you why within the first 45 days. We complete health-data deletion within **30 days** of verifying a deletion request (backups within 6 months). Requests are free up to twice a year.
 
-**Appeals:** if we turn down a request, tap "Appeal this decision" in the app or email krodriguez0720@gmail.com with "Appeal" in the subject. We’ll answer in writing within **45 days**, with our reasons. If we deny your appeal, you can complain to the attorney general:
+**Appeals:** if we turn down a request, tap "Appeal this decision" in the app or email privacy@[domain] with "Appeal" in the subject. We’ll answer in writing within **45 days**, with our reasons (Texas law allows up to 60; we use 45 for everyone). If we deny your appeal, you can complain to the attorney general:
 
 - Washington: https://www.atg.wa.gov/file-complaint
 - Texas: https://www.texasattorneygeneral.gov/consumer-protection/file-consumer-complaint
@@ -765,6 +815,8 @@ You have the right to:
 - A parent must link and agree before any health data is collected.
 - Health data, AI planning and coach sharing each need **both** the teen and the parent to opt in. Either can turn them off.
 - The teen can turn off and delete health data in Settings › Privacy; the parent can in Parent Settings. The teen is told when the parent changes anything.
+- **Body weight** [PENDING KEVIN: teen weight]: no weight card, trend or chart. Only an optional current value in Profile while both the teen and the parent have health data on, with no goal. If either turns health data off, or the teen clears it, the weight is deleted from the app right away and from our servers and backups within 30 days, and the teen is told when a parent’s change caused it.
+- [PENDING KEVIN: parent export] The parent can download a copy of the teen’s data; the teen is told.
 - No progress photos, no weight-loss or calorie goals, form-check videos deleted on the phone right after analysis, and coaches never see the teen’s health info.
 - **Wearables and health apps:** both the teen and the parent must opt in; coaches never see this data.
 - **Approximate location:** only with both opt-ins; never in the background.
@@ -777,7 +829,7 @@ You have the right to:
 | Health data | How long |
 |---|---|
 | Health data under the switch | Until you turn the switch off or delete it (then deleted within 30 days), or delete your account. |
-| Progress photos (18+) | Until you delete them; then removed from phone, server and backups within 30 days. |
+| Progress photos (18+) | Until you delete them or turn photos off; then removed from your phone right away and from our servers and backups within 30 days. Copies you saved to your camera roll aren’t affected. [PENDING KEVIN: camera-roll option] |
 | Adult form-check videos | On your phone; auto-deleted after 90 days unless starred. Shared copies are deleted from our server when unshared or the account is deleted. |
 | 16–17 form-check videos | Deleted on the phone right after analysis; never uploaded. |
 | Data sent to Anthropic | Deleted within 30 days (up to 2 years if flagged by safety checks, or longer if the law requires). |
@@ -785,14 +837,14 @@ You have the right to:
 | Run routes (when available) | [OPEN: proposed: kept while your account is active; deleted within 30 days after you delete the route or your account.] |
 | Approximate location | [OPEN: proposed: not stored on our servers beyond the request; cached on your phone at most 24 hours.] |
 | Account deletion | Within 45 days; backups within 6 months. |
-| Consent records | Life of the account + 4 years; for minors, at least until their 22nd birthday. |
+| Consent records (version, text hash, timestamps, hashed IP and device ID, app version) | Life of the account + 4 years; for minors, at least until their 22nd birthday. |
 | Rights-request logs | At least 24 months (we aim for 4 years). |
 | Coach access logs | 2 years. |
 | Minor safety records that include health details | Until the minor’s 22nd birthday or 4 years, whichever is later. Legal holds override. |
 
 ## 15. Breaches
 
-If unsecured health data is breached, we’ll notify you without unreasonable delay and within 60 calendar days of discovery, as the FTC Health Breach Notification Rule requires (16 CFR part 318). We’ll also notify the FTC, and the media if 500 or more residents of a state are affected, and follow Texas law (Tex. Bus. & Com. Code §521.053) and other state laws that apply.
+If unsecured health data is breached, we’ll notify you without unreasonable delay and within 60 calendar days of discovery, as the FTC Health Breach Notification Rule requires (16 CFR part 318). We’ll also notify the FTC, and the media if 500 or more residents of a state are affected, and follow Texas law (Tex. Bus. & Com. Code §521.053): notice to affected people within 60 days of determining a breach happened, and to the Texas Attorney General within 30 days if 250 or more Texans are affected. We also follow other state laws that apply.
 
 ## 16. Changes to this policy
 
@@ -800,7 +852,7 @@ We’ll post changes here with a new version and date, and tell you in the app b
 
 ## 17. Contact
 
-[Company] · [mailing address] · krodriguez0720@gmail.com · [website URL]
+[Company] · [mailing address] · privacy@[domain] · [website URL]
 $legal$
 );
 
@@ -820,23 +872,23 @@ select private.put_legal_text_version(
 
 select private.put_legal_text_version(
   $legal$ai_adult$legal$,
-  $legal$ai-B-2026-11-15-draft$legal$,
-  $legal$d449f3e7ef1f1f6abfcd9a19bf8cecfe6c4d3b229ed136f18ce24577e0e04a36$legal$,
-  $legal$Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.$legal$
+  $legal$ai-B-2026-11-16-draft$legal$,
+  $legal$1a38fb7bfced3b1088616d01bde2bc5b610c1100c8115ceff0a0b013420db257$legal$,
+  $legal$Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting.$legal$
 );
 
 select private.put_legal_text_version(
   $legal$ai_teen$legal$,
-  $legal$ai-B-teen-2026-11-15-draft$legal$,
-  $legal$bd4634cb8c44b592fb4141290e0f67299812d04cef73191d93f877890927cf26$legal$,
-  $legal$Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting. Your parent must also agree before this turns on, and either of you can turn it off.$legal$
+  $legal$ai-B-teen-2026-11-16-draft$legal$,
+  $legal$9f07355b6e34ae6cfe50d1992b7690ecd6e61d536ae5089ac105460e6396176a$legal$,
+  $legal$Use AI to build my plan. Turn on to send Anthropic, our AI provider, your goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) so it can create and adapt your plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Turn off anytime in Settings › Privacy; your saved plan stays but stops adapting. Your parent must also agree before this turns on, and either of you can turn it off.$legal$
 );
 
 select private.put_legal_text_version(
   $legal$ai_parent$legal$,
-  $legal$ai-B-parent-2026-11-15-draft$legal$,
-  $legal$56eb93085169fc2cee3af9a270a126cff24c11286848a342b5fd591809aff7fc$legal$,
-  $legal$Let Fitness App send Anthropic, our AI provider, your teen’s goals, experience, equipment, age range, and injury category (no name, email, photos, or location) to create and adapt your teen’s plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Your teen must also agree. You or your teen can turn it off anytime; your teen’s saved plan stays but stops adapting.$legal$
+  $legal$ai-B-parent-2026-11-16-draft$legal$,
+  $legal$d5fd95a7c2a1d9d068761169aecd1a2d6bb639d2d1797bef0817980bc2725c76$legal$,
+  $legal$Let Fitness App send Anthropic, our AI provider, your teen’s goals, experience, equipment, age range, training schedule (days and session length), and injury category (no name, email, photos, or location) to create and adapt your teen’s plan. Anthropic processes it only for us, under contract, and doesn’t train its AI on it. Anthropic deletes it within 30 days, unless its automated safety checks flag a request (then it may keep that request for up to 2 years) or the law requires it to keep data longer. Your teen must also agree. You or your teen can turn it off anytime; your teen’s saved plan stays but stops adapting.$legal$
 );
 
 select private.put_legal_text_version(
