@@ -48,6 +48,13 @@ import { AiBlockedScreen } from '../../ai/screens/AiBlocked';
 import { HomeAiScreen } from '../../ai/screens/HomeAi';
 import { TrainAiScreen } from '../../ai/screens/TrainAi';
 import { ProfileScreen } from '../../ai/screens/ProfileScreen';
+import { AddPhotosChooser } from '../../progress/screens/AddPhotosChooser';
+import { ImportConsentSheet } from '../../progress/screens/ImportConsentSheet';
+import { PhotoOptInSheet } from '../../progress/screens/PhotoOptInSheet';
+import { PrToast } from '../../progress/screens/PrToast';
+import { WorkoutRecapScreen } from '../../progress/screens/WorkoutRecap';
+import { Turned18Card } from '../../progress/screens/Turned18Card';
+import { PhotoPrivacySettingsScreen } from '../../progress/screens/PhotoPrivacySettings';
 
 /**
  * Screen preview registry (dev only; used by app/dev-preview.tsx for screenshots). id → render function with
@@ -207,7 +214,7 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'train-ai-paused': () => <TrainAiScreen notice="footer" healthScreenPaused />,
   'profile': () => <ProfileScreen name="Jordan" roleLabel="Athlete" notice="footer" />,
   'profile-teen': () => <ProfileScreen teen name="Alex" roleLabel="Athlete" showWeight weightLabel="142 lb" notice="footer" />,
-  // ───── Legal: Terms v0.2-draft ─────
+  // ───── Legal: Terms v0.4-draft ─────
   terms: () => <TermsDocumentScreen />,
   'terms-reaccept': () => <ReacceptTermsScreen checked={false} onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
   'terms-reaccept-ready': () => <ReacceptTermsScreen checked onChecked={noop} onOpenTerms={noop} onAccept={noop} />,
@@ -258,5 +265,59 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
   'workout-aurora': () => <AuroraWorkoutPreview />,
   'workout-aurora-empty': () => <AuroraWorkoutPreview empty />,
   'appearance-aurora': () => <AppearanceSettingsScreen onBack={() => {}} />,
+  // ───── Phase 5b (SPEC rev 3) ─────
+  'add-photos-chooser': () => <AddPhotosChooser onTakePhoto={noop} onChooseFromLibrary={noop} onCancel={noop} />,
+  'import-consent': () => <ImportConsentSheet onAgree={noop} onCancel={noop} />,
+  'photo-opt-in': () => <PhotoOptInSheet switchOn={false} onSwitchChange={noop} onContinue={noop} onNotNow={noop} />,
+  'pr-toast': () => (
+    <PrToast
+      model={{
+        kind: 'heaviest_lift',
+        exercise: 'Bench press',
+        load: '185',
+        unit: 'lb',
+        reps: 5,
+        delta: '5',
+        prevLoad: '180',
+        prevReps: 5,
+      }}
+    />
+  ),
+  'workout-recap': () => (
+    <WorkoutRecapScreen
+      dateLine="Tue, Nov 17"
+      complete
+      volume="12,400"
+      unit="lb"
+      lastWorkout="Upper"
+      lastVolume="11,200"
+      setsDone={16}
+      setsTotal={16}
+      exercisesDone={5}
+      exercisesTotal={5}
+      minutes={48}
+      prs={[{ exercise: 'Bench press', detail: '185 × 5' }]}
+      streakLine={{ title: '2-week streak', body: 'You’ve hit your planned workouts 2 weeks in a row.' }}
+      onDone={noop}
+    />
+  ),
+  'turned-18': () => <Turned18Card onNotNow={noop} onLearnMore={noop} />,
+  'photo-privacy': () => <PhotoPrivacySettingsScreen optedIn={false} onBack={noop} onOpenOptIn={noop} />,
+  'settings-privacy-teen-photos': () => (
+    <PrivacySettingsScreen
+      healthOn
+      aiOn
+      coachOn={false}
+      isMinor
+      photoOptedIn={false}
+      onManageChoices={noop}
+      onPrivacyPolicy={noop}
+      onHealthPolicy={noop}
+      onTerms={noop}
+      onExport={noop}
+      onDeleteAccount={noop}
+    />
+  ),
 };
+
 

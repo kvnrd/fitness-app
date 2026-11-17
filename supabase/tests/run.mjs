@@ -14,7 +14,7 @@ const read = (p) => readFileSync(p, 'utf8');
 const migrations = readdirSync(migDir).filter((f) => f.endsWith('.sql')).sort().map((f) => [f, read(join(migDir, f))]);
 
 // Test files run in this order after the migrations, sharing one database and tests.results.
-const TEST_FILES = ['rls.sql', 'phase2b.sql', 'phase3.sql', 'phase4.sql', 'phase5.sql'];
+const TEST_FILES = ['rls.sql', 'phase2b.sql', 'phase3.sql', 'phase4.sql', 'phase5.sql', 'phase5b.sql'];
 
 const RESET = `
   drop schema if exists public cascade; drop schema if exists private cascade; drop schema if exists app cascade;

@@ -22,6 +22,8 @@ import {
   PRIVACY_SETTINGS_REASK_BODY,
   PRIVACY_SETTINGS_REASK_TITLE,
 } from '../../legal/text';
+import { PHOTO_LIBRARY_LINE } from '../../progress/phase5bCopy.ts';
+import { privacyPhotosRow } from '../../progress/privacyPhotosRow.ts';
 
 function Row({
   label,
@@ -29,16 +31,25 @@ function Row({
   sub,
   onPress,
   danger,
+  disabled,
+  showChevron,
+  accessibilityLabel,
+  accessibilityState,
 }: {
   label: string;
   value?: string;
   sub?: string;
   onPress?: () => void;
   danger?: boolean;
+  disabled?: boolean;
+  showChevron?: boolean;
+  accessibilityLabel?: string;
+  accessibilityState?: { disabled?: boolean };
 }) {
   const { colors, fonts } = useTheme();
+  const chevron = (showChevron ?? !!onPress) && !disabled;
   const inner = (
-    <View style={{ paddingVertical: 14, gap: 2, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border }}>
+    <View style={{ paddingVertical: 14, gap: 2, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, opacity: disabled ? 0.7 : 1 }}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text color={danger ? colors.danger : colors.text} style={{ fontFamily: fonts.bodySemi, fontSize: 16, lineHeight: 24 }}>
           {label}
@@ -54,12 +65,19 @@ function Row({
           {value}
         </Text>
       ) : null}
-      {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.textMuted} /> : null}
+      {chevron ? <Ionicons name="chevron-forward" size={16} color={colors.textMuted} /> : null}
     </View>
   );
-  if (!onPress) return inner;
+  const a11y = accessibilityLabel ?? label;
+  if (!onPress || disabled) {
+    return (
+      <View accessible accessibilityLabel={a11y} accessibilityState={accessibilityState ?? (disabled ? { disabled: true } : undefined)}>
+        {inner}
+      </View>
+    );
+  }
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={accessibilityState}>
       {inner}
     </Pressable>
   );
@@ -81,6 +99,9 @@ export function PrivacySettingsScreen({
   onDeleteHealth,
   onDeleteAccount,
   onCoaching,
+  isMinor,
+  photoOptedIn,
+  onProgressPhotos,
 }: {
   healthOn: boolean;
   aiOn: boolean;
@@ -97,10 +118,14 @@ export function PrivacySettingsScreen({
   onDeleteHealth?: () => void;
   onDeleteAccount: () => void;
   onCoaching?: () => void;
+  isMinor?: boolean;
+  photoOptedIn?: boolean;
+  onProgressPhotos?: () => void;
 }) {
   const { colors, fonts } = useTheme();
   const insets = useSafeAreaInsets();
   const onOff = (v: boolean) => (v ? 'On' : 'Off');
+  const photos = privacyPhotosRow({ isMinor: isMinor === true, photoOptedIn: photoOptedIn === true });
   return (
     <ScreenBackground>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 20 }}>
@@ -137,6 +162,19 @@ export function PrivacySettingsScreen({
           <Row label="Health data" value={onOff(healthOn)} onPress={onManageChoices} />
           <Row label="AI planning" value={onOff(aiOn)} onPress={onManageChoices} />
           <Row label="Sharing with my coach" value={onOff(coachOn)} onPress={onManageChoices} />
+          <Row
+            label={photos.label}
+            value={photos.disabled ? undefined : photos.statusCopy}
+            sub={photos.subtitle ?? (photos.disabled ? photos.statusCopy : undefined)}
+            onPress={photos.disabled ? undefined : onProgressPhotos}
+            disabled={photos.disabled}
+            showChevron={photos.showChevron}
+            accessibilityLabel={photos.accessibilityLabel}
+            accessibilityState={photos.accessibilityState}
+          />
+          <Text color={colors.textMuted} style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 18, paddingTop: 8 }}>
+            {PHOTO_LIBRARY_LINE}
+          </Text>
         </View>
 
         <View>

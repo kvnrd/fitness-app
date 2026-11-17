@@ -141,7 +141,7 @@ export default function WorkoutDayScreen() {
                 onPress={() => setNotesOpen((o) => !o)}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: notesOpen }}
-                accessibilityLabel="Coach's notes"
+                accessibilityLabel="Coach’s notes"
                 style={[
                   styles.notesRow,
                   {
@@ -154,7 +154,7 @@ export default function WorkoutDayScreen() {
               >
                 <Ionicons name="mic" size={20} color={colors.accentInk} />
                 <Text variant="small" style={{ fontFamily: fonts.bodySemi }}>
-                  Coach's notes
+                  Coach’s notes
                 </Text>
                 <Text variant="small" color={colors.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
                   {notesOpen ? '' : previewNote}
@@ -165,7 +165,7 @@ export default function WorkoutDayScreen() {
               </Pressable>
             ) : (
               <View>
-                <SectionHeader title="Coach's notes" />
+                <SectionHeader title="Coach’s notes" />
                 {w.keyPoints.map((k, i) => (
                   <View key={i} style={styles.note}>
                     <View style={[styles.noteBar, { backgroundColor: colors.coach }]} />

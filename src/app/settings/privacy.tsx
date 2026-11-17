@@ -17,7 +17,7 @@ import { PrivacySettingsScreen } from '../../settings/screens/PrivacySettings';
 const placeholder = (title: string) => Alert.alert(title, PRIVACY_RIGHTS_PLACEHOLDER_NOTE);
 
 export default function PrivacySettingsRoute() {
-  const { user, onboarding } = useSession();
+  const { user, onboarding, profile } = useSession();
   const [healthOn, setHealthOn] = useState(false);
   const [aiOn, setAiOn] = useState(false);
   const [coachOn, setCoachOn] = useState(false);
@@ -53,6 +53,9 @@ export default function PrivacySettingsRoute() {
       onDeleteHealth={() => placeholder(PRIVACY_DELETE_HEALTH_LABEL)}
       onDeleteAccount={() => placeholder(PRIVACY_DELETE_ACCOUNT_LABEL)}
       onCoaching={() => placeholder(PRIVACY_COACHING_LABEL)}
+      isMinor={profile?.is_minor === true || onboarding?.is_minor === true}
+      photoOptedIn={false}
+      onProgressPhotos={() => router.push('/settings/photo-privacy')}
     />
   );
 }
