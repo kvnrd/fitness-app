@@ -177,7 +177,9 @@ select tests.logout();
 -- =============================================================== progress photos blocked for 16-17
 select tests.login(tests.u(20));
 select public.record_consent('health_data', 'health-v1');
-select tests.affected('photos: adult with health consent can add a photo row', format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(20), tests.u(20)::text || '/a.jpg'), 1);
+select tests.blocked('photos: adult with health consent but no photo opt-in refused', format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(20), tests.u(20)::text || '/a.jpg'));
+select public.set_progress_photo_opt_in(true);
+select tests.affected('photos: adult with health consent and photo opt-in can add a photo row', format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(20), tests.u(20)::text || '/a.jpg'), 1);
 select tests.blocked('photos: adult cannot write into another user''s folder', format($q$insert into public.progress_photos (user_id, storage_path) values (%L, %L)$q$, tests.u(20), tests.u(21)::text || '/a.jpg'));
 select tests.affected('photos: adult storage upload into own folder', format($q$insert into storage.objects (bucket_id, name) values ('progress-photos', %L)$q$, tests.u(20)::text || '/a.jpg'), 1);
 select tests.blocked('photos: storage upload into another folder refused', format($q$insert into storage.objects (bucket_id, name) values ('progress-photos', %L)$q$, tests.u(21)::text || '/x.jpg'));
