@@ -1,9 +1,9 @@
-import { Pressable, ScrollView, View } from 'react-native';
-import { ScreenBackground } from '../../components/ScreenAtmosphere';
+import { ScrollView, View } from 'react-native';
+import { ScreenBackground, screenScrollContentStyle } from '../../components/ScreenAtmosphere';
 import { HeroNumeral } from '../../components/HeroNumeral';
-import { Text } from '../../components/ui';
+import { Button, Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
-import { minControlSize, space } from '../../theme/tokens';
+import { space } from '../../theme/tokens';
 import {
   EST_1RM_LABEL,
   HEAVIEST_LIFT,
@@ -63,7 +63,7 @@ export function WorkoutRecapScreen({
   const { colors, fonts, radius } = useTheme();
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48, gap: 20 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[screenScrollContentStyle(colors.bg), { padding: 24, paddingBottom: 48, gap: 20 }]}>
         <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyMedium, fontSize: 14 }}>
           {dateLine}
         </Text>
@@ -129,14 +129,7 @@ export function WorkoutRecapScreen({
           </View>
         ) : null}
 
-        <Pressable
-          onPress={onDone}
-          accessibilityRole="button"
-          accessibilityLabel={RECAP_DONE}
-          style={{ minHeight: minControlSize, marginTop: space.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.input ?? 12 }}
-        >
-          <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.accentInk }}>{RECAP_DONE}</Text>
-        </Pressable>
+        <Button label={RECAP_DONE} onPress={onDone} accessibilityLabel={RECAP_DONE} style={{ marginTop: space.md }} />
       </ScrollView>
     </ScreenBackground>
   );
