@@ -11,7 +11,7 @@ import type { TextStyle } from 'react-native';
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type ColorScheme = 'dark' | 'light';
 
-/** Visual system. Default remains Classic v2 (Carbon / Concrete / Champagne). */
+/** Visual system. Default is Aurora (Midnight). Classic v2 stays selectable in Appearance. */
 export type ThemeFamily = 'v2' | 'aurora';
 export const THEME_FAMILIES = ['v2', 'aurora'] as const;
 
@@ -24,7 +24,7 @@ export type AccentKey = (typeof ACCENT_KEYS)[number];
 
 export const DEFAULT_MODE: ThemeMode = 'system';
 export const DEFAULT_ACCENT: AccentKey = 'champagne';
-export const DEFAULT_FAMILY: ThemeFamily = 'v2';
+export const DEFAULT_FAMILY: ThemeFamily = 'aurora';
 export const DEFAULT_AURORA_PRESET: AuroraPreset = 'midnight';
 /** Hue shown on the Appearance wheel for Midnight (appearance-aurora-midnight). */
 export const DEFAULT_CUSTOM_HUE = 273;
