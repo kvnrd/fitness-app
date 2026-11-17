@@ -4,8 +4,8 @@ import { canIssueDataExportLink } from '../progress/dataExportPackage.ts';
 /**
  * Queues a "Download my data" request and, when the lock check has passed,
  * asks the server for a short-lived in-app link. The packer lives on the server
- * (`prepare_data_export` / `fetch_data_export`). Parent export of a teen stays
- * behind PARENT_CAN_EXPORT_TEEN_DATA.
+ * (`prepare_data_export` / `fetch_data_export`). Parent export of a teen is
+ * refused (`PARENT_CAN_EXPORT_TEEN_DATA` is false).
  */
 export async function requestDataExport(): Promise<boolean> {
   if (!supabase) return false;

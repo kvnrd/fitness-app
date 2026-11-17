@@ -42,8 +42,9 @@ insert into public.set_logs (user_id, exercise_id, performed_on, set_index, weig
   (tests.u(120), '53000000-0000-0000-0000-000000000001', '2026-10-01', 0, 135, 8, true, false),
   (tests.u(120), '53000000-0000-0000-0000-000000000001', '2026-11-10', 0, 135, 8, true, false); -- inside 1M of 2026-11-16
 
+-- 1000 m in 120 s = 60 s / 500 m. Stored as canonical miles.
 insert into public.set_logs (user_id, exercise_id, performed_on, set_index, time_seconds, distance, power, done) values
-  (tests.u(120), '53000000-0000-0000-0000-000000000002', '2026-11-01', 0, 120, 1000, 180, true);
+  (tests.u(120), '53000000-0000-0000-0000-000000000002', '2026-11-01', 0, 120, 1000.0 / 1609.344, 180, true);
 
 select tests.login(tests.u(120));
 select tests.eq('strength: first session is a PR; a repeat is not; a real bump is', $q$
@@ -434,17 +435,22 @@ select tests.ok('rev3: Clear weight wipes the live value and leaves Health on', 
   (select body_weight_ct is null from public.health_records where user_id = tests.u(122))
   and app.has_consent(tests.u(122), 'health_data')));
 
-select tests.ok('rev3: parent export of teen data is on (Kevin flag, Counsel recommended)', app.parent_can_export_teen_data());
+select tests.ok('rev3: parent export of teen data is off (Kevin decision)', not app.parent_can_export_teen_data());
 select tests.login(tests.u(120));
 select tests.raises('rev3: a non-parent cannot export a teen''s data',
   format($q$select public.parent_export_teen_data(%L)$q$, tests.u(122)),
-  'forbidden');
+  'parent_export_not_allowed');
 select tests.login(tests.u(124));
-select tests.ok('rev3: the parent can request an export', public.parent_export_teen_data(tests.u(122)) is not null);
+select tests.raises('rev3: a parent cannot export a teen''s data',
+  format($q$select public.parent_export_teen_data(%L)$q$, tests.u(122)),
+  'parent_export_not_allowed');
+select tests.raises('rev3: prepare_data_export refuses a parent-for-teen request',
+  format($q$select public.prepare_data_export(true, %L)$q$, tests.u(122)),
+  'parent_export_not_allowed');
 select tests.login(tests.u(122));
-select tests.ok('rev3: the teen is told about the parent export', exists (
+select tests.ok('rev3: a refused parent export does not notify the teen', not exists (
   select 1 from public.teen_data_notices
-   where user_id = tests.u(122) and kind = 'parent_exported_data' and actor_user_id = tests.u(124)));
+   where user_id = tests.u(122) and kind = 'parent_exported_data'));
 select tests.logout();
 
 -- =============================================================== Rev 3 addendum: weigh-in metadata is fully hidden

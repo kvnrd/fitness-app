@@ -67,8 +67,8 @@ test('the included and excluded sets match Counsel Rev 4, and inapplicable rows 
   assert.equal(DATA_EXPORT_CRASH_REPORTS_LINE, false);
   assert.equal(DATA_EXPORT_FOOTER, "Some records aren't included, like security logs and other people's information. Ask us through Your privacy rights.");
   assert.equal(/crash/i.test(DATA_EXPORT_FOOTER), false);
-  assert.equal(PARENT_CAN_EXPORT_TEEN_DATA, true);
-  assert.equal(parentCanExportTeenData(), true);
+  assert.equal(PARENT_CAN_EXPORT_TEEN_DATA, false);
+  assert.equal(parentCanExportTeenData(), false);
   assert.equal(parentExportedDataNotice(), 'Your parent downloaded a copy of your data.');
 });
 

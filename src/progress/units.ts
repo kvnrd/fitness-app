@@ -1,4 +1,4 @@
-/** Mass and distance units for Progress. Canonical storage is pounds and metres. */
+/** Mass and distance units for Progress. Canonical storage is pounds and miles. Display follows the user setting. */
 
 export type MassUnit = 'lb' | 'kg';
 export type DistanceUnit = 'mi' | 'km';
@@ -7,6 +7,7 @@ import { KG_PER_LB, LB_PER_KG } from '../onboarding/weightGoal.ts';
 export { KG_PER_LB, LB_PER_KG };
 export const METERS_PER_MILE = 1609.344;
 export const METERS_PER_KM = 1000;
+export const MILES_PER_KM = METERS_PER_KM / METERS_PER_MILE;
 
 export const DEFAULT_MASS_UNIT: MassUnit = 'lb';
 export const DEFAULT_DISTANCE_UNIT: DistanceUnit = 'mi';
@@ -25,30 +26,51 @@ export function roundMass(value: number, unit: MassUnit): number {
   return Math.round(value * 10) / 10;
 }
 
+/** Convert a displayed distance into canonical miles. */
+export function distanceToMiles(value: number, unit: DistanceUnit): number {
+  return unit === 'mi' ? value : value * MILES_PER_KM;
+}
+
+/** Convert canonical miles into the user's display unit. */
+export function distanceFromMiles(miles: number, unit: DistanceUnit): number {
+  return unit === 'mi' ? miles : miles / MILES_PER_KM;
+}
+
+export function milesToMeters(miles: number): number {
+  return miles * METERS_PER_MILE;
+}
+
+export function metersToMiles(meters: number): number {
+  return meters / METERS_PER_MILE;
+}
+
+/** @deprecated Use distanceToMiles; kept for 500 m split math. */
 export function distanceToMeters(value: number, unit: DistanceUnit): number {
-  return unit === 'mi' ? value * METERS_PER_MILE : value * METERS_PER_KM;
+  return milesToMeters(distanceToMiles(value, unit));
 }
 
+/** @deprecated Use distanceFromMiles; kept for 500 m split math. */
 export function distanceFromMeters(meters: number, unit: DistanceUnit): number {
-  return unit === 'mi' ? meters / METERS_PER_MILE : meters / METERS_PER_KM;
+  return distanceFromMiles(metersToMiles(meters), unit);
 }
 
-/** Rowing splits are always seconds per 500 m, regardless of the distance-unit pref. */
-export function rowSplitSecPer500(timeSeconds: number, distanceMeters: number): number | null {
+/** Rowing splits are always seconds per 500 m, regardless of the distance-unit pref. `distanceMiles` is canonical storage. */
+export function rowSplitSecPer500(timeSeconds: number, distanceMiles: number): number | null {
+  const distanceMeters = milesToMeters(distanceMiles);
   if (!(timeSeconds > 0) || !(distanceMeters > 0)) return null;
   return timeSeconds * (500 / distanceMeters);
 }
 
-export function paceSecPerUnit(timeSeconds: number, distanceMeters: number, unit: DistanceUnit): number | null {
-  if (!(timeSeconds > 0) || !(distanceMeters > 0)) return null;
-  const dist = distanceFromMeters(distanceMeters, unit);
+export function paceSecPerUnit(timeSeconds: number, distanceMiles: number, unit: DistanceUnit): number | null {
+  if (!(timeSeconds > 0) || !(distanceMiles > 0)) return null;
+  const dist = distanceFromMiles(distanceMiles, unit);
   if (!(dist > 0)) return null;
   return timeSeconds / dist;
 }
 
-export function speedUnitPerHour(timeSeconds: number, distanceMeters: number, unit: DistanceUnit): number | null {
-  if (!(timeSeconds > 0) || !(distanceMeters > 0)) return null;
+export function speedUnitPerHour(timeSeconds: number, distanceMiles: number, unit: DistanceUnit): number | null {
+  if (!(timeSeconds > 0) || !(distanceMiles > 0)) return null;
   const hours = timeSeconds / 3600;
   if (!(hours > 0)) return null;
-  return distanceFromMeters(distanceMeters, unit) / hours;
+  return distanceFromMiles(distanceMiles, unit) / hours;
 }

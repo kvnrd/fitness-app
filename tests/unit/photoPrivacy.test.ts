@@ -10,7 +10,9 @@ import {
   canAlignCompare,
   canCropCompare,
   canRotateCompare,
+  DEFAULT_CAMERA_ROLL_COPIES,
   defaultPhotoLockOn,
+  defaultPhotoPrivacySettings,
   galleryPrivacyLine,
   isPhotoLockOn,
   lockSubtitle,
@@ -36,6 +38,8 @@ test('Kevin flags are explicit and the current defaults are documented', () => {
   assert.equal(CAMERA_ROLL_SAVE_OPTION, true);
   assert.equal(TEEN_WEIGHT_PROFILE_ONLY, true);
   assert.equal(defaultPhotoLockOn(), true);
+  assert.equal(DEFAULT_CAMERA_ROLL_COPIES, false);
+  assert.equal(defaultPhotoPrivacySettings().cameraRollCopies, false);
   assert.equal(isPhotoLockOn(false, 'always_on'), true);
   assert.equal(isPhotoLockOn(false, 'default_on_setting'), false);
 });

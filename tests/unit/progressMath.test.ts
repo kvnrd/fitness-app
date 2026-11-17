@@ -94,12 +94,15 @@ test('mass and distance conversions; row splits stay per 500 m', () => {
   assert.ok(Math.abs(massFromLb(massToLb(100, 'kg'), 'kg') - 100) < 1e-6);
   assert.ok(Math.abs(massToLb(100, 'kg') - 100 * 2.20462262) < 1e-6);
   assert.equal(massToLb(100, 'lb'), 100);
-  const split = rowSplitSecPer500(120, 1000);
-  assert.equal(split, 60);
-  const paceMi = paceSecPerUnit(360, 1609.344, 'mi');
+  const split = rowSplitSecPer500(120, 1000 / 1609.344);
+  assert.ok(split != null && Math.abs(split - 60) < 1e-9);
+  const paceMi = paceSecPerUnit(360, 1, 'mi');
   assert.ok(paceMi != null && Math.abs(paceMi - 360) < 1e-9);
-  const mph = speedUnitPerHour(3600, 1609.344, 'mi');
+  const mph = speedUnitPerHour(3600, 1, 'mi');
   assert.ok(mph != null && Math.abs(mph - 1) < 1e-9);
+  const km = 1000 / 1609.344;
+  const paceKm = paceSecPerUnit(360, km, 'km');
+  assert.ok(paceKm != null && Math.abs(paceKm - 360) < 1e-9);
 });
 
 test('weight chart: 10-day EMA, range filter, downsample cap, sparse/empty flags', () => {

@@ -1,8 +1,7 @@
 /**
  * Estimated 1RM. Configurable between Epley and Brzycki.
  *
- * Default (used until Kevin decides otherwise): Epley with a 10-rep cap.
- * This is an open product decision — see docs/phase-5-progress.md.
+ * Approved default: Epley with a 10-rep cap. Brzycki remains available as a setting.
  *
  *   Epley:   w × (1 + reps/30)
  *   Brzycki: w × 36 / (37 − reps)

@@ -48,12 +48,12 @@ test('teen current weight needs both health opt-ins and is Profile-only, with no
   assert.equal(canStoreTeenCurrentWeight({ isMinor: false, healthOn: false, parentHealthOn: false }), false);
 });
 
-test('Kevin flags: teen weight exists (Profile only) and parent export is on by default', () => {
+test('Kevin flags: teen weight exists (Profile only) and parent export is off', () => {
   assert.equal(TEEN_WEIGHT_EXISTS, true);
   assert.equal(TEEN_WEIGHT_PROFILE_ONLY, true);
   assert.equal(teenWeightExists(), true);
-  assert.equal(PARENT_CAN_EXPORT_TEEN_DATA, true);
-  assert.equal(parentCanExportTeenData(), true);
+  assert.equal(PARENT_CAN_EXPORT_TEEN_DATA, false);
+  assert.equal(parentCanExportTeenData(), false);
 });
 
 test('a new teen weight overwrites the old value; no history is kept', async () => {

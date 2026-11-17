@@ -36,6 +36,17 @@ export function defaultPhotoLockOn(mode: PhotoLockMode = PHOTO_LOCK_MODE): boole
   return mode === 'always_on' || mode === 'default_on_setting';
 }
 
+/** User default for the camera-roll save option: off. */
+export const DEFAULT_CAMERA_ROLL_COPIES = false;
+
+export function defaultPhotoPrivacySettings(biometric: BiometricLockKind = 'face_id'): PhotoPrivacySettings {
+  return {
+    lock: { lockOn: defaultPhotoLockOn(), biometric },
+    thumbnailBlur: true,
+    cameraRollCopies: DEFAULT_CAMERA_ROLL_COPIES,
+  };
+}
+
 export function shouldRelockPhotos(lastLeftAt: number | null, now: number, relockMs: number = PHOTO_LOCK_RELOCK_MS): boolean {
   if (lastLeftAt == null) return false;
   return now - lastLeftAt >= relockMs;
