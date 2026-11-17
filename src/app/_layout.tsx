@@ -23,6 +23,7 @@ import { nextOnboardingRoute } from '../onboarding/routing';
 import { useGateFacts } from '../onboarding/useGateFacts';
 import { AppStoreProvider } from '../state/AppStore';
 import { myLatestTerms, needsTermsReaccept } from '../legal/termsApi';
+import { termsReacceptGate } from '../legal/termsGate';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -123,11 +124,12 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
   const readyWithTerms = ready && termsOk !== null;
   const isMinor = !!onboarding?.is_minor;
   // Adults are gated from general app use until they re-accept, but Settings › Privacy,
-  // export, and deletion stay reachable (TDPSA §541.054; MHMDA). 16–17 are not locked:
+  // export, and deletion stay reachable (ToS §20; TDPSA §541.054; MHMDA). 16–17 are not locked:
   // the parent re-accepts, and the teen can keep using the app.
-  const needsTerms = inApp && termsOk === false && !isMinor;
-  const termsWaiting = inApp && termsOk === false && isMinor;
-  const inAppOk = inApp && (termsOk === true || isMinor);
+  const termsGate = termsReacceptGate({ inApp, termsCurrent: termsOk, isMinor });
+  const needsTerms = termsGate.showReaccept && !isMinor;
+  const termsWaiting = termsGate.showReaccept && isMinor;
+  const inAppOk = termsGate.allowGeneralApp;
 
   useEffect(() => {
     if (readyWithTerms) SplashScreen.hideAsync().catch(() => {});

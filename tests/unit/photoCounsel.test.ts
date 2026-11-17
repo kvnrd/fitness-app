@@ -16,6 +16,7 @@ import {
   payloadContainsPhotoData,
   scrubPhotoFields,
 } from '../../src/progress/photoScrub.ts';
+import { assertCrashAnalyticsSafe } from '../../src/analytics/guards.ts';
 import {
   DEFAULT_PHOTO_OPT_IN_CHECKED,
   DEFAULT_PHOTO_SHARE_OPT_IN_CHECKED,
@@ -146,4 +147,12 @@ test('Continue logs on or off with version and hash; Not now logs dismissed; no 
   assert.deepEqual(photoSheetDismissed('progress_photos'), { kind: 'progress_photos', decision: 'dismissed' });
   assert.throws(() => photoSheetContinue('progress_photos', true, 'photos-v1', 'nope'), /invalid_text_hash/);
   assert.throws(() => photoSheetContinue('progress_photos', false, '', hash), /invalid_text_version/);
+});
+
+test('ToS §12: health info, photos and messages are not sent to AI, analytics, or crash reports', () => {
+  for (const sink of ['anthropic', 'ai-plan', 'analytics', 'crash'] as const) {
+    assert.throws(() => assertPhotoSafeForExternal(sink, { photo_id: 'p1', storage_path: '/p.jpg' }), /photo_data_not_allowed/);
+  }
+  assert.throws(() => assertCrashAnalyticsSafe({ event: 'message_sent', body: 'hey coach', email: 'a@b.com' }), /crash_analytics_user_identifier/);
+  assert.doesNotThrow(() => assertCrashAnalyticsSafe({ event: 'session_start', properties: { installId: 'aaaaaaaaaaaaaaaa' } }));
 });

@@ -411,11 +411,11 @@ select tests.ok('legal-text: retention schedule covers the archive and does not 
            where record_type = 'legal_text_versions' and status = 'kept_no_period'));
 select tests.ok('legal-text: put is a no-op when the same text is re-seeded', true);
 select private.put_legal_text_version(
-  'terms', 'v0.1-draft',
-  (select sha256 from public.legal_text_versions where kind = 'terms' and version = 'v0.1-draft'),
-  (select full_text from public.legal_text_versions where kind = 'terms' and version = 'v0.1-draft'));
+  'terms', 'v0.2-draft',
+  (select sha256 from public.legal_text_versions where kind = 'terms' and version = 'v0.2-draft'),
+  (select full_text from public.legal_text_versions where kind = 'terms' and version = 'v0.2-draft'));
 select tests.raises('legal-text: a kind+version cannot change its hash',
-  $q$select private.put_legal_text_version('terms','v0.1-draft','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','not the body')$q$,
+  $q$select private.put_legal_text_version('terms','v0.2-draft','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','not the body')$q$,
   '%legal_text_version_%');
 select tests.raises('legal-text: updates are rejected (append-only)',
   $q$update public.legal_text_versions set full_text = 'changed' where kind = 'terms'$q$,
@@ -503,12 +503,17 @@ select tests.logout();
 update public.consents set reask_on = current_date - 1
  where user_id = tests.u(110) and kind = 'health_data' and grantor = 'self';
 select tests.login(tests.u(110));
-select tests.ok('clocks: consent re-ask due does not pause AI',
+select tests.ok('clocks: consent re-ask due does not pause AI or end consent',
   (public.my_onboarding_state() ->> 'health_reask_self_due') = 'true'
   and (public.my_onboarding_state() ->> 'health_reask_parent_due') = 'false'
   and (public.my_onboarding_state() ->> 'health_reask_due') = 'true'
   and (public.my_onboarding_state() ->> 'can_ai_plan') = 'true'
-  and (public.my_onboarding_state() ->> 'health_screen_status') = 'ok');
+  and (public.my_onboarding_state() ->> 'health_screen_status') = 'ok'
+  and app.has_consent(tests.u(110), 'health_data')
+  and app.has_consent(tests.u(110), 'ai_vendor')
+  and exists (select 1 from public.consents c
+               where c.user_id = tests.u(110) and c.kind = 'health_data' and c.grantor = 'self'
+                 and c.granted and c.revoked_at is null));
 select tests.logout();
 
 -- Only the parent's health grant is due: the teen waits, nothing pauses, AI is unaffected by this clock.
@@ -530,17 +535,23 @@ update public.health_screen_state set reask_on = current_date - 1 where user_id 
 select tests.login(tests.u(110));
 select tests.ok('clocks: a due health screen pauses AI only',
   (public.my_onboarding_state() ->> 'health_screen_status') = 'due'
-  and (public.my_onboarding_state() ->> 'can_ai_plan') = 'false');
+  and (public.my_onboarding_state() ->> 'can_ai_plan') = 'false'
+  and app.has_consent(tests.u(110), 'health_data'));
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.raises('clocks: a due health screen blocks AI plan generation requests',
+  format($q$select public.ai_plan_context(%L)$q$, tests.u(110)),
+  'health_screen_required');
 select tests.logout();
 update public.health_screen_state set reask_on = current_date + 30 where user_id = tests.u(110);
 
 select tests.login(tests.u(103));
 select tests.raises('terms: a 16–17 cannot re-accept; the parent does',
-  $q$select public.accept_terms('v0.1-draft', tests.h('a'))$q$, 'parent_required%');
+  $q$select public.accept_terms('v0.2-draft', tests.h('a'))$q$, 'parent_required%');
 select tests.logout();
 
 select tests.login(tests.u(104));
-select public.accept_terms('v0.1-draft', tests.h('a'));
+select public.accept_terms('v0.2-draft', tests.h('a'));
 select tests.logout();
 select tests.ok('terms: parent re-accept writes a subject row for the linked teen', exists (
   select 1 from public.consent_events
