@@ -29,18 +29,17 @@ function mem(): KeyValueAdapter & { m: Map<string, string> } {
 
 const bothOn = { isMinor: true as const, healthOn: true, parentHealthOn: true };
 
-test('teens get no Progress or Home weight card, trend, or sparkline, even with Health on', () => {
-  assert.equal(canServeWeightTrend(true), false);
-  assert.equal(canServeWeightCard('progress', true), false);
-  assert.equal(canServeWeightCard('home', true), false);
+test('Option 3: teens see weight, history and trends like adults when both health opt-ins are on', () => {
+  assert.equal(canServeWeightTrend(true), true);
+  assert.equal(canServeWeightCard('progress', true), true);
+  assert.equal(canServeWeightCard('home', true), true);
   assert.equal(canServeWeightCard('profile', true), true);
   assert.equal(canServeWeightTrend(false), true);
   assert.equal(canServeWeightCard('progress', false), true);
   assert.equal(canServeWeightCard('home', false), true);
-  assert.equal(teenMayHaveWeightGoal(), false);
 });
 
-test('teen current weight needs both health opt-ins and is Profile-only, with no target', () => {
+test('teen current weight still needs both health opt-ins', () => {
   assert.equal(canStoreTeenCurrentWeight({ isMinor: true, healthOn: true, parentHealthOn: true }), true);
   assert.equal(canStoreTeenCurrentWeight({ isMinor: true, healthOn: true, parentHealthOn: false }), false);
   assert.equal(canStoreTeenCurrentWeight({ isMinor: true, healthOn: false, parentHealthOn: true }), false);
@@ -48,15 +47,15 @@ test('teen current weight needs both health opt-ins and is Profile-only, with no
   assert.equal(canStoreTeenCurrentWeight({ isMinor: false, healthOn: false, parentHealthOn: false }), false);
 });
 
-test('Kevin flags: teen weight exists (Profile only) and parent export is off', () => {
+test('Kevin flags: teen weight is not Profile-only; parent export stays off', () => {
   assert.equal(TEEN_WEIGHT_EXISTS, true);
-  assert.equal(TEEN_WEIGHT_PROFILE_ONLY, true);
+  assert.equal(TEEN_WEIGHT_PROFILE_ONLY, false);
   assert.equal(teenWeightExists(), true);
   assert.equal(PARENT_CAN_EXPORT_TEEN_DATA, false);
   assert.equal(parentCanExportTeenData(), false);
 });
 
-test('a new teen weight overwrites the old value; no history is kept', async () => {
+test('the device current-weight store overwrites the previous value', async () => {
   const first = { value: 130, unit: 'lb' as const, updatedOn: '2026-11-01' };
   const second = { value: 128, unit: 'lb' as const, updatedOn: '2026-11-16' };
   assert.deepEqual(overwriteTeenCurrentWeight(first, second), second);

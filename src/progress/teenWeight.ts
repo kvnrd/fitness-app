@@ -9,7 +9,8 @@
  * health key). Notify the teen if a parent's change caused the deletion.
  * When turned back on, it starts empty.
  */
-import { PARENT_CAN_EXPORT_TEEN_DATA, TEEN_WEIGHT_EXISTS, TEEN_WEIGHT_PROFILE_ONLY } from './phase5Flags.ts';
+import { PARENT_CAN_EXPORT_TEEN_DATA, TEEN_WEIGHT_EXISTS } from './phase5Flags.ts';
+import { allowTeenWeight, teenMayHaveWeightGoal as teenMayHaveWeightGoalFromPolicy, teenWeightRequiresBothHealthOptIns } from './teenWeightPolicy.ts';
 import { canShowPurgeDate, formatPurgeDate, purgeDate } from './purgeToasts.ts';
 import type { KeyValueAdapter } from '../onboarding/deviceSetupStore.ts';
 import type { MassUnit } from './units.ts';
@@ -27,26 +28,27 @@ export function teenWeightExists(): boolean {
 }
 
 export function canServeWeightTrend(isMinor: boolean): boolean {
-  if (isMinor) return false;
-  return true;
+  if (!isMinor) return true;
+  return allowTeenWeight('trend');
 }
 
 export function canServeWeightCard(surface: WeightSurface, isMinor: boolean): boolean {
   if (!isMinor) return true;
-  if (!TEEN_WEIGHT_EXISTS) return false;
-  if (TEEN_WEIGHT_PROFILE_ONLY) return surface === 'profile';
-  return surface === 'profile';
+  if (surface === 'profile') return allowTeenWeight('profile_current');
+  if (surface === 'progress') return allowTeenWeight('progress_card');
+  return allowTeenWeight('home_card');
 }
 
 /** Teens may store a current Profile weight only. No target, no goal, no history. */
 export function canStoreTeenCurrentWeight(opts: { isMinor: boolean; healthOn: boolean; parentHealthOn: boolean }): boolean {
   if (!opts.isMinor) return opts.healthOn === true;
   if (!TEEN_WEIGHT_EXISTS) return false;
-  return opts.healthOn === true && opts.parentHealthOn === true;
+  if (teenWeightRequiresBothHealthOptIns() && !(opts.healthOn === true && opts.parentHealthOn === true)) return false;
+  return true;
 }
 
-export function teenMayHaveWeightGoal(): false {
-  return false;
+export function teenMayHaveWeightGoal(): boolean {
+  return teenMayHaveWeightGoalFromPolicy();
 }
 
 /** Saving a new weight overwrites the old value. No history is kept. */

@@ -15,6 +15,8 @@ export class FakeHealthDb implements HealthDb {
   keys = new Map<string, WrappedKeyRow>();
   rows = new Map<string, Row>();
   minors = new Set<string>();
+  /** Mirrors app.teen_no_goal_weight_or_loss_advice(); Kevin: off. */
+  teenNoGoalWeight = false;
   allowed = new Set<string>();
   coachOf = new Map<string, string>(); // coach -> client
   parentOf = new Map<string, string>(); // parent -> minor
@@ -38,7 +40,7 @@ export class FakeHealthDb implements HealthDb {
   async write(actor: string, f: HealthCipherWrite, target?: string | null) {
     const subject = this.subjectOf(actor, target);
     if (!this.keys.has(subject)) throw new Error('no_data_key');
-    if (this.minors.has(subject) && f.weight_goal) throw new Error('forbidden (SQLSTATE 42501) detail that must not leak');
+    if (this.minors.has(subject) && f.weight_goal && this.teenNoGoalWeight) throw new Error('forbidden (SQLSTATE 42501) detail that must not leak');
     const cur = this.rows.get(subject) ?? { n: null, s: null, c: null, w: null, bw: null };
     // Same semantics as public.health_write: absent key keeps, null clears.
     this.rows.set(subject, {
