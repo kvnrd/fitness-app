@@ -55,7 +55,17 @@ begin
   perform set_config('request.jwt.claims', '', false);
 end $$;
 
-grant execute on function tests.login(uuid, text, text), tests.logout() to anon, authenticated, service_role;
+-- Session-level (is_local := false), same as tests.login. The CI runner uses psql, which
+-- autocommits each statement, so set_config(..., true) / SET LOCAL is discarded before the
+-- next SELECT and request.headers never reach fill_consent_context. PGlite runs a whole
+-- file inside one exec(), so LOCAL happened to persist and hid the bug.
+create or replace function tests.set_headers(headers text)
+returns void language plpgsql as $$
+begin
+  perform set_config('request.headers', coalesce(headers, ''), false);
+end $$;
+
+grant execute on function tests.login(uuid, text, text), tests.logout(), tests.set_headers(text) to anon, authenticated, service_role;
 
 -- Minimal Supabase Storage emulation (bucket + objects + foldername) so storage policies can be tested.
 create schema if not exists storage;
