@@ -64,16 +64,50 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 
 ### Purge date in outcome toasts (Rev 3)
 - `{date}` is the request date + 30 days.
-- It is shown only when the purge job guarantees that deadline (`PHOTO_PURGE_DEADLINE_GUARANTEED`, `app.photo_purge_deadline_guaranteed()`).
-- The guarantee is testable: scheduled shreds are never more than 30 days out, and `run_retention_purge` shreds a due photo key. The job is expected to run daily, with alerts, when it is wired into ops.
-- Teen "Clear weight" while Health stays on only nulls the live value; the health key still encrypts other records, so that toast omits `{date}` (`TEEN_WEIGHT_CLEAR_PURGE_DEADLINE_GUARANTEED = false`). When Health is withdrawn, the existing health-key shred path applies and the date may be shown.
+- It is shown only when the purge job guarantees that deadline (`photoPurgeDeadlineGuaranteed` from `public.retention_purge_health()`, and `app.photo_purge_deadline_guaranteed()`).
+- The guarantee is true only when the daily job is confirmed running (a successful run in the last 25 hours) and no photo shred is overdue. Scheduled shreds are never more than 30 days out; `run_retention_purge` shreds due photo and health keys.
+- Ops wiring is config and a runbook only, not a deploy: `ops/retention-purge.schedule.yml` (daily 07:20 UTC via `private.run_retention_purge_cron()`), `ops/retention-purge.alerts.yml` (placeholder destinations), and `docs/runbooks/retention-purge.md`.
+- Teen "Clear weight" while Health stays on only nulls the live value; the health key still encrypts other records, so that toast omits `{date}` (`TEEN_WEIGHT_CLEAR_PURGE_DEADLINE_GUARANTEED = false`). When Health is withdrawn, the health-key shred path applies and the date may be shown if the job is confirmed running.
 
-### Teens (weight)
+### Teens (weight) and Health-off (Rev 4)
 - No photos or video.
 - No weight card, trend, or sparkline on Progress or Home, whether or not Health is on. No Lose, Gain, or size goals.
 - When teen weight exists, it is a **single current Profile value** (both health opt-ins, no target). Saving overwrites the previous value; there is no history and no `weigh_ins` row (`teen_weight_history_not_allowed`).
-- If either opt-in turns off: the device copy is deleted immediately; the live `body_weight_ct` is cleared immediately; backups go with the health key within 30 days. The teen is notified when a parent's change caused the deletion (`teen_data_notices.weight_deleted_by_parent`). When Health is turned back on, the value starts empty.
-- "Clear weight" has the same live-value deletion (Health stays on).
+- If either Health opt-in turns off (teen or parent): AI planning turns off; all saved health info is deleted, including weight, injury notes, the health screen, the derived injury category, and weigh-ins (`private.clear_teen_health_data`). Immediate in the app and on the live server; backups go with the health-key shred within 30 days. When Health is turned back on, those values start empty.
+- If the parent caused the withdrawal, the teen is notified once (`teen_data_notices.health_deleted_by_parent`) and the notice stays in their notification list. There is no "ask your parent to turn it back on" nudge. `{date}` in that notice is shown only when the purge guarantee is on.
+- "Clear weight" while Health stays on still only nulls the live weight and does not insert that parent notice.
+
+### Download my data (Rev 4)
+- The server builds one ZIP of JSON/CSV plus photos (`private.build_data_export_package`, `prepare_data_export` / `fetch_data_export`).
+- Included: account and settings (age range and the date the person turns 18, not date of birth); training setup; workouts, sets and PRs; AI plans; saved health info including the derived injury category and plan changes; connected health apps (empty when none); photos; coach messages (empty when none); consent history with the exact text shown; recipients; purchases; rights requests.
+- Never included: IP/device hashes (available on a separate request only); the pepper or any keys; other people's data; safety, moderation or NCMEC records; security logs; AI prompts.
+- Delivery is a short-lived in-app signed link (15 minutes), only after the photo/app lock check passes (`lock_required` otherwise). Fetching an expired link raises `link_expired`.
+- The request is logged as a rights request (`audit_log.data_export_requested` with `rights_request: true`).
+- Parent export of teen data stays behind `PARENT_CAN_EXPORT_TEEN_DATA` / `app.parent_can_export_teen_data()`. The existing `request_data_export()` queue stub is unchanged.
+- Sheet rows are shown or hidden by whether that data exists, not by age (`dataExportLabelsFor`). The exception is Photos, which never appears for 16–17s. An adult with 0 photos also hides that row. The footer stays the single security-logs line; there is no separate crash-reports line.
+
+### Weigh-in visibility (Rev 3 addendum)
+- Encrypted weigh-in rows are fully hidden from a coach unless the athlete has turned on weight sharing for that coach (`body_weight_share` is per-coach; `app.shares_body_weight_with`).
+- Teens never share weight. Turning sharing off cuts access immediately, including realtime (`weigh_ins` is not in `supabase_realtime`; `app.weigh_in_push_signals_enabled()` is false).
+- When sharing is off, coaches get no metadata either: no row counts, timestamps, `updated_at`, sync events, or "last active" signals derived from weigh-ins. `progress_weight_series` is owner-only.
+
+### Crash and analytics (Rev 5)
+- Crash and analytics events must not include a user ID, email, or name. They may carry at most a random install ID (`src/analytics/installId.ts`) that resets on sign-out and on account deletion, is never joined to account data, and is shared only with service providers. This is a separate ID from the trainer-code rate-limit id.
+- `assertCrashAnalyticsSafe` / `trackAnalyticsEvent` / `reportCrash` fail if a payload includes those identifiers. A unit scan fails if a vendor SDK is added or if source calls `setUser` / `identify` style APIs.
+- No analytics or crash vendor is wired today (`package.json` and `app.json` have none). Under that rule these events are not part of Download my data, and the footer stays the single security-logs line. If a vendor setup ever attaches user IDs, add "crash reports" to the footer and pull them on request.
+
+### Teen Health-off notice and push (Rev 5)
+- Lock-screen / push preview is exactly: "Your parent changed a privacy setting." It must not mention health.
+- The kept in-app notice uses the Rev 4 text with `{date}` until that date, then reads exactly: "Your parent turned off Health data. Your saved health info, including your weight, was deleted. AI planning is off too."
+
+### Curly apostrophes (Rev 6)
+- Bundled legal policies and hashed consent texts use curly apostrophes (U+2019). The version hash is of the exact characters shown. A unit guard fails if a straight apostrophe appears in those texts.
+- This switch is before the first production hash, so draft versions stay `v0.2 DRAFT` / `v0.1-draft` with updated hashes (`npm run policies` regenerates `policies.generated.ts` and the seed migration).
+- After a version is live, any text change, including typography, must bump the version.
+
+### Download my data lead (Rev 6)
+- When the photos row is shown: "One ZIP file with your data and photos. Data is in common file formats (JSON and CSV)."
+- When the photos row is hidden (16–17s, or an adult with 0 photos): "One ZIP file with your data. Data is in common file formats (JSON and CSV)."
 
 ## Kevin flags (not yet decided)
 
@@ -91,7 +125,7 @@ These are config flags in `src/progress/phase5Flags.ts` so the rest of the logic
 
 1. **EXIF re-strip vs device-only key.** Counsel chose encrypt-before-upload plus per-user key destruction within 30 days (envelope-style shreddable key, not a device-only key the server can never destroy). Client strip before upload is required. Server re-strip is not required in this review.
 2. **PhotoDNA / hash matching.** "Run hash matching on shared copies. The vendor is already listed in Privacy Policy §8.1." The hook is `finalize_shared_photo_copy`. Actual vendor wiring remains later.
-3. **Coaches seeing ciphertext weigh-in rows after the share toggle.** Not answered in this review; still open.
+3. **Coaches seeing ciphertext weigh-in rows after the share toggle.** Answered in the Rev 3 addendum: fully hidden unless the client has turned on sharing for that coach. Applied above.
 
 Approved in-app and policy copy from the review (opt-in sheets, lock strings, turn-off / delete-all confirms, v0.3 policy wording, export and teen-weight copy) was not seeded into `src/legal/policies/` or `legal_text_versions` in this pass, so existing hash tests stay green. The strings live in the client helpers for when Paper / Legal text land.
 
@@ -99,11 +133,10 @@ Approved in-app and policy copy from the review (opt-in sheets, lock strings, tu
 - No new Progress, Home, or Photos screens (those wait for Paper).
 - No victory-native chart UI, no HealthKit / Health Connect sync.
 - No actual PhotoDNA vendor integration (hook only), no on-image watermark renderer (shared copies are flagged watermarked by the finalize hook).
-- No ops wiring or alerts for the daily purge job (the shred function and deadline tests are in place).
+- Policy markdown / `legal_text_versions` **v0.3 is not published** by Counsel (privacy and health policies remain v0.2 DRAFT). This pass does not invent or seed v0.3 copy.
 - No field-level shred for "Clear weight" while Health stays on, so that toast does not claim a calendar date.
 - No server-computed body-weight EMA: weigh-ins are ciphertext, so aggregates run in the TS library on decrypted or still-on-device points until a decrypting worker exists.
 - Strength and cardio coach-sharing toggles (separate from body weight) are not wired yet.
-- Policy markdown / `legal_text_versions` v0.3 wording is not seeded yet.
 
 ## Open questions
 
@@ -120,4 +153,4 @@ Approved in-app and policy copy from the review (opt-in sheets, lock strings, tu
 10. Lose fat on the adult AI quiz (carried forward).
 
 ### For Counsel
-1. Coaches can currently `SELECT` ciphertext weigh-in rows after the athlete opts in (no decrypt key). Is exposing ciphertext and the weigh-in date acceptable, or should even the row be hidden until a view function mediates it?
+1. ~~Coaches seeing ciphertext weigh-in rows.~~ Answered in the Rev 3 addendum (fully hidden unless sharing is on for that coach).
