@@ -8,6 +8,7 @@ import { resolveColors, resolveTheme } from '../../src/theme/resolve.ts';
 import {
   ACCENT_KEYS,
   DEFAULT_ACCENT,
+  DEFAULT_AURORA_PRESET,
   DEFAULT_FAMILY,
   accents,
   auroraRadius,
@@ -50,8 +51,11 @@ test('v2 resolveColors is unchanged for every accent and both schemes', () => {
   }
 });
 
-test('resolveTheme with family v2 matches resolveColors (default family is v2)', () => {
-  assert.equal(DEFAULT_FAMILY, 'v2');
+test('default family is Aurora Midnight; Classic v2 is still resolvable', () => {
+  assert.equal(DEFAULT_FAMILY, 'aurora');
+  assert.equal(DEFAULT_AURORA_PRESET, 'midnight');
+  assert.equal(resolveTheme('dark').bg, midnight.bg);
+  assert.equal(resolveTheme('light').bg, grove.bg);
   assert.deepEqual(resolveTheme('dark', 'v2', DEFAULT_ACCENT), resolveColors('dark', DEFAULT_ACCENT));
   assert.deepEqual(resolveTheme('light', 'v2', 'volt'), resolveColors('light', 'volt'));
 });
