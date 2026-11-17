@@ -5,10 +5,19 @@
 export const PHOTO_PURGE_DAYS = 30;
 
 /**
- * Set true only together with a test that the daily purge shreds due keys by
- * the 30-day deadline (see supabase/tests/phase5.sql and app.photo_purge_deadline_guaranteed).
+ * The server function app.photo_purge_deadline_guaranteed() is the source of truth:
+ * true only when the daily job is confirmed running (successful run in the last 25 hours)
+ * and no photo shred is overdue. See public.retention_purge_health() and the runbook.
  */
-export const PHOTO_PURGE_DEADLINE_GUARANTEED = true;
+export type PurgeHealth = {
+  jobConfirmedRunning: boolean;
+  overduePhotoKeys: number;
+  policyEnforced?: boolean;
+};
+
+export function photoPurgeDeadlineGuaranteed(health: PurgeHealth): boolean {
+  return (health.policyEnforced ?? true) && health.jobConfirmedRunning === true && health.overduePhotoKeys === 0;
+}
 
 /**
  * "Clear weight" while Health stays on only nulls the live value; the health

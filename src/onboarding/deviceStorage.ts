@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ExpoCrypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { createAnalyticsInstallId } from '../analytics/installId.ts';
 import { createDeviceFlags } from './deviceFlags.ts';
 import { createDeviceSetupStore, type KeyValueAdapter } from './deviceSetupStore.ts';
 
@@ -49,3 +50,6 @@ export const deviceSetupStore = createDeviceSetupStore({
 
 /** Goal-done marker + per-install rate-limit id (AsyncStorage; neither is secret). */
 export const deviceFlags = createDeviceFlags(asyncAdapter, () => ExpoCrypto.randomUUID());
+
+/** Crash/analytics install ID only. Reset on sign-out and account deletion. Never joined to the account. */
+export const analyticsInstallId = createAnalyticsInstallId(asyncAdapter, () => ExpoCrypto.randomUUID());

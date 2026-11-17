@@ -12,12 +12,12 @@ import {
   planPhotoExport,
 } from '../../src/progress/photoExport.ts';
 import {
-  PHOTO_PURGE_DEADLINE_GUARANTEED,
   PHOTO_PURGE_DAYS,
   TEEN_WEIGHT_CLEAR_PURGE_DEADLINE_GUARANTEED,
   canShowPurgeDate,
   deleteAllPhotosToast,
   formatPurgeDate,
+  photoPurgeDeadlineGuaranteed,
   purgeDate,
   teenClearWeightToast,
   turnOffPhotosToast,
@@ -92,8 +92,10 @@ test('export strips location and device metadata again, and never burns in weigh
 
 test('purge {date} is request + 30 days and is shown only when the job guarantees it', () => {
   assert.equal(PHOTO_PURGE_DAYS, 30);
-  assert.equal(PHOTO_PURGE_DEADLINE_GUARANTEED, true);
-  assert.equal(canShowPurgeDate(true), true);
+  assert.equal(photoPurgeDeadlineGuaranteed({ jobConfirmedRunning: true, overduePhotoKeys: 0 }), true);
+  assert.equal(photoPurgeDeadlineGuaranteed({ jobConfirmedRunning: false, overduePhotoKeys: 0 }), false);
+  assert.equal(photoPurgeDeadlineGuaranteed({ jobConfirmedRunning: true, overduePhotoKeys: 1 }), false);
+  assert.equal(canShowPurgeDate(photoPurgeDeadlineGuaranteed({ jobConfirmedRunning: true, overduePhotoKeys: 0 })), true);
   assert.equal(canShowPurgeDate(false), false);
   const requestAt = new Date(Date.UTC(2026, 10, 16));
   assert.equal(formatPurgeDate(purgeDate(requestAt)), '2026-12-16');
