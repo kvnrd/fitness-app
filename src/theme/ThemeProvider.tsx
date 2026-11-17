@@ -85,6 +85,7 @@ export type Theme = {
   motion: typeof motion;
   reducedMotion: boolean;
   /** Dev preview only (screenshots): forces the resolved scheme without touching the saved mode. null = off. */
+  schemeOverride: ColorScheme | null;
   setSchemeOverride: (scheme: ColorScheme | null) => void;
   /** Dev preview only: forces family / preset / hue without touching storage. */
   setPreviewOverride: (next: ThemePreviewOverride | null) => void;
@@ -202,6 +203,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       minControlSize,
       motion,
       reducedMotion,
+      schemeOverride,
       setSchemeOverride,
       setPreviewOverride,
       hydrated,
@@ -219,6 +221,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       resolvedHue,
       setCustomHue,
       reducedMotion,
+      schemeOverride,
       setPreviewOverride,
       hydrated,
     ],

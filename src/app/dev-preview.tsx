@@ -30,7 +30,7 @@ function Preview() {
     hue?: string;
   }>();
   const grow = full === '1';
-  const { resolvedScheme, family: curFamily, auroraPreset, customHue, setPreviewOverride } = useTheme();
+  const { resolvedScheme, family: curFamily, auroraPreset, customHue, setPreviewOverride, colors } = useTheme();
   const want: ColorScheme = scheme === 'light' ? 'light' : 'dark';
   const wantFamily: ThemeFamily | undefined = isThemeFamily(family) ? family : undefined;
   const wantPreset: AuroraPreset | undefined = isAuroraPreset(preset) ? preset : undefined;
@@ -56,6 +56,17 @@ function Preview() {
     }, 300);
     return () => clearInterval(t);
   }, [grow]);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const prevBody = document.body.style.background;
+    const prevHtml = document.documentElement.style.background;
+    document.body.style.background = colors.bg;
+    document.documentElement.style.background = colors.bg;
+    return () => {
+      document.body.style.background = prevBody;
+      document.documentElement.style.background = prevHtml;
+    };
+  }, [colors.bg]);
   const render = typeof screen === 'string' ? PREVIEW_SCREENS[screen] : undefined;
   const familyReady = !wantFamily || curFamily === wantFamily;
   const presetReady = !wantPreset || auroraPreset === wantPreset;
@@ -64,5 +75,5 @@ function Preview() {
     return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
   }
   if (!render) return <Redirect href="/" />;
-  return grow ? <FullHeightContext.Provider value><View nativeID="preview-full" style={{ minHeight: 844 }}>{render()}</View></FullHeightContext.Provider> : render();
+  return grow ? <FullHeightContext.Provider value><View nativeID="preview-full" style={{ minHeight: 844, backgroundColor: colors.bg }}>{render()}</View></FullHeightContext.Provider> : render();
 }

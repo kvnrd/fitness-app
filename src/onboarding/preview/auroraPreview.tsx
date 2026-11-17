@@ -8,6 +8,7 @@ import { AuroraTabBar, AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTab
 import { AppearanceSettingsScreen } from '../../settings/screens/AppearanceSettings';
 import { useAppStore } from '../../state/AppStore';
 import { setPreviewToday } from '../../theme/dayLabels.ts';
+import { useTheme } from '../../theme/ThemeProvider';
 import { setPreviewWorkoutDay } from '../../preview/flags.ts';
 import type { DayKey, DayLog } from '../../data/types';
 
@@ -83,8 +84,9 @@ function FakeTabBar({ active }: { active: 'index' | 'train' | 'progress' | 'prof
 }
 
 function WithTabs({ active, children }: { active: 'index' | 'train' | 'progress' | 'profile'; children: ReactElement }) {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, minHeight: 844, paddingBottom: AURORA_TAB_BAR_RESERVE }}>
+    <View style={{ flex: 1, minHeight: 844, paddingBottom: AURORA_TAB_BAR_RESERVE, backgroundColor: colors.bg }}>
       {children}
       <FakeTabBar active={active} />
     </View>

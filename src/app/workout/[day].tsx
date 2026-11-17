@@ -31,12 +31,12 @@ export default function WorkoutDayScreen() {
 
   useEffect(() => {
     if (!aurora || process.env.EXPO_PUBLIC_SCREEN_PREVIEW !== '1') return;
+    if (done === 0 || rest) return;
     const ex = w.exercises[0];
-    if (done > 0 && ex?.restSeconds) {
+    if (ex?.restSeconds) {
       setRest({ remaining: 102, total: ex.restSeconds, nextLabel: 'set 4 next' });
     }
-    // empty preview stays without a ring
-  }, []);
+  }, [aurora, done, rest, w]);
 
   useEffect(() => {
     if (!rest) return;

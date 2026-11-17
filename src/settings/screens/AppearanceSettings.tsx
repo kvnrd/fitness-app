@@ -235,6 +235,7 @@ export function AppearanceSettingsScreen({ onBack }: { onBack: () => void }) {
     setFamily,
     mode,
     setMode,
+    schemeOverride,
     resolvedScheme,
     auroraPreset,
     setAuroraPreset,
@@ -247,6 +248,7 @@ export function AppearanceSettingsScreen({ onBack }: { onBack: () => void }) {
     fonts,
   } = useTheme();
   const aurora = family === 'aurora';
+  const modeShown = schemeOverride ?? mode;
 
   const wheelHue = auroraPreset === 'custom' ? customHue : AURORA_PRESET_HUE[auroraPreset];
   const wheelLabel =
@@ -311,7 +313,7 @@ export function AppearanceSettingsScreen({ onBack }: { onBack: () => void }) {
         </Text>
         <Segment
           aurora={aurora}
-          value={mode}
+          value={modeShown}
           onChange={setMode}
           options={MODE_OPTIONS.map((o) => ({ value: o.mode, label: o.label }))}
         />
