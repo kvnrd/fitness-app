@@ -59,7 +59,7 @@ export function EqualActions({
         paddingHorizontal: space.sm,
       }}
     >
-      <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: !equal && primary ? colors.accentInk : colors.text }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: !equal && primary ? colors.accentText : colors.text }}>{label}</Text>
     </Pressable>
   );
   return (

@@ -112,7 +112,7 @@ export function ImportConfirmScreen({
             accessibilityLabel={IMPORT_ADD}
             style={{ flex: 1, minHeight: minControlSize, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.input ?? 12 }}
           >
-            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.accentInk }}>{IMPORT_ADD}</Text>
+            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 16, color: colors.accentText }}>{IMPORT_ADD}</Text>
           </Pressable>
         </View>
       </View>
