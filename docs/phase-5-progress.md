@@ -102,7 +102,7 @@ This branch also applies Counsel's Phase 5 review (Nov 16, 2026) and Rev 2 (10:5
 
 ### Curly apostrophes (Rev 6)
 - Bundled legal policies and hashed consent texts use curly apostrophes (U+2019). The version hash is of the exact characters shown. A unit guard fails if a straight apostrophe appears in those texts.
-- This switch is before the first production hash, so draft versions stay `v0.2 DRAFT` / `v0.1-draft` with updated hashes (`npm run policies` regenerates `policies.generated.ts` and the seed migration).
+- Counsel later published Privacy Policy and Consumer Health Data Privacy Policy v0.3 DRAFT and Terms of Service v0.2 DRAFT. Those are bundled and hashed (`privacy-policy-v0.3-draft`, `health-policy-v0.3-draft`, Terms `v0.2-draft`). `npm run policies` regenerates `policies.generated.ts` and the seed migration. Acceptances stay pre-production and must be repeated before launch.
 - After a version is live, any text change, including typography, must bump the version.
 
 ### Download my data lead (Rev 6)
@@ -127,13 +127,13 @@ These are config flags in `src/progress/phase5Flags.ts` so the rest of the logic
 2. **PhotoDNA / hash matching.** "Run hash matching on shared copies. The vendor is already listed in Privacy Policy §8.1." The hook is `finalize_shared_photo_copy`. Actual vendor wiring remains later.
 3. **Coaches seeing ciphertext weigh-in rows after the share toggle.** Answered in the Rev 3 addendum: fully hidden unless the client has turned on sharing for that coach. Applied above.
 
-Approved in-app and policy copy from the review (opt-in sheets, lock strings, turn-off / delete-all confirms, v0.3 policy wording, export and teen-weight copy) was not seeded into `src/legal/policies/` or `legal_text_versions` in this pass, so existing hash tests stay green. The strings live in the client helpers for when Paper / Legal text land.
+Counsel's published Privacy Policy v0.3 DRAFT, Consumer Health Data Privacy Policy v0.3 DRAFT, and Terms of Service v0.2 DRAFT are now the bundled policy sources in `src/legal/policies/` and the `legal_text_versions` seed. In-app opt-in sheets, lock strings, and confirm copy still live in the client helpers.
 
 ## What this pass did not build
 - No new Progress, Home, or Photos screens (those wait for Paper).
 - No victory-native chart UI, no HealthKit / Health Connect sync.
 - No actual PhotoDNA vendor integration (hook only), no on-image watermark renderer (shared copies are flagged watermarked by the finalize hook).
-- Policy markdown / `legal_text_versions` **v0.3 is not published** by Counsel (privacy and health policies remain v0.2 DRAFT). This pass does not invent or seed v0.3 copy.
+- Policy markdown and `legal_text_versions` now carry Counsel's published Privacy / Health v0.3 DRAFT and Terms v0.2 DRAFT. AI consent versions are `ai-B-2026-11-16-draft` (and the teen / parent siblings) so the list includes training schedule (days and session length).
 - No field-level shred for "Clear weight" while Health stays on, so that toast does not claim a calendar date.
 - No server-computed body-weight EMA: weigh-ins are ciphertext, so aggregates run in the TS library on decrypted or still-on-device points until a decrypting worker exists.
 - Strength and cardio coach-sharing toggles (separate from body weight) are not wired yet.
