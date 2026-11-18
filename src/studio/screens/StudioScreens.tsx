@@ -261,7 +261,7 @@ export function ClientAdultScreen({ photos = false, deleteAsk = false }: { photo
   );
 }
 
-function ClientAdultBody({ photos = false, deleteAsk = false }: { photos?: boolean; deleteAsk?: boolean }) {
+export function ClientAdultBody({ photos = false, deleteAsk = false }: { photos?: boolean; deleteAsk?: boolean }) {
   const { colors } = useTheme();
   return (
     <View>

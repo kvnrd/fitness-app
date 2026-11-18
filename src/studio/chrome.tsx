@@ -53,7 +53,20 @@ export function Phase6Shell({
 }
 
 /** Bottom sheet over a dimmed screen. Sits above the tab bar; use with hideTab. */
-export function SheetOverlay({ title, body, children }: { title: string; body?: string; children?: ReactNode }) {
+export function SheetOverlay({
+  title,
+  body,
+  bodyStyle,
+  children,
+  top,
+}: {
+  title: string;
+  body?: string;
+  bodyStyle?: object;
+  children?: ReactNode;
+  /** Pin the sheet from this offset to the bottom, as in tall official sheets (e.g. 62). */
+  top?: number;
+}) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -73,12 +86,14 @@ export function SheetOverlay({ title, body, children }: { title: string; body?: 
           paddingHorizontal: 20,
           paddingBottom: Math.max(insets.bottom, 28),
           zIndex: 31,
+          overflow: 'hidden',
+          ...(top != null ? { position: 'absolute' as const, left: 0, right: 0, top, bottom: 0 } : {}),
         }}
       >
         <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 14 }} />
         <Text variant="heading">{title}</Text>
         {body ? (
-          <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>
+          <Text variant="small" color={colors.textMuted} style={[{ marginTop: 8 }, bodyStyle]}>
             {body}
           </Text>
         ) : null}

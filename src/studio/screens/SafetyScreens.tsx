@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
@@ -16,7 +16,7 @@ import {
   SwitchRow,
   TextLink,
 } from '../chrome';
-import { ClientAdultScreen, StudioClientsScreen } from './StudioScreens';
+import { ClientAdultBody, ClientAdultScreen, StudioClientsScreen } from './StudioScreens';
 import { ClientViewCustomScreen } from './LibraryScreens';
 
 const FIVE_TEN =
@@ -305,36 +305,54 @@ export function CoachDeletionConfirmScreen({ filled = false, ready = false }: { 
     'Copies in other apps or tools (email, spreadsheets, cloud drives)': 'Deleted',
     'Records the law requires me to keep, for example payment records': 'Kept only what’s required',
   } : {};
+  const attest = 'I confirm I’ve deleted every copy of Kevin’s data I had, in and outside [App], and kept none except records the law requires.';
   return (
-    <Phase6Shell tab={3} hideTab>
-      <BackRow title="Studio" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Confirm deletion</Text>
-      <Muted>Under the Coach Terms, you must delete every copy of Kevin’s data by Dec 17, including anything saved outside [App]. Your access has already ended. Mark each item, then confirm.</Muted>
-      <GlassCard>
-        <View style={{ padding: 12 }}>
-          {ITEMS.map((it, i) => (
-            <View key={it.label} style={{ flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 7, borderTopWidth: i ? 1 : 0, borderTopColor: colors.border }}>
-              <Text variant="small" style={{ flex: 1 }}>{it.label}</Text>
-              <Chip label={it.a} on={picks[it.label] === it.a} />
-              <Chip label={it.b} on={picks[it.label] === it.b} />
+    <Phase6Shell
+      tab={3}
+      hideTab
+      overlay={
+        <SheetOverlay
+          top={70}
+          title="Confirm you’ve deleted Kevin’s data"
+          body="Under the Coach Terms, you must delete every copy of Kevin’s data by Dec 17, including anything saved outside [App]. Your access has already ended. Mark each item, then confirm."
+          bodyStyle={{ marginTop: 4 }}
+        >
+          <GlassCard style={{ borderRadius: 20, marginTop: 8 }}>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 2 }}>
+              {ITEMS.map((it, i) => (
+                <View key={it.label} style={{ flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 7, borderTopWidth: i ? 1 : 0, borderTopColor: colors.glassBorder }}>
+                  <Text variant="small" style={{ flex: 1 }}>{it.label}</Text>
+                  <Chip label={it.a} on={picks[it.label] === it.a} />
+                  <Chip label={it.b} on={picks[it.label] === it.b} />
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
-      </GlassCard>
-      <SwitchRow
-        label="I confirm I’ve deleted every copy of Kevin’s data I had, in and outside [App], and kept none except records the law requires."
-        on={ready}
-        a11y="I confirm I’ve deleted every copy of Kevin’s data I had, in and outside [App], and kept none except records the law requires."
-      />
-      {!filled && !ready ? (
-        <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: colors.surfaceRaised }}>
-          <Text variant="small">Mark each item, then turn on the confirmation. Confirm deletion saves whatever the switch says. You can only submit when every row is answered and the switch is on.</Text>
-        </View>
-      ) : null}
-      {filled && !ready ? (
-        <Text variant="label" color={colors.textMuted} style={{ marginTop: 8 }}>Confirm deletion works when every row is answered and the switch is on. The switch starts off.</Text>
-      ) : null}
-      <EqualRow left="I’ll do this later" right="Confirm deletion" />
+          </GlassCard>
+          <GlassCard style={{ borderRadius: 20, marginTop: 8 }}>
+            <View style={{ paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+              <Text variant="small" style={{ flex: 1 }}>{attest}</Text>
+              <Switch
+                value={ready}
+                onValueChange={() => undefined}
+                accessibilityLabel={attest}
+                trackColor={{ false: colors.borderStrong, true: colors.accent }}
+                thumbColor={ready ? colors.accentText : colors.surfaceRaised}
+              />
+            </View>
+          </GlassCard>
+          {ready && !filled ? (
+            <View style={{ marginTop: 10, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surfaceRaised }}>
+              <Text variant="small">Mark each item, then turn on the confirmation. Confirm deletion saves whatever the switch says. You can only submit when every row is answered and the switch is on.</Text>
+            </View>
+          ) : null}
+          {filled && !ready ? (
+            <Text variant="label" color={colors.textMuted} style={{ marginTop: 8 }}>Confirm deletion works when every row is answered and the switch is on. The switch starts off.</Text>
+          ) : null}
+          <EqualRow left="I’ll do this later" right="Confirm deletion" />
+        </SheetOverlay>
+      }
+    >
+      <ClientAdultBody deleteAsk />
     </Phase6Shell>
   );
 }
