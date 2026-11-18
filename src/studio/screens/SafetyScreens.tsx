@@ -233,26 +233,47 @@ export function UploadsSuspendedScreen() {
   );
 }
 
-export function AskCoachDeleteScreen() {
+function AskCoachDeleteBody() {
   const { colors } = useTheme();
   return (
-    <Phase6Shell athleteTab={3}>
+    <>
       <BackRow title="Privacy" />
-      <Text variant="title" accessibilityRole="header">Ask Alex to delete your data</Text>
-      <Muted>We’ll tell Alex to delete every copy of your data within 30 days, including anything saved outside [App], as our Coach Terms require. Coaching with Alex ends, and Alex loses access right away. We also remove anything of yours we kept for Alex.</Muted>
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>Alex must confirm the deletion by Dec 17. We remove Alex’s access now, without waiting for Alex. Coaches don’t get a copy or export of your data from us. There is no parent export.</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Ask Alex to delete your data</Text>
+      <Muted style={{ marginTop: 8 }}>We’ll tell Alex to delete every copy of your data within 30 days, including anything saved outside [App], as our Coach Terms require. Coaching with Alex ends, and Alex loses access right away. We also remove anything of yours we kept for Alex in [App]. Your own account and history stay unless you delete them in Your privacy rights.</Muted>
+      <GlassCard style={{ borderRadius: 24 }}>
+        <View style={{ padding: 16 }}>
+          <Text variant="body">What happens next</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>Alex must confirm the deletion by Dec 17. We remove Alex’s access now, without waiting for Alex. Coaches don’t get a copy or export of your data from us. There is no parent export.</Text>
+        </View>
+      </GlassCard>
       <EqualRow left="Not now" right="Continue" />
+    </>
+  );
+}
+
+export function AskCoachDeleteScreen() {
+  return (
+    <Phase6Shell athleteTab={3}>
+      <AskCoachDeleteBody />
     </Phase6Shell>
   );
 }
 
 export function AskCoachDeleteConfirmScreen() {
   return (
-    <Phase6Shell athleteTab={3} hideTab>
-      <BackRow title="Privacy" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>End coaching and ask Alex to delete?</Text>
-      <Muted>This ends coaching with Alex right away and asks Alex to delete every copy. You can still use [App] and download your own data from Download my data first if you want a copy.</Muted>
-      <EqualRow left="Keep coaching" right="End and ask Alex to delete" danger stacked />
+    <Phase6Shell
+      athleteTab={3}
+      hideTab
+      overlay={
+        <SheetOverlay
+          title="Send this request?"
+          body="This ends coaching with Alex right away and asks Alex to delete every copy. You can still use [App] and download your own data from Download my data first if you want a copy."
+        >
+          <EqualRow left="Not now" right="Send request" danger stacked />
+        </SheetOverlay>
+      }
+    >
+      <AskCoachDeleteBody />
     </Phase6Shell>
   );
 }
@@ -313,7 +334,7 @@ export function CoachDeletionConfirmScreen({ filled = false, ready = false }: { 
       {filled && !ready ? (
         <Text variant="label" color={colors.textMuted} style={{ marginTop: 8 }}>Confirm deletion works when every row is answered and the switch is on. The switch starts off.</Text>
       ) : null}
-      <EqualRow left="Not now" right="Confirm deletion" />
+      <EqualRow left="I’ll do this later" right="Confirm deletion" />
     </Phase6Shell>
   );
 }
