@@ -164,12 +164,14 @@ export function SettingsRow({
   sub,
   first,
   accentChevron,
+  highlight,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   sub?: string;
   first?: boolean;
   accentChevron?: boolean;
+  highlight?: boolean;
 }) {
   const { colors } = useTheme();
   return (
@@ -181,8 +183,17 @@ export function SettingsRow({
         gap: 12,
         paddingVertical: 10,
         paddingHorizontal: 16,
-        borderTopWidth: first ? 0 : 1,
+        borderTopWidth: first || highlight ? 0 : 1,
         borderTopColor: colors.border,
+        ...(highlight
+          ? {
+              backgroundColor: colors.surfaceRaised,
+              borderRadius: 16,
+              borderWidth: 2,
+              borderColor: colors.accent,
+              margin: 8,
+            }
+          : {}),
       }}
     >
       <Ionicons name={icon} size={20} color={colors.textMuted} />
@@ -199,16 +210,69 @@ export function SettingsRow({
   );
 }
 
-export function PrimaryButton({ label, disabled, onPress = noop }: { label: string; disabled?: boolean; onPress?: () => void }) {
-  return <Button label={label} disabled={disabled} onPress={onPress} style={{ marginTop: space.md }} />;
+export function PrimaryButton({ label, disabled, onPress = noop, style }: { label: string; disabled?: boolean; onPress?: () => void; style?: object }) {
+  return <Button label={label} disabled={disabled} onPress={onPress} style={[{ marginTop: space.md }, style]} />;
 }
 
-export function TextLink({ label }: { label: string }) {
+export function TextLink({ label, style }: { label: string; style?: object }) {
   const { colors } = useTheme();
   return (
-    <Text variant="small" color={colors.accentInk} style={{ marginTop: 12, textAlign: 'center', fontWeight: '600' }}>
+    <Text variant="small" color={colors.accentInk} style={[{ marginTop: 12, textAlign: 'center', fontWeight: '600' }, style]}>
       {label}
     </Text>
+  );
+}
+
+export function Toast({ message }: { message: string }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      accessibilityRole="alert"
+      style={{
+        position: 'absolute',
+        left: 20,
+        right: 20,
+        bottom: 104,
+        minHeight: 56,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.glassBorder,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        zIndex: 40,
+      }}
+    >
+      <Ionicons name="checkmark-circle" size={22} color={colors.accentInk} />
+      <Text variant="small" style={{ flex: 1 }}>{message}</Text>
+    </View>
+  );
+}
+
+export function DemoFigure({ w = 48, h = 48 }: { w?: number; h?: number }) {
+  const { colors } = useTheme();
+  const head = Math.max(12, Math.round(w * 0.38));
+  const bodyW = Math.max(18, Math.round(w * 0.55));
+  const bodyH = Math.max(16, Math.round(h * 0.42));
+  return (
+    <View
+      style={{
+        width: w,
+        height: h,
+        borderRadius: 14,
+        backgroundColor: colors.photo,
+        borderWidth: 1.5,
+        borderColor: colors.faint,
+        overflow: 'hidden',
+        alignItems: 'center',
+      }}
+    >
+      <View style={{ width: head, height: head, borderRadius: head / 2, backgroundColor: colors.figure, marginTop: h * 0.16 }} />
+      <View style={{ width: bodyW, height: bodyH, borderRadius: 12, backgroundColor: colors.figure, marginTop: 4 }} />
+    </View>
   );
 }
 
@@ -219,7 +283,9 @@ export function EqualRow({ left, right, danger, stacked }: { left: string; right
       accessibilityRole="button"
       accessibilityLabel={label}
       style={{
-        flex: stacked ? undefined : 1,
+        flex: stacked || !right ? undefined : 1,
+        alignSelf: right ? undefined : 'stretch',
+        width: right ? undefined : '100%',
         minHeight: 56,
         borderRadius: 28,
         alignItems: 'center',
@@ -235,7 +301,7 @@ export function EqualRow({ left, right, danger, stacked }: { left: string; right
     </Pressable>
   );
   if (!right) {
-    return <View style={{ marginTop: 12 }}>{btn(left)}</View>;
+    return <View style={{ marginTop: 12 }}><View style={{ alignSelf: 'stretch' }}>{btn(left)}</View></View>;
   }
   return (
     <View style={{ marginTop: 12, flexDirection: stacked ? 'column' : 'row', gap: stacked ? 10 : 12 }}>{btn(left)}{btn(right, danger)}</View>
@@ -418,11 +484,13 @@ export function Caption({ children, style }: { children: string; style?: object 
   );
 }
 
-export function Field({ label, value, placeholder }: { label: string; value?: string; placeholder?: string }) {
+export function Field({ label, value, placeholder, mutedValue, tight }: { label: string; value?: string; placeholder?: string; mutedValue?: boolean; tight?: boolean }) {
   const { colors } = useTheme();
+  const shown = value || placeholder || '';
+  const filled = Boolean(value);
   return (
-    <View style={{ marginTop: 14 }}>
-      <Text variant="label" color={colors.textMuted} style={{ marginBottom: 6 }}>
+    <View style={{ marginTop: tight ? 4 : 14 }}>
+      <Text variant="label" color={colors.textMuted} style={{ marginBottom: tight ? 2 : 6 }}>
         {label}
       </Text>
       <View
@@ -436,8 +504,8 @@ export function Field({ label, value, placeholder }: { label: string; value?: st
           borderColor: colors.glassBorder,
         }}
       >
-        <Text variant="body" color={value ? colors.text : colors.placeholder}>
-          {value || placeholder || ''}
+        <Text variant="body" color={filled && !mutedValue ? colors.text : colors.placeholder}>
+          {shown}
         </Text>
       </View>
     </View>
