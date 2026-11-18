@@ -49,16 +49,20 @@ export function PrimaryCta({
       ]}
     >
       {!disabled ? (
-        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" preserveAspectRatio="none">
-          <Defs>
-            <LinearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={metal[0]} />
-              <Stop offset="0.5" stopColor={metal[1]} />
-              <Stop offset="1" stopColor={metal[2]} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#cta)" />
-        </Svg>
+        // The gradient gets its own full-size layer. Drawn straight into the Pressable, iOS sized the
+        // Svg's 100% inside the 24/8 padding and left a dark strip behind the arrow.
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Svg width="100%" height="100%" preserveAspectRatio="none">
+            <Defs>
+              <LinearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={metal[0]} />
+                <Stop offset="0.5" stopColor={metal[1]} />
+                <Stop offset="1" stopColor={metal[2]} />
+              </LinearGradient>
+            </Defs>
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#cta)" />
+          </Svg>
+        </View>
       ) : null}
       <Text
         importantForAccessibility="no"
