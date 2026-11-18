@@ -11,6 +11,7 @@ import {
   GlassCard,
   Phase6Shell,
   PrimaryButton,
+  SheetOverlay,
   SwitchRow,
   TextLink,
 } from '../chrome';
@@ -64,11 +65,19 @@ function Chip({ label, on }: { label: string; on?: boolean }) {
 
 export function ReportVideoScreen() {
   return (
-    <Phase6Shell athleteTab={1}>
-      <ClientViewCustomScreen />
-      <Sheet title="Report this video?" body="Tell us why. We review reports and may hide the video while we look. Reports made in bad faith can lead to limits on an account.">
-        <EqualRow left="Cancel" right="Choose a reason" />
-      </Sheet>
+    <Phase6Shell
+      athleteTab={1}
+      hideTab
+      overlay={
+        <SheetOverlay
+          title="Report this video?"
+          body="Tell us why. We review reports and may hide the video while we look. Reports made in bad faith can lead to limits on an account."
+        >
+          <EqualRow left="Cancel" right="Choose a reason" />
+        </SheetOverlay>
+      }
+    >
+      <ClientViewCustomScreen embedded />
     </Phase6Shell>
   );
 }

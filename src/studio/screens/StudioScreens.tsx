@@ -12,6 +12,7 @@ import {
   GlassCard,
   Phase6Shell,
   PrimaryButton,
+  SheetOverlay,
   SettingsRow,
   SwitchRow,
   TextLink,
@@ -378,14 +379,19 @@ export function ClientTeenScreen() {
 
 export function EndRelationshipScreen() {
   return (
-    <Phase6Shell tab={3}>
+    <Phase6Shell
+      tab={3}
+      hideTab
+      overlay={
+        <SheetOverlay
+          title="End coaching with Kevin?"
+          body="Your access to Kevin’s shared data ends right away. Under the Coach Terms, delete every copy you have, including anything saved outside [App], by Dec 17. You don’t get an export."
+        >
+          <EqualRow left="Keep coaching" right="End and delete copies" danger stacked />
+        </SheetOverlay>
+      }
+    >
       <ClientAdultInner />
-      <Sheet
-        title="End coaching with Kevin?"
-        body="Your access to Kevin’s shared data ends right away. Under the Coach Terms, delete every copy you have, including anything saved outside [App], by Dec 17. You don’t get an export."
-      >
-        <EqualRow left="Keep coaching" right="End and delete copies" danger stacked />
-      </Sheet>
     </Phase6Shell>
   );
 }
@@ -494,8 +500,45 @@ const EXERCISES = [
 
 export function PlanDayScreen({ add = false }: { add?: boolean }) {
   const { colors } = useTheme();
+  const addSheet = (
+    <SheetOverlay title="Add to Upper Push">
+          <GlassCard style={{ marginTop: 10 }}>
+            <View style={{ height: 44, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="search" size={20} color={colors.textMuted} />
+              <Text variant="body" color={colors.textMuted}>
+                Search 640 exercises
+              </Text>
+            </View>
+          </GlassCard>
+          <View style={{ flexDirection: 'row', gap: 4, marginTop: 10, padding: 4, borderRadius: 22, backgroundColor: colors.glass }}>
+            {['All', 'Default', 'My exercises'].map((s, i) => (
+              <View key={s} style={{ flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: i === 0 ? colors.tabOn : 'transparent' }}>
+                <Text variant="small" color={i === 0 ? colors.tabOnText : colors.text} style={{ fontWeight: '700' }}>
+                  {s}
+                </Text>
+              </View>
+            ))}
+          </View>
+          {[
+            ['Barbell bench press', 'Barbell · Push · Chest, triceps', 'Default'],
+            ['Half-kneeling landmine press', 'Landmine · Push · Shoulders', 'My exercise'],
+            ['Incline dumbbell press', 'Dumbbells · Push · Upper chest', 'Default'],
+          ].map(([n, m, b], i) => (
+            <View key={n} style={{ flexDirection: 'row', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: colors.border, alignItems: 'center' }}>
+              <Figure />
+              <View style={{ flex: 1 }}>
+                <Text variant="body">{n}</Text>
+                <Text variant="label" color={colors.textMuted}>
+                  {m}
+                </Text>
+              </View>
+              <Chip label={b} />
+            </View>
+          ))}
+    </SheetOverlay>
+  );
   return (
-    <Phase6Shell tab={3}>
+    <Phase6Shell tab={3} hideTab={add} overlay={add ? addSheet : undefined}>
       <BackRow title="This week" rightLabel="Save" />
       <Muted>Wednesday · Kevin</Muted>
       <Text variant="title" accessibilityRole="header">
@@ -534,43 +577,6 @@ export function PlanDayScreen({ add = false }: { add?: boolean }) {
       <Text variant="label" color={colors.textMuted} style={{ marginTop: 10 }}>
         A lock keeps Kevin from editing that exercise or its tempo. Unlocked changes show up in Activity, with no notification.
       </Text>
-      {add ? (
-        <Sheet title="Add to Upper Push">
-          <GlassCard style={{ marginTop: 10 }}>
-            <View style={{ height: 44, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name="search" size={20} color={colors.textMuted} />
-              <Text variant="body" color={colors.textMuted}>
-                Search 640 exercises
-              </Text>
-            </View>
-          </GlassCard>
-          <View style={{ flexDirection: 'row', gap: 4, marginTop: 10, padding: 4, borderRadius: 22, backgroundColor: colors.glass }}>
-            {['All', 'Default', 'My exercises'].map((s, i) => (
-              <View key={s} style={{ flex: 1, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: i === 0 ? colors.tabOn : 'transparent' }}>
-                <Text variant="small" color={i === 0 ? colors.tabOnText : colors.text} style={{ fontWeight: '700' }}>
-                  {s}
-                </Text>
-              </View>
-            ))}
-          </View>
-          {[
-            ['Barbell bench press', 'Barbell · Push · Chest, triceps', 'Default'],
-            ['Half-kneeling landmine press', 'Landmine · Push · Shoulders', 'My exercise'],
-            ['Incline dumbbell press', 'Dumbbells · Push · Upper chest', 'Default'],
-          ].map(([n, m, b], i) => (
-            <View key={n} style={{ flexDirection: 'row', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: colors.border, alignItems: 'center' }}>
-              <Figure />
-              <View style={{ flex: 1 }}>
-                <Text variant="body">{n}</Text>
-                <Text variant="label" color={colors.textMuted}>
-                  {m}
-                </Text>
-              </View>
-              <Chip label={b} />
-            </View>
-          ))}
-        </Sheet>
-      ) : null}
     </Phase6Shell>
   );
 }
@@ -808,8 +814,36 @@ export function CoachPicksScreen({ empty = false, full = false, add = false }: {
     { n: 'Pendulum squat', note: '“Use when you’re at Main gym.”', warn: true },
   ];
   const count = full ? 20 : 4;
+  const addSheet = (
+    <SheetOverlay title="Add a pick · 4 of 20">
+          <GlassCard style={{ marginTop: 10 }}>
+            <View style={{ height: 44, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="search" size={20} color={colors.textMuted} />
+              <Text variant="body" color={colors.textMuted}>
+                Search library
+              </Text>
+            </View>
+          </GlassCard>
+          {[
+            ['Front squat', 'Barbell · Squat · Quads'],
+            ['Landmine press, standing', 'Landmine · Push · Shoulders'],
+            ['Farmer’s carry', 'Dumbbells · Carry · Full body'],
+          ].map(([n, m], i) => (
+            <View key={n} style={{ flexDirection: 'row', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: colors.border, alignItems: 'center' }}>
+              <Figure />
+              <View style={{ flex: 1 }}>
+                <Text variant="body">{n}</Text>
+                <Text variant="label" color={colors.textMuted}>
+                  {m}
+                </Text>
+              </View>
+              <Chip label="Add" />
+            </View>
+          ))}
+    </SheetOverlay>
+  );
   return (
-    <Phase6Shell tab={3}>
+    <Phase6Shell tab={3} hideTab={add} overlay={add ? addSheet : undefined}>
       <BackRow title="Kevin" rightLabel="Done" />
       <Caption>Shown in Kevin’s Favorites</Caption>
       <Text variant="title" accessibilityRole="header">
@@ -852,34 +886,6 @@ export function CoachPicksScreen({ empty = false, full = false, add = false }: {
         <Text variant="label" color={colors.textMuted} style={{ marginTop: 8 }}>
           You’ve reached 20 of 20. Remove a pick to add another.
         </Text>
-      ) : null}
-      {add ? (
-        <Sheet title="Add a pick · 4 of 20">
-          <GlassCard style={{ marginTop: 10 }}>
-            <View style={{ height: 44, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name="search" size={20} color={colors.textMuted} />
-              <Text variant="body" color={colors.textMuted}>
-                Search library
-              </Text>
-            </View>
-          </GlassCard>
-          {[
-            ['Front squat', 'Barbell · Squat · Quads'],
-            ['Landmine press, standing', 'Landmine · Push · Shoulders'],
-            ['Farmer’s carry', 'Dumbbells · Carry · Full body'],
-          ].map(([n, m], i) => (
-            <View key={n} style={{ flexDirection: 'row', gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: colors.border, alignItems: 'center' }}>
-              <Figure />
-              <View style={{ flex: 1 }}>
-                <Text variant="body">{n}</Text>
-                <Text variant="label" color={colors.textMuted}>
-                  {m}
-                </Text>
-              </View>
-              <Chip label="Add" />
-            </View>
-          ))}
-        </Sheet>
       ) : null}
     </Phase6Shell>
   );

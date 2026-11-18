@@ -16,6 +16,7 @@ export function Phase6Shell({
   hideTab,
   athleteTab,
   scroll = true,
+  overlay,
 }: {
   children: ReactNode;
   tab?: number;
@@ -23,6 +24,7 @@ export function Phase6Shell({
   hideTab?: boolean;
   athleteTab?: number;
   scroll?: boolean;
+  overlay?: ReactNode;
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -45,7 +47,44 @@ export function Phase6Shell({
         <View style={[{ flex: 1 }, screenScrollContentStyle(colors.bg)]}>{body}</View>
       )}
       {hideTab ? null : athleteTab != null ? <AthleteTabBar on={athleteTab} /> : tab != null ? <CoachTabBar on={tab} locked={lockedStudio} /> : null}
+      {overlay}
     </ScreenBackground>
+  );
+}
+
+/** Bottom sheet over a dimmed screen. Sits above the tab bar; use with hideTab. */
+export function SheetOverlay({ title, body, children }: { title: string; body?: string; children?: ReactNode }) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      pointerEvents="box-none"
+      style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 30, justifyContent: 'flex-end' }}
+    >
+      <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(7,10,22,0.55)' }} />
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderTopLeftRadius: 40,
+          borderTopRightRadius: 40,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+          paddingTop: 10,
+          paddingHorizontal: 20,
+          paddingBottom: Math.max(insets.bottom, 28),
+          zIndex: 31,
+        }}
+      >
+        <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 14 }} />
+        <Text variant="heading">{title}</Text>
+        {body ? (
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>
+            {body}
+          </Text>
+        ) : null}
+        {children}
+      </View>
+    </View>
   );
 }
 

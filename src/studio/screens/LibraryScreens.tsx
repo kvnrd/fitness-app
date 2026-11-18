@@ -2,7 +2,6 @@ import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
-import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import {
   BackRow,
   Caption,
@@ -155,21 +154,44 @@ export function CreateDemoScreen() {
   );
 }
 
-/** Camera chrome is always dark, in both themes. */
+/** Camera chrome is always dark, in both themes. Copy and layout follow the rev 3 mockup. */
 export function RecordDemoScreen() {
   return (
-    <View style={{ flex: 1, backgroundColor: '#070A16' }}>
-      <ScreenBackground>
-        <View style={{ flex: 1, backgroundColor: '#070A16', paddingTop: 56, paddingHorizontal: 20 }}>
-          <Text variant="small" color="#F1F4FF">Demo · Front</Text>
-          <Text variant="title" color="#F1F4FF" accessibilityRole="header" style={{ marginTop: 4 }}>Record demo</Text>
-          <View style={{ flex: 1, marginTop: 16, borderRadius: 24, backgroundColor: '#12162A' }} />
-          <View style={{ alignItems: 'center', paddingVertical: 28 }}>
-            <View style={{ width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderColor: '#F1F4FF' }} />
-            <Text variant="small" color="#F1F4FF" style={{ marginTop: 12 }}>00:12</Text>
-          </View>
+    <View style={{ flex: 1, backgroundColor: '#070A16', minHeight: '100%' }}>
+      <View style={{ paddingTop: 62, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ height: 32, borderRadius: 16, paddingHorizontal: 10, gap: 6, backgroundColor: '#3A1020', flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FE7E70' }} />
+          <Text variant="label" color="#F1F4FF" style={{ fontWeight: '700' }}>00:12 / 00:30</Text>
         </View>
-      </ScreenBackground>
+        <View style={{ height: 32, borderRadius: 16, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.10)' }}>
+          <Text variant="label" color="#F1F4FF" style={{ fontWeight: '700' }}>Sound off</Text>
+        </View>
+      </View>
+      <View style={{ marginTop: 12, alignSelf: 'center', height: 28, borderRadius: 14, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: 'rgba(7,10,22,0.82)' }}>
+        <Text variant="label" color="#F1F4FF" style={{ fontWeight: '700' }}>Side view · keep your whole body in the box</Text>
+      </View>
+      <View style={{ flex: 1, marginHorizontal: 36, marginTop: 16, marginBottom: 210, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#8FA3FF', borderRadius: 8 }} />
+      <View style={{ position: 'absolute', left: '50%', top: 210, marginLeft: -22, width: 44, height: 44, borderRadius: 22, backgroundColor: '#5B6690' }} />
+      <View style={{ position: 'absolute', left: '50%', top: 260, marginLeft: -45, width: 90, height: 200, borderRadius: 40, backgroundColor: '#5B6690', opacity: 0.9 }} />
+      <View style={{ position: 'absolute', left: 20, bottom: 150 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, borderRadius: 14, paddingHorizontal: 10, backgroundColor: 'rgba(7,10,22,0.82)', alignSelf: 'flex-start' }}>
+          <Ionicons name="checkmark-circle" size={16} color="#A9BAFF" />
+          <Text variant="label" color="#F1F4FF">Whole body in frame</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, borderRadius: 14, paddingHorizontal: 10, backgroundColor: 'rgba(7,10,22,0.82)', alignSelf: 'flex-start', marginTop: 6 }}>
+          <Ionicons name="checkmark-circle" size={16} color="#A9BAFF" />
+          <Text variant="label" color="#F1F4FF">No one else in shot</Text>
+        </View>
+      </View>
+      <View style={{ position: 'absolute', left: 20, right: 20, bottom: 118, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)' }}>
+        <View style={{ width: '40%', height: 4, borderRadius: 2, backgroundColor: '#8FA3FF' }} />
+      </View>
+      <View style={{ position: 'absolute', left: '50%', bottom: 36, marginLeft: -36, width: 72, height: 72, borderRadius: 36, borderWidth: 3, borderColor: '#F1F4FF', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#FE7E70' }} />
+      </View>
+      <Text variant="label" color="#AEB6D4" style={{ position: 'absolute', left: 20, right: 20, bottom: 14, textAlign: 'center' }}>
+        Demo for Half-kneeling landmine press
+      </Text>
     </View>
   );
 }
@@ -200,10 +222,10 @@ export function DemoPendingScreen() {
   );
 }
 
-export function ClientViewCustomScreen() {
+export function ClientViewCustomScreen({ embedded = false }: { embedded?: boolean }) {
   const { colors } = useTheme();
-  return (
-    <Phase6Shell athleteTab={1}>
+  const body = (
+    <>
       <BackRow title="Upper Push" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 6 }}>Half-kneeling landmine press</Text>
       <Text variant="small" color={colors.textMuted}>From Alex · My exercise · 3 × 10</Text>
@@ -212,8 +234,10 @@ export function ClientViewCustomScreen() {
       </View>
       <GlassCard style={{ height: 160, borderRadius: 20 }} />
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 10 }}>Eyes on the landmine. Ribs down. Press without shrugging.</Text>
-    </Phase6Shell>
+    </>
   );
+  if (embedded) return body;
+  return <Phase6Shell athleteTab={1}>{body}</Phase6Shell>;
 }
 
 void Figure;
