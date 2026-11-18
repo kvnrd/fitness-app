@@ -2,7 +2,7 @@ import type { Session as AuthSession, User } from '@supabase/supabase-js';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { checkStoreAgeSharingRevoked, onStoreAgeSignalRevoked } from '../age/storeAgeSignal';
 import { reportStoreSignalRevoked } from '../age/reportStoreRevocation';
-import { DEFAULT_ROLE, isRole, isVerifiedCoach, resolveDevRole, Role } from './session';
+import { DEFAULT_ROLE, isRole, isStudioCoach, isVerifiedCoach, resolveDevRole, Role } from './session';
 import { analyticsInstallId, deviceFlags, deviceSetupStore } from '../onboarding/deviceStorage';
 import { myOnboardingState, type OnboardingState } from '../onboarding/api';
 import { isSupabaseConfigured, supabase } from './supabase';
@@ -12,6 +12,7 @@ export type Profile = { id: string; display_name: string | null; is_minor: boole
 type Session = {
   role: Role;
   isVerifiedCoach: boolean;
+  isStudioCoach: boolean;
   /** Supabase configured (real auth) vs. the unconfigured prototype. */
   isConfigured: boolean;
   isLoading: boolean;
@@ -175,6 +176,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     () => ({
       role,
       isVerifiedCoach: isVerifiedCoach(role),
+      isStudioCoach: isStudioCoach(role),
       isConfigured: configured,
       isLoading: authLoading || (!!userId && loadedUser !== userId),
       isSignedIn: !!authSession,

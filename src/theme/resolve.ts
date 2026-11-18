@@ -55,6 +55,10 @@ export type ResolvedColors = {
   tabOn: string;
   tabOnText: string;
   track: string;
+  /** Official tokens6 demo-plate fill (Grove #D6DACB, Midnight #1A2142). Scoped to media plates. */
+  photo: string;
+  /** Silhouette on a demo plate. Uses `faint` so non-text contrast vs `photo` is at least 3:1. */
+  figure: string;
   /** Set when the resolved Aurora palette has no reviewed mockup (Berry light, Chrome light). */
   unreviewed?: boolean;
 } & PrRoles;
@@ -109,6 +113,8 @@ function fromAurora(p: AuroraPalette): ResolvedColors {
     tabOn: p.tabOn,
     tabOnText: p.tabOnText,
     track: p.track,
+    photo: p.key === 'grove' ? '#D6DACB' : p.key === 'midnight' ? '#1A2142' : p.scheme === 'light' ? p.rowOn : p.bg,
+    figure: p.faint,
     unreviewed: p.unreviewed || undefined,
     pr: p.pr,
     prText: p.prText,
@@ -144,6 +150,8 @@ export function resolveColors(scheme: ColorScheme, accentKey: AccentKey): Resolv
     tabOn: roles.accent,
     tabOnText: roles.accentText,
     track: n.surfaceSunken,
+    photo: n.surface,
+    figure: n.border,
   };
 }
 

@@ -1,0 +1,5 @@
+{
+  "name": "fitness-app-screenshot-tools",
+  "private": true,
+  "description": "Local screenshot helpers (not part of the app). Install puppeteer-core with: npm i --no-save --no-package-lock puppeteer-core"
+}

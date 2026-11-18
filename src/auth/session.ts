@@ -16,9 +16,14 @@ export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
 }
 
-/** Only coach_verified unlocks Studio. gym_admin / platform_admin do not. */
+/** Only coach_verified unlocks Studio tools. gym_admin / platform_admin do not. */
 export function isVerifiedCoach(role: Role): boolean {
   return role === 'coach_verified';
+}
+
+/** Pending and verified coaches see the Studio tab. Pending sees the lock. */
+export function isStudioCoach(role: Role): boolean {
+  return role === 'coach_pending' || role === 'coach_verified';
 }
 
 /** Unconfigured-prototype role: dev override in __DEV__, otherwise athlete. */

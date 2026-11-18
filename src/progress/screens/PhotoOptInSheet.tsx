@@ -67,7 +67,7 @@ export function PhotoOptInSheet({
         </Text>
         <Switch value={switchOn} onValueChange={onSwitchChange} accessibilityLabel={PHOTO_OPT_IN_SWITCH} />
       </View>
-      <EqualActions left={PHOTO_OPT_IN_NOT_NOW} right={PHOTO_OPT_IN_CONTINUE} onLeft={onNotNow} onRight={onContinue} />
+      <EqualActions equal left={PHOTO_OPT_IN_NOT_NOW} right={PHOTO_OPT_IN_CONTINUE} onLeft={onNotNow} onRight={onContinue} />
       <Text color={colors.textMuted} style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 18 }}>
         {PHOTO_OPT_IN_FOOTER}
       </Text>

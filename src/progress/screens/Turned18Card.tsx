@@ -30,7 +30,7 @@ export function Turned18Card({ onNotNow, onLearnMore }: { onNotNow: () => void; 
       <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 22 }}>
         {TURNED_18_BODY}
       </Text>
-      <EqualActions left={TURNED_18_NOT_NOW} right={TURNED_18_LEARN_MORE} onLeft={onNotNow} onRight={onLearnMore} />
+      <EqualActions equal left={TURNED_18_NOT_NOW} right={TURNED_18_LEARN_MORE} onLeft={onNotNow} onRight={onLearnMore} />
     </View>
   );
 }

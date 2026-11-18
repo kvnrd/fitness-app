@@ -52,9 +52,9 @@ export function EqualActions({
         minHeight: minControlSize,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: radius.input ?? 12,
-        borderWidth: 1,
-        borderColor: !equal && primary ? colors.accent : colors.borderStrong,
+        borderRadius: equal ? 28 : (radius.input ?? 12),
+        borderWidth: equal ? 1.5 : 1,
+        borderColor: !equal && primary ? colors.accent : equal ? colors.text : colors.borderStrong,
         backgroundColor: !equal && primary ? colors.accent : 'transparent',
         paddingHorizontal: space.sm,
       }}
