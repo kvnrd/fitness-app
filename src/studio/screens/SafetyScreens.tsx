@@ -1,4 +1,4 @@
-import { Switch, View } from 'react-native';
+import { Linking, Switch, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -22,6 +22,7 @@ import {
 } from '../chrome';
 import { ClientAdultBody, ClientAdultScreen, StudioClientsScreen } from './StudioScreens';
 import { ClientViewCustomScreen } from './LibraryScreens';
+import { DFPS_HOTLINE_URL, DFPS_ONLINE_URL, EMERGENCY_URL } from '../safetyLinks';
 
 const FIVE_TEN =
   'I have a good-faith belief that this use isn’t authorized by the copyright owner, its agent or the law. The information in this request is accurate, and under penalty of perjury, I’m the owner or authorized to act for the owner. My typed name is my electronic signature.';
@@ -248,6 +249,11 @@ export function DmcaReceivedScreen() {
   );
 }
 
+/** Opens a phone or web link for a safety action. A failure must never crash the screen. */
+function openSafetyUrl(url: string) {
+  void Linking.openURL(url).catch(() => {});
+}
+
 export function SafetyReportingScreen() {
   const { colors } = useTheme();
   return (
@@ -257,10 +263,10 @@ export function SafetyReportingScreen() {
       <Muted style={{ marginTop: 8 }}>If you believe a child is being abused or neglected, Texas law requires you to report it right away (Fam. Code §261.101). Telling [App] doesn’t meet that duty. This screen is a guide, not legal advice.</Muted>
       <Text variant="bodyStrong" style={{ marginTop: 10, marginBottom: 4 }}>Report to Texas DFPS</Text>
       <Muted>Call the Texas Abuse Hotline, 24/7, or report online if it isn’t urgent. DFPS asks for your name and phone number and keeps them confidential.</Muted>
-      <PrimaryButton label="Call 1-800-252-5400" style={{ marginTop: 8 }} />
-      <PrimaryButton label="Report online at txabusehotline.org" style={{ marginTop: 6 }} />
+      <PrimaryButton label="Call 1-800-252-5400" onPress={() => openSafetyUrl(DFPS_HOTLINE_URL)} style={{ marginTop: 8 }} />
+      <PrimaryButton label="Report online at txabusehotline.org" onPress={() => openSafetyUrl(DFPS_ONLINE_URL)} style={{ marginTop: 6 }} />
       <Muted style={{ marginTop: 8 }}>If someone is in immediate danger, call 911.</Muted>
-      <PrimaryButton label="Call 911" style={{ marginTop: 6 }} />
+      <PrimaryButton label="Call 911" onPress={() => openSafetyUrl(EMERGENCY_URL)} style={{ marginTop: 6 }} />
       <TextLink label="View reporting training" style={{ marginTop: 8 }} />
       <GlassCard style={{ marginTop: 10, borderRadius: 24 }}>
         <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
