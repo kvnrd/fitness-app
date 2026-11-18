@@ -96,7 +96,7 @@ export function AgeAttestScreen({ on = false }: { on?: boolean }) {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Become a coach" />
-      <Caption>Step 1 of 4</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 1 of 4</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>
         Confirm you’re 18 or older
       </Text>
@@ -129,7 +129,7 @@ export function CertificationScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Become a coach" />
-      <Caption>Step 2 of 4</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 2 of 4</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>
         Your certification
       </Text>
@@ -189,7 +189,7 @@ export function IdentityScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Become a coach" />
-      <Caption>Step 3 of 4</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 3 of 4</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>
         Identity check
       </Text>
@@ -221,7 +221,7 @@ export function CoachTermsScreen({ on = false, nudge = false }: { on?: boolean; 
   return (
     <Phase6Shell athleteTab={3} hideTab>
       <BackRow title="Become a coach" />
-      <Caption>Step 4 of 4</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 4 of 4</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>
         Coach Terms
       </Text>
@@ -391,7 +391,7 @@ export function AbuseTrainingScreen() {
   return (
     <Phase6Shell tab={3}>
       <BackRow title="Training" />
-      <Caption>Reporting training</Caption>
+      <Caption style={{ marginTop: 8 }}>Reporting training</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>
         Texas reporting duties
       </Text>

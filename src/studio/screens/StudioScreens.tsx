@@ -795,7 +795,7 @@ export function CoachPicksScreen({ empty = false, full = false, add = false }: {
     return (
       <Phase6Shell tab={3}>
         <BackRow title="Kevin" rightLabel="Done" />
-        <Caption>Shown in Kevin’s Favorites</Caption>
+        <Caption style={{ marginTop: 8 }}>Shown in Kevin’s Favorites</Caption>
         <Text variant="title" accessibilityRole="header">
           Coach picks
         </Text>
@@ -845,7 +845,7 @@ export function CoachPicksScreen({ empty = false, full = false, add = false }: {
   return (
     <Phase6Shell tab={3} hideTab={add} overlay={add ? addSheet : undefined}>
       <BackRow title="Kevin" rightLabel="Done" />
-      <Caption>Shown in Kevin’s Favorites</Caption>
+      <Caption style={{ marginTop: 8 }}>Shown in Kevin’s Favorites</Caption>
       <Text variant="title" accessibilityRole="header">
         Coach picks
       </Text>

@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
+  Avatar,
   BackRow,
   Caption,
   CheckRow,
@@ -37,9 +38,9 @@ const ITEMS: { label: string; a: string; b: string }[] = [
   { label: 'Records the law requires me to keep, for example payment records', a: 'Kept only what’s required', b: 'None' },
 ];
 
-function Muted({ children }: { children: string }) {
+function Muted({ children, style }: { children: string; style?: object }) {
   const { colors } = useTheme();
-  return <Text variant="small" color={colors.textMuted}>{children}</Text>;
+  return <Text variant="small" color={colors.textMuted} style={style}>{children}</Text>;
 }
 
 function Sheet({ title, body, children }: { title: string; body?: string; children?: React.ReactNode }) {
@@ -427,7 +428,7 @@ export function ParentCoachingEndedScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Parent settings" />
-      <Text variant="title" accessibilityRole="header">Coaching ended</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Coaching ended</Text>
       <PrimaryButton label="Got it" />
     </Phase6Shell>
   );
@@ -437,9 +438,14 @@ export function TeenRegistryDisclosureScreen() {
   const { colors } = useTheme();
   return (
     <Phase6Shell athleteTab={3}>
-      <BackRow title="Coach" />
-      <Muted>1:1 coach · Certification verified</Muted>
-      <Text variant="title" accessibilityRole="header">Alex Rivera</Text>
+      <BackRow title="Alex Rivera" />
+      <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, alignItems: 'center' }}>
+        <Avatar initials="AR" size={56} />
+        <View style={{ flex: 1 }}>
+          <Text variant="title" accessibilityRole="header">Alex Rivera</Text>
+          <Muted>1:1 coach · Certification verified</Muted>
+        </View>
+      </View>
       <GlassCard>
         <View style={{ padding: 16 }}>
           <Text variant="body">How we check coaches who work with teens</Text>
@@ -456,8 +462,8 @@ export function ParentRegistryDisclosureScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Parent consent" />
-      <Text variant="title" accessibilityRole="header">Approve 1:1 coaching</Text>
-      <Muted>You’re approving 1:1 coaching for Sam with Alex Rivera.</Muted>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Approve 1:1 coaching</Text>
+      <Muted style={{ marginTop: 8 }}>You’re approving 1:1 coaching for Sam with Alex Rivera.</Muted>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>{PARENT_SEE_LINE}</Text>
       <GlassCard>
         <View style={{ padding: 16 }}>
@@ -477,7 +483,7 @@ export function CertVerifiedTeenScreen() {
     <Phase6Shell athleteTab={3} hideTab>
       <BackRow title="Alex Rivera" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>What certification verified means</Text>
-      <Muted>{CERT_VERIFIED_BODY}</Muted>
+      <Muted style={{ marginTop: 8 }}>{CERT_VERIFIED_BODY}</Muted>
       <PrimaryButton label="Got it" />
     </Phase6Shell>
   );
@@ -488,7 +494,7 @@ export function CertVerifiedParentScreen() {
     <Phase6Shell athleteTab={3} hideTab>
       <BackRow title="Parent consent" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>What certification verified means</Text>
-      <Muted>{CERT_VERIFIED_BODY}</Muted>
+      <Muted style={{ marginTop: 8 }}>{CERT_VERIFIED_BODY}</Muted>
       <PrimaryButton label="Got it" />
     </Phase6Shell>
   );
@@ -499,9 +505,9 @@ export function ParentApprovalPendingScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Parent consent" />
-      <Caption>Waiting for Sam to agree</Caption>
+      <Caption style={{ marginTop: 8 }}>Waiting for Sam to agree</Caption>
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 4 }}>Approve 1:1 coaching</Text>
-      <Muted>You’ve approved 1:1 coaching for Sam with Alex Rivera. Sharing with Alex turns on only after Sam also agrees.</Muted>
+      <Muted style={{ marginTop: 8 }}>You’ve approved 1:1 coaching for Sam with Alex Rivera. Sharing with Alex turns on only after Sam also agrees.</Muted>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>{PARENT_SEE_LINE}</Text>
       <GlassCard>
         <View style={{ padding: 16 }}>

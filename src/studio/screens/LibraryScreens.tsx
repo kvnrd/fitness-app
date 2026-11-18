@@ -112,7 +112,7 @@ export function CreateBasicsScreen() {
   return (
     <Phase6Shell tab={3}>
       <BackRow title="Library" />
-      <Caption>Step 1 of 3</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 1 of 3</Caption>
       <Text variant="title" accessibilityRole="header">New exercise</Text>
       <Field label="Name" value="Half-kneeling landmine press" />
       <Field label="Equipment" value="Landmine" />
@@ -127,7 +127,7 @@ export function CreateTrackingScreen() {
   return (
     <Phase6Shell tab={3}>
       <BackRow title="New exercise" />
-      <Caption>Step 2 of 3</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 2 of 3</Caption>
       <Text variant="title" accessibilityRole="header">What clients log</Text>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>Pick how this exercise is tracked. You can change this later.</Text>
       <GlassCard>
@@ -145,7 +145,7 @@ export function CreateDemoScreen() {
   return (
     <Phase6Shell tab={3}>
       <BackRow title="New exercise" />
-      <Caption>Step 3 of 3</Caption>
+      <Caption style={{ marginTop: 8 }}>Step 3 of 3</Caption>
       <Text variant="title" accessibilityRole="header">Add a demo</Text>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>A short demo helps clients see the movement. You can skip this and add one later.</Text>
       <PrimaryButton label="Record a demo" />

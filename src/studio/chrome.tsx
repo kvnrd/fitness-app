@@ -394,10 +394,10 @@ export function Avatar({ initials, size = 44 }: { initials: string; size?: numbe
   );
 }
 
-export function Caption({ children }: { children: string }) {
+export function Caption({ children, style }: { children: string; style?: object }) {
   const { colors } = useTheme();
   return (
-    <Text variant="label" color={colors.textMuted} style={{ textTransform: 'uppercase', letterSpacing: 1.4 }}>
+    <Text variant="label" color={colors.textMuted} style={[{ textTransform: 'uppercase', letterSpacing: 1.4 }, style]}>
       {children}
     </Text>
   );
