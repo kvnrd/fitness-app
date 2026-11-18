@@ -1,8 +1,9 @@
-import { View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
+  Avatar,
   BackRow,
   Caption,
   EmptyState,
@@ -170,7 +171,11 @@ export function RecordDemoScreen() {
       <View style={{ marginTop: 12, alignSelf: 'center', height: 28, borderRadius: 14, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: 'rgba(7,10,22,0.82)' }}>
         <Text variant="label" color="#F1F4FF" style={{ fontWeight: '700' }}>Side view · keep your whole body in the box</Text>
       </View>
-      <View style={{ flex: 1, marginHorizontal: 36, marginTop: 16, marginBottom: 210, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#8FA3FF', borderRadius: 8 }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: 36, right: 36, top: 150, bottom: 210, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#8FA3FF', borderRadius: 8 }} />
+      <View style={{ position: 'absolute', left: 28, top: 142, width: 18, height: 18, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#8FA3FF' }} />
+      <View style={{ position: 'absolute', right: 28, top: 142, width: 18, height: 18, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#8FA3FF' }} />
+      <View style={{ position: 'absolute', left: 28, bottom: 202, width: 18, height: 18, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: '#8FA3FF' }} />
+      <View style={{ position: 'absolute', right: 28, bottom: 202, width: 18, height: 18, borderBottomWidth: 2, borderRightWidth: 2, borderColor: '#8FA3FF' }} />
       <View style={{ position: 'absolute', left: '50%', top: 210, marginLeft: -22, width: 44, height: 44, borderRadius: 22, backgroundColor: '#5B6690' }} />
       <View style={{ position: 'absolute', left: '50%', top: 260, marginLeft: -45, width: 90, height: 200, borderRadius: 40, backgroundColor: '#5B6690', opacity: 0.9 }} />
       <View style={{ position: 'absolute', left: 20, bottom: 150 }}>
@@ -200,12 +205,50 @@ export function TrimDemoScreen() {
   const { colors } = useTheme();
   return (
     <Phase6Shell tab={3}>
-      <BackRow title="Demo" rightLabel="Done" />
+      <BackRow title="New exercise" />
       <Text variant="title" accessibilityRole="header">Trim your demo</Text>
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>Keep the useful part. Clients will see this loop.</Text>
-      <GlassCard style={{ height: 180, borderRadius: 20 }} />
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 10 }}>00:12 of 00:30</Text>
-      <PrimaryButton label="Use this clip" />
+      <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>9 seconds selected · 0:02–0:11 of 0:12. Max 30 seconds. Loop is on for clients.</Text>
+      <View style={{ height: 280, borderRadius: 24, backgroundColor: colors.glass, marginTop: 14, overflow: 'hidden', position: 'relative' }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceRaised, position: 'absolute', left: '50%', top: 56, marginLeft: -20 }} />
+        <View style={{ width: 86, height: 150, borderRadius: 32, backgroundColor: colors.surfaceRaised, position: 'absolute', left: '50%', top: 104, marginLeft: -43 }} />
+        <View accessibilityRole="button" accessibilityLabel="Play" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -28, marginTop: -28, width: 56, height: 56, borderRadius: 28, backgroundColor: colors.tabOn, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="play" size={24} color={colors.tabOnText} />
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 4, marginTop: 12 }}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 8,
+              backgroundColor: colors.glass,
+              opacity: 2 <= i && i <= 6 ? 1 : 0.55,
+              borderWidth: 2 <= i && i <= 6 ? 2 : 0,
+              borderColor: colors.accent,
+            }}
+          />
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+        <Text variant="label" color={colors.textMuted}>0:00</Text>
+        <Text variant="label" color={colors.textMuted}>0:12</Text>
+      </View>
+      <GlassCard style={{ borderRadius: 20, marginTop: 12 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 0 }}>
+          <View style={{ height: 48, flexDirection: 'row', alignItems: 'center' }}>
+            <Text variant="body" style={{ flex: 1 }}>Loop for clients</Text>
+            <Switch value accessibilityLabel="Loop for clients" onValueChange={() => undefined} trackColor={{ false: colors.borderStrong, true: colors.accent }} thumbColor={colors.accentText} />
+          </View>
+          <View style={{ height: 48, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.glassBorder }}>
+            <Text variant="body" style={{ flex: 1 }}>Sound off</Text>
+            <Switch value={false} accessibilityLabel="Sound off" onValueChange={() => undefined} trackColor={{ false: colors.borderStrong, true: colors.accent }} thumbColor={colors.surfaceRaised} />
+          </View>
+          <Text variant="label" color={colors.textMuted} style={{ paddingTop: 4, paddingBottom: 8 }}>Location data removed. Clients see it after an automatic check, usually within a minute.</Text>
+        </View>
+      </GlassCard>
+      <PrimaryButton label="Use this demo" />
     </Phase6Shell>
   );
 }
@@ -222,22 +265,73 @@ export function DemoPendingScreen() {
   );
 }
 
+function DemoStage({ active = 'Side', height = 132 }: { active?: 'Front' | 'Side' | '3/4'; height?: number }) {
+  const { colors } = useTheme();
+  return (
+    <GlassCard style={{ borderRadius: 24, marginTop: 12 }}>
+      <View style={{ padding: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text variant="label" color={colors.textMuted}>Demo · loop</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['Front', 'Side', '3/4'] as const).map((p) => <Chip key={p} label={p} on={p === active} />)}
+          </View>
+        </View>
+        <View style={{ height, borderRadius: 20, backgroundColor: colors.glass, marginTop: 10, overflow: 'hidden', position: 'relative' }}>
+          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceRaised, position: 'absolute', left: '50%', top: 28, marginLeft: -18 }} />
+          <View style={{ width: 70, height: 88, borderRadius: 20, backgroundColor: colors.surfaceRaised, position: 'absolute', left: '50%', top: 68, marginLeft: -35 }} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, alignItems: 'center' }}>
+          <Ionicons name="pause" size={20} color={colors.text} accessibilityLabel="Pause" />
+          <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.track }}>
+            <View style={{ width: '38%', height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
+          </View>
+          <Text variant="label" color={colors.textMuted}>0.5×</Text>
+        </View>
+      </View>
+    </GlassCard>
+  );
+}
+
 export function ClientViewCustomScreen({ embedded = false }: { embedded?: boolean }) {
   const { colors } = useTheme();
+  const cues = [
+    'Ribcage stacked, front knee tracks over mid-foot.',
+    'Press the landmine away, don’t lean into it.',
+  ];
   const body = (
     <>
-      <BackRow title="Upper Push" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 6 }}>Half-kneeling landmine press</Text>
-      <Text variant="small" color={colors.textMuted}>From Alex · My exercise · 3 × 10</Text>
-      <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
-        {['Front', 'Side', '3/4'].map((p, i) => <Chip key={p} label={p} on={i === 0} />)}
+      <BackRow title="Upper Push" right={<Ionicons name="flag-outline" size={20} color={colors.text} accessibilityLabel="Report" />} />
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, alignItems: 'center' }}>
+        <Chip label="From Coach Alex" />
+        <Text variant="label" color={colors.textMuted}>Custom exercise</Text>
       </View>
-      <GlassCard style={{ height: 160, borderRadius: 20 }} />
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 10 }}>Eyes on the landmine. Ribs down. Press without shrugging.</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 6 }}>Half-kneeling landmine press</Text>
+      <Text variant="small" color={colors.textMuted}>3 × 8 / side · RPE 7</Text>
+      <DemoStage active="Side" height={132} />
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
+        <Avatar initials="AR" size={28} />
+        <Text variant="label" color={colors.textMuted} style={{ flex: 1 }}>Alex’s demo · visible to Alex’s clients only</Text>
+      </View>
+      <GlassCard style={{ borderRadius: 24, marginTop: 12 }}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text variant="bodyStrong">Cues · By Alex</Text>
+          {cues.map((c, i) => (
+            <View key={c} style={{ flexDirection: 'row', gap: 10, paddingVertical: 6, alignItems: 'flex-start' }}>
+              <Text variant="heading" color={colors.accentInk} style={{ width: 28 }}>{`0${i + 1}`}</Text>
+              <Text variant="body" style={{ flex: 1 }}>{c}</Text>
+            </View>
+          ))}
+        </View>
+      </GlassCard>
+      <GlassCard style={{ borderRadius: 20, marginTop: 8 }}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text variant="body">You’ll log</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>Weight · reps · RPE · per side</Text>
+        </View>
+      </GlassCard>
+      <TextLink label="Report this video" />
     </>
   );
   if (embedded) return body;
   return <Phase6Shell athleteTab={1}>{body}</Phase6Shell>;
 }
-
-void Figure;

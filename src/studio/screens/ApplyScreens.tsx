@@ -28,7 +28,8 @@ const TERMS_EXCERPT = [
 ];
 
 export function BecomeACoachScreen() {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
+  const appearance = resolvedScheme === 'light' ? 'Grove · Aurora' : 'Midnight · Aurora';
   return (
     <Phase6Shell athleteTab={3}>
       <Text variant="small" color={colors.textMuted}>
@@ -39,7 +40,7 @@ export function BecomeACoachScreen() {
       </Text>
       <GlassCard>
         <SettingsRow first icon="options-outline" label="Units" sub="Pounds and miles" />
-        <SettingsRow icon="color-palette-outline" label="Appearance" sub="Midnight · Aurora" />
+        <SettingsRow icon="color-palette-outline" label="Appearance" sub={appearance} />
         <SettingsRow icon="heart-outline" label="Privacy" sub="Health data, AI, coach sharing" />
       </GlassCard>
       <Text variant="bodyStrong" style={{ marginTop: 16, marginBottom: 8 }}>

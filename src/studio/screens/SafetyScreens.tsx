@@ -228,7 +228,7 @@ export function UploadsSuspendedScreen() {
           <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>Use default demos, edit cues, and coach your clients. Recording or uploading a new demo is unavailable until this is lifted.</Text>
         </View>
       </GlassCard>
-      <PrimaryButton label="Contact Support" />
+      <EqualRow left="Back to library" right="Contact support" />
     </Phase6Shell>
   );
 }
@@ -241,8 +241,7 @@ export function AskCoachDeleteScreen() {
       <Text variant="title" accessibilityRole="header">Ask Alex to delete your data</Text>
       <Muted>We’ll tell Alex to delete every copy of your data within 30 days, including anything saved outside [App], as our Coach Terms require. Coaching with Alex ends, and Alex loses access right away. We also remove anything of yours we kept for Alex.</Muted>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>Alex must confirm the deletion by Dec 17. We remove Alex’s access now, without waiting for Alex. Coaches don’t get a copy or export of your data from us. There is no parent export.</Text>
-      <PrimaryButton label="Continue" />
-      <EqualRow left="Not now" />
+      <EqualRow left="Not now" right="Continue" />
     </Phase6Shell>
   );
 }
@@ -434,10 +433,10 @@ export function ParentCoachingEndedScreen() {
   );
 }
 
-export function TeenRegistryDisclosureScreen() {
+function TeenRegistryBody() {
   const { colors } = useTheme();
   return (
-    <Phase6Shell athleteTab={3}>
+    <>
       <BackRow title="Alex Rivera" />
       <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, alignItems: 'center' }}>
         <Avatar initials="AR" size={56} />
@@ -453,14 +452,22 @@ export function TeenRegistryDisclosureScreen() {
         </View>
       </GlassCard>
       <TextLink label="What certification verified means" />
+    </>
+  );
+}
+
+export function TeenRegistryDisclosureScreen() {
+  return (
+    <Phase6Shell athleteTab={3}>
+      <TeenRegistryBody />
     </Phase6Shell>
   );
 }
 
-export function ParentRegistryDisclosureScreen() {
+function ParentRegistryBody() {
   const { colors } = useTheme();
   return (
-    <Phase6Shell athleteTab={3}>
+    <>
       <BackRow title="Parent consent" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Approve 1:1 coaching</Text>
       <Muted style={{ marginTop: 8 }}>You’re approving 1:1 coaching for Sam with Alex Rivera.</Muted>
@@ -472,30 +479,37 @@ export function ParentRegistryDisclosureScreen() {
         </View>
       </GlassCard>
       <TextLink label="What certification verified means" />
-      <PrimaryButton label="Approve" />
-      <EqualRow left="Not now" />
+      <EqualRow left="Not now" right="Approve coaching" />
+    </>
+  );
+}
+
+export function ParentRegistryDisclosureScreen() {
+  return (
+    <Phase6Shell athleteTab={3}>
+      <ParentRegistryBody />
     </Phase6Shell>
   );
 }
 
+const certSheet = (
+  <SheetOverlay title="What certification verified means" body={CERT_VERIFIED_BODY}>
+    <PrimaryButton label="Got it" />
+  </SheetOverlay>
+);
+
 export function CertVerifiedTeenScreen() {
   return (
-    <Phase6Shell athleteTab={3} hideTab>
-      <BackRow title="Alex Rivera" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>What certification verified means</Text>
-      <Muted style={{ marginTop: 8 }}>{CERT_VERIFIED_BODY}</Muted>
-      <PrimaryButton label="Got it" />
+    <Phase6Shell athleteTab={3} hideTab overlay={certSheet}>
+      <TeenRegistryBody />
     </Phase6Shell>
   );
 }
 
 export function CertVerifiedParentScreen() {
   return (
-    <Phase6Shell athleteTab={3} hideTab>
-      <BackRow title="Parent consent" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>What certification verified means</Text>
-      <Muted style={{ marginTop: 8 }}>{CERT_VERIFIED_BODY}</Muted>
-      <PrimaryButton label="Got it" />
+    <Phase6Shell athleteTab={3} hideTab overlay={certSheet}>
+      <ParentRegistryBody />
     </Phase6Shell>
   );
 }

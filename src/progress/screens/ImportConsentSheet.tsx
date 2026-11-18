@@ -19,6 +19,7 @@ export function ImportConsentSheet({ onCancel, onAgree }: { onCancel: () => void
         {IMPORT_CONSENT_BODY}
       </Text>
       <EqualActions
+        equal
         left={IMPORT_CONSENT_CANCEL}
         right={IMPORT_CONSENT_AGREE}
         onLeft={onCancel}

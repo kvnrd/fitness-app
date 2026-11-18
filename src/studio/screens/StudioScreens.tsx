@@ -254,9 +254,17 @@ export function StudioClientsScreen({ empty = false, banner = false }: { empty?:
 }
 
 export function ClientAdultScreen({ photos = false, deleteAsk = false }: { photos?: boolean; deleteAsk?: boolean }) {
-  const { colors } = useTheme();
   return (
     <Phase6Shell tab={3}>
+      <ClientAdultBody photos={photos} deleteAsk={deleteAsk} />
+    </Phase6Shell>
+  );
+}
+
+function ClientAdultBody({ photos = false, deleteAsk = false }: { photos?: boolean; deleteAsk?: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View>
       <BackRow title="Studio" right={<Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />} />
       <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, alignItems: 'center' }}>
         <Avatar initials="KR" size={56} />
@@ -311,20 +319,26 @@ export function ClientAdultScreen({ photos = false, deleteAsk = false }: { photo
       </GlassCard>
       <GlassCard>
         <View style={{ padding: 16 }}>
-          <Text variant="body">Progress photos</Text>
-          <Text variant="small" color={photos ? colors.textMuted : colors.textMuted} style={{ marginTop: 2 }}>
+          {photos ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text variant="body" style={{ flex: 1 }}>
+                Progress photos
+              </Text>
+              <Text variant="small" color={colors.accentInk} style={{ fontWeight: '600' }}>
+                Open
+              </Text>
+            </View>
+          ) : (
+            <Text variant="body">Progress photos</Text>
+          )}
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 2 }}>
             {photos
               ? 'Kevin turned photo sharing on. 8 check-ins · last Nov 14.'
               : 'Kevin hasn’t turned on sharing, so photos aren’t available here.'}
           </Text>
-          {photos ? (
-            <Text variant="small" color={colors.accentInk} style={{ marginTop: 8, fontWeight: '600' }}>
-              Open
-            </Text>
-          ) : null}
         </View>
       </GlassCard>
-    </Phase6Shell>
+    </View>
   );
 }
 
@@ -391,24 +405,8 @@ export function EndRelationshipScreen() {
         </SheetOverlay>
       }
     >
-      <ClientAdultInner />
+      <ClientAdultBody />
     </Phase6Shell>
-  );
-}
-
-function ClientAdultInner() {
-  const { colors } = useTheme();
-  return (
-    <View>
-      <BackRow title="Studio" />
-      <View style={{ flexDirection: 'row', gap: 14, marginTop: 14, alignItems: 'center' }}>
-        <Avatar initials="KR" size={56} />
-        <View style={{ flex: 1 }}>
-          <Text variant="title">Kevin</Text>
-          <Muted>1:1 · Week 3 of 8 · Main gym</Muted>
-        </View>
-      </View>
-    </View>
   );
 }
 
