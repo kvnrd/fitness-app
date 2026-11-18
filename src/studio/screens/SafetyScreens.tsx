@@ -1,4 +1,5 @@
 import { Switch, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui';
 import { useTheme } from '../../theme/ThemeProvider';
 import {
@@ -6,15 +7,18 @@ import {
   BackRow,
   Caption,
   CheckRow,
+  DemoFigure,
   EmptyState,
   EqualRow,
   Field,
   GlassCard,
   Phase6Shell,
   PrimaryButton,
+  SettingsRow,
   SheetOverlay,
   SwitchRow,
   TextLink,
+  Toast,
 } from '../chrome';
 import { ClientAdultBody, ClientAdultScreen, StudioClientsScreen } from './StudioScreens';
 import { ClientViewCustomScreen } from './LibraryScreens';
@@ -87,18 +91,29 @@ export function ReportReasonsScreen() {
   const reasons = ['Nudity or sexual content', 'Violence or harm', 'Someone else is in the shot', 'Looks like spam or advertising', 'Copyright or legal concern', 'Something else'];
   const { colors } = useTheme();
   return (
-    <Phase6Shell athleteTab={1} hideTab>
-      <BackRow title="Report" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Why are you reporting this?</Text>
-      <Muted>Pick the option that fits best. If this is about copyright, you can also use the copyright request form.</Muted>
-      <GlassCard>
-        {reasons.map((r, i) => (
-          <View key={r} style={{ minHeight: 52, paddingHorizontal: 16, justifyContent: 'center', borderTopWidth: i ? 1 : 0, borderTopColor: colors.border }}>
-            <Text variant="body">{r}</Text>
-          </View>
-        ))}
-      </GlassCard>
-      <EqualRow left="Cancel" right="Submit report" />
+    <Phase6Shell
+      hideTab
+      athleteTab={1}
+      overlay={
+        <SheetOverlay
+          top={200}
+          title="Why are you reporting this?"
+          body="Pick the option that fits best. If this is about copyright, you can also use the copyright request form."
+          bodyStyle={{ marginTop: 6 }}
+        >
+          <GlassCard style={{ marginTop: 12, borderRadius: 20 }}>
+            {reasons.map((r, i) => (
+              <View key={r} style={{ minHeight: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderTopWidth: i ? 1 : 0, borderTopColor: colors.glassBorder }}>
+                <Text variant="body" style={{ flex: 1 }}>{r}</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </View>
+            ))}
+          </GlassCard>
+          <EqualRow left="Cancel" />
+        </SheetOverlay>
+      }
+    >
+      <ClientViewCustomScreen embedded />
     </Phase6Shell>
   );
 }
@@ -106,13 +121,19 @@ export function ReportReasonsScreen() {
 export function VideoRemovedNoticeScreen() {
   const { colors } = useTheme();
   return (
-    <Phase6Shell tab={3}>
-      <BackRow title="Library" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Half-kneeling landmine press</Text>
-      <GlassCard>
+    <Phase6Shell tab={3} overlay={<Toast message="We hid this demo while we review a report." />}>
+      <Muted>Library</Muted>
+      <Text variant="title" accessibilityRole="header">Studio</Text>
+      <GlassCard style={{ marginTop: 16, borderRadius: 24 }}>
         <View style={{ padding: 16 }}>
-          <Text variant="body">Demo hidden while we review a report</Text>
-          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>Your clients see the default demo, if there is one, until this is resolved. Repeat problems can pause your uploads.</Text>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <DemoFigure w={56} h={56} />
+            <View style={{ flex: 1 }}>
+              <Text variant="body">Half-kneeling landmine press</Text>
+              <Text variant="small" color={colors.textMuted}>Demo hidden while we review a report</Text>
+            </View>
+          </View>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 10 }}>Your clients see the default demo, if there is one, until this is resolved. Repeat problems can pause your uploads.</Text>
         </View>
       </GlassCard>
       <PrimaryButton label="Got it" />
@@ -121,12 +142,38 @@ export function VideoRemovedNoticeScreen() {
 }
 
 export function BlockUserScreen() {
+  const { colors } = useTheme();
   return (
-    <Phase6Shell athleteTab={3} hideTab>
+    <Phase6Shell
+      athleteTab={3}
+      hideTab
+      overlay={
+        <SheetOverlay title="Block Alex?" body="Alex won’t be able to message you or see your shared data. The coaching relationship ends right away. You can still report a safety concern.">
+          <EqualRow left="Cancel" right="Block Alex" danger stacked />
+        </SheetOverlay>
+      }
+    >
       <BackRow title="Alex Rivera" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Block Alex?</Text>
-      <Muted>Alex won’t be able to message you or see your shared data. The coaching relationship ends right away. You can still report a safety concern.</Muted>
-      <EqualRow left="Cancel" right="Block" danger />
+      <View style={{ flexDirection: 'row', gap: 14, marginTop: 12, alignItems: 'center' }}>
+        <Avatar initials="AR" size={56} />
+        <View>
+          <Text variant="title" accessibilityRole="header">Alex Rivera</Text>
+          <Muted>Your 1:1 coach</Muted>
+        </View>
+      </View>
+      <GlassCard style={{ marginTop: 16, borderRadius: 24 }}>
+        <View style={{ minHeight: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Ionicons name="flag-outline" size={20} color={colors.textMuted} />
+          <Text variant="body" style={{ flex: 1 }}>Report</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </View>
+        <View style={{ minHeight: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.glassBorder }}>
+          <Ionicons name="ban-outline" size={20} color={colors.textMuted} />
+          <Text variant="body" style={{ flex: 1 }}>Block</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </View>
+      </GlassCard>
+      <Text variant="label" color={colors.textMuted} style={{ marginTop: 10 }}>Blocking hides Alex’s content from you and ends the coaching relationship. You can unblock later in Settings › Privacy › Blocked.</Text>
     </Phase6Shell>
   );
 }
@@ -136,11 +183,15 @@ export function BlockedListScreen() {
   return (
     <Phase6Shell athleteTab={3}>
       <BackRow title="Privacy" />
-      <Text variant="title" accessibilityRole="header">Blocked</Text>
-      <Muted>People you’ve blocked can’t message you or see your shared data. Unblocking doesn’t restart coaching on its own.</Muted>
-      <GlassCard>
-        <View style={{ padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text variant="body">Alex Rivera</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Blocked</Text>
+      <Muted style={{ marginTop: 6 }}>People you’ve blocked can’t message you or see your shared data. Unblocking doesn’t restart coaching on its own.</Muted>
+      <GlassCard style={{ marginTop: 16, borderRadius: 24 }}>
+        <View style={{ minHeight: 64, paddingHorizontal: 16, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <Avatar initials="AR" size={44} />
+          <View style={{ flex: 1 }}>
+            <Text variant="body">Alex Rivera</Text>
+            <Text variant="label" color={colors.textMuted}>Blocked Nov 17, 2026</Text>
+          </View>
           <Text variant="small" color={colors.accentInk} style={{ fontWeight: '600' }}>Unblock</Text>
         </View>
       </GlassCard>
@@ -151,16 +202,30 @@ export function BlockedListScreen() {
 export function DmcaRequestScreen({ signed = false }: { signed?: boolean }) {
   const { colors } = useTheme();
   return (
-    <Phase6Shell hideTab>
-      <BackRow title="Copyright" />
-      <Text variant="title" accessibilityRole="header">Copyright request</Text>
-      <Muted>Use this if you own a copyright and think something on [App] uses it without permission. We need enough detail to find the material. This isn’t a general report form.</Muted>
-      <Field label="Your name" value={signed ? 'Jordan Hale' : undefined} placeholder="Full name" />
-      <Field label="Email" value={signed ? 'jordan@email.com' : undefined} placeholder="Email" />
-      <Field label="Phone" value={signed ? '(512) 555-0148' : undefined} placeholder="Phone" />
-      <Field label="What to take down" value="Half-kneeling landmine press demo" />
-      <CheckRow label={FIVE_TEN} on={signed} a11y={FIVE_TEN} />
-      <EqualRow left="Cancel" right="Submit request" />
+    <Phase6Shell
+      hideTab
+      overlay={
+        <View style={{ position: 'absolute', left: 20, right: 20, bottom: 24, zIndex: 4 }}>
+          <Text variant="label" color={colors.textMuted}>Knowingly false claims can make you liable for damages.</Text>
+          <EqualRow left="Cancel" right="Submit request" />
+        </View>
+      }
+    >
+      <View style={{ paddingBottom: 160 }}>
+        <BackRow title="Legal" />
+        <Text variant="title" accessibilityRole="header">Copyright request</Text>
+        <Muted style={{ marginTop: 2 }}>Use this if you own a copyright and think something on [App] uses it without permission. We need enough detail to find the material. This isn’t a general report form.</Muted>
+        <Field tight label="Your name and email" value="Jordan Hale · jordan@email.com" />
+        <Field tight label="Phone number or mailing address" value="(512) 555-0148" />
+        <Field tight label="The work you own" value={'Instructional video, “Landmine press — side view”'} />
+        <Field tight mutedValue label="Where it appears in [App]" value="Coach demo on Half-kneeling landmine press" />
+        <Field tight label="Type your full name to sign" value={signed ? 'Jordan Hale' : undefined} placeholder="Type your full name" />
+        <GlassCard style={{ marginTop: 6, borderRadius: 20 }}>
+          <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+            <CheckRow label={FIVE_TEN} on={signed} a11y={FIVE_TEN} />
+          </View>
+        </GlassCard>
+      </View>
     </Phase6Shell>
   );
 }
@@ -188,16 +253,22 @@ export function SafetyReportingScreen() {
   return (
     <Phase6Shell tab={3}>
       <BackRow title="Safety" />
-      <Text variant="title" accessibilityRole="header">Report suspected abuse</Text>
-      <Muted>If you believe a child is being abused or neglected, Texas law requires you to report it right away (Fam. Code §261.101). Telling [App] doesn’t meet that duty. This screen is a guide, not legal advice.</Muted>
-      <GlassCard>
-        <View style={{ padding: 16, gap: 10 }}>
-          <Text variant="body">Call the Texas Abuse Hotline, 24/7, or report online if it isn’t urgent. DFPS asks for your name and phone number and keeps them confidential.</Text>
-          <Text variant="body">If someone is in immediate danger, call 911.</Text>
-          <Text variant="small" color={colors.textMuted}>After you report to DFPS or the police, you can also tell us so we can act on [App], like pausing an account. This doesn’t replace your report.</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Report suspected abuse</Text>
+      <Muted style={{ marginTop: 8 }}>If you believe a child is being abused or neglected, Texas law requires you to report it right away (Fam. Code §261.101). Telling [App] doesn’t meet that duty. This screen is a guide, not legal advice.</Muted>
+      <Text variant="bodyStrong" style={{ marginTop: 10, marginBottom: 4 }}>Report to Texas DFPS</Text>
+      <Muted>Call the Texas Abuse Hotline, 24/7, or report online if it isn’t urgent. DFPS asks for your name and phone number and keeps them confidential.</Muted>
+      <PrimaryButton label="Call 1-800-252-5400" style={{ marginTop: 8 }} />
+      <PrimaryButton label="Report online at txabusehotline.org" style={{ marginTop: 6 }} />
+      <Muted style={{ marginTop: 8 }}>If someone is in immediate danger, call 911.</Muted>
+      <PrimaryButton label="Call 911" style={{ marginTop: 6 }} />
+      <TextLink label="View reporting training" style={{ marginTop: 8 }} />
+      <GlassCard style={{ marginTop: 10, borderRadius: 24 }}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+          <Text variant="body">Tell [App] too</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>After you report to DFPS or the police, you can also tell us so we can act on [App], like pausing an account. This doesn’t replace your report.</Text>
         </View>
       </GlassCard>
-      <PrimaryButton label="Got it" />
+      <EqualRow left="Tell [App] too" />
     </Phase6Shell>
   );
 }
@@ -205,12 +276,18 @@ export function SafetyReportingScreen() {
 export function NcmecPolicyScreen() {
   const { colors } = useTheme();
   return (
-    <Phase6Shell tab={3}>
+    <Phase6Shell tab={4}>
       <BackRow title="Safety" />
-      <Text variant="title" accessibilityRole="header">How we report illegal content</Text>
-      <Muted>If we learn of apparent child sexual exploitation on [App], including child sexual abuse material, enticement or trafficking of a minor, we report it to NCMEC’s CyberTipline as US law requires (18 U.S.C. §2258A) and preserve the reported material as required.</Muted>
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>If a photo or video doesn’t pass our safety check, we remove it. We don’t show the flagged content or the details of a report in the app.</Text>
-      <PrimaryButton label="Got it" />
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>How we report illegal content</Text>
+      <Muted style={{ marginTop: 8 }}>If we learn of apparent child sexual exploitation on [App], including child sexual abuse material, enticement or trafficking of a minor, we report it to NCMEC’s CyberTipline as US law requires (18 U.S.C. §2258A) and preserve the reported material for 1 year.</Muted>
+      <GlassCard style={{ marginTop: 14, borderRadius: 24 }}>
+        <View style={{ padding: 16 }}>
+          <Text variant="body">What you’ll see</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>If a photo or video doesn’t pass our safety check, we remove it. We don’t show the flagged content or the details of a report in the app.</Text>
+        </View>
+      </GlassCard>
+      <Text variant="label" color={colors.textMuted} style={{ marginTop: 12 }}>16–17 year olds can’t upload progress photos.</Text>
+      <EqualRow left="Got it" />
     </Phase6Shell>
   );
 }
@@ -280,10 +357,10 @@ export function AskCoachDeleteConfirmScreen() {
 
 export function AskCoachDeleteSentScreen() {
   return (
-    <Phase6Shell athleteTab={3}>
+    <Phase6Shell athleteTab={3} overlay={<Toast message="Alex can’t see your data anymore. We asked Alex to delete every copy." />}>
       <BackRow title="Privacy" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Request sent</Text>
-      <Muted>Alex can no longer see your shared data. We’ve asked Alex to delete every copy by Dec 17 and to confirm. We’ll tell you when Alex confirms.</Muted>
+      <Muted style={{ marginTop: 8 }}>Alex can no longer see your shared data. We’ve asked Alex to delete every copy by Dec 17 and to confirm. We’ll tell you when Alex confirms.</Muted>
       <PrimaryButton label="Done" />
       <TextLink label="Download my data" />
     </Phase6Shell>
@@ -317,7 +394,7 @@ export function CoachDeletionConfirmScreen({ filled = false, ready = false }: { 
           body="Under the Coach Terms, you must delete every copy of Kevin’s data by Dec 17, including anything saved outside [App]. Your access has already ended. Mark each item, then confirm."
           bodyStyle={{ marginTop: 4 }}
         >
-          <GlassCard style={{ borderRadius: 20, marginTop: 8 }}>
+          <GlassCard style={{ borderRadius: 20, marginTop: 8, backgroundColor: colors.photo, borderWidth: 1.5, borderColor: colors.faint }}>
             <View style={{ paddingHorizontal: 14, paddingVertical: 2 }}>
               {ITEMS.map((it, i) => (
                 <View key={it.label} style={{ flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 7, borderTopWidth: i ? 1 : 0, borderTopColor: colors.glassBorder }}>
@@ -328,7 +405,7 @@ export function CoachDeletionConfirmScreen({ filled = false, ready = false }: { 
               ))}
             </View>
           </GlassCard>
-          <GlassCard style={{ borderRadius: 20, marginTop: 8 }}>
+          <GlassCard style={{ borderRadius: 20, marginTop: 8, backgroundColor: colors.photo, borderWidth: 1.5, borderColor: colors.faint }}>
             <View style={{ paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
               <Text variant="small" style={{ flex: 1 }}>{attest}</Text>
               <Switch
@@ -358,12 +435,19 @@ export function CoachDeletionConfirmScreen({ filled = false, ready = false }: { 
 }
 
 export function CoachDeletionDoneScreen() {
+  const { colors } = useTheme();
   return (
-    <Phase6Shell tab={3}>
-      <BackRow title="Studio" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>You confirmed deletion for Kevin</Text>
-      <Muted>Thanks. Your confirmation was saved on Nov 17. If you find another copy later, delete it right away.</Muted>
-      <PrimaryButton label="Back to Studio" />
+    <Phase6Shell tab={3} overlay={<Toast message="You confirmed Kevin’s data was deleted." />}>
+      <Muted>Coach workspace</Muted>
+      <Text variant="title" accessibilityRole="header">Studio</Text>
+      <Muted style={{ marginTop: 4 }}>3 clients</Muted>
+      <GlassCard style={{ marginTop: 14, borderRadius: 24 }}>
+        <View style={{ padding: 16 }}>
+          <Text variant="body">You confirmed deletion for Kevin</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>Thanks. Your confirmation was saved on Nov 17. If you find another copy later, delete it right away.</Text>
+        </View>
+      </GlassCard>
+      <PrimaryButton label="Back to clients" />
     </Phase6Shell>
   );
 }
@@ -373,8 +457,8 @@ export function AccessEndedScreen() {
     <Phase6Shell tab={3}>
       <BackRow title="Studio" />
       <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Access ended</Text>
-      <Muted>Your coaching relationship with Kevin has ended. You can’t see Kevin’s plans, logs, photos, favorites or messages anymore. Delete every copy you have outside [App] by Dec 17, and confirm.</Muted>
-      <PrimaryButton label="Confirm deletion" />
+      <Muted style={{ marginTop: 8 }}>Your coaching relationship with Kevin has ended. You can’t see Kevin’s plans, logs, photos, favorites or messages anymore. Delete every copy you have outside [App] by Dec 17, and confirm.</Muted>
+      <EqualRow left="Back to Studio" />
     </Phase6Shell>
   );
 }
@@ -383,27 +467,28 @@ export function CoachSettingsNoExportScreen() {
   const { colors } = useTheme();
   return (
     <Phase6Shell tab={4}>
-      <BackRow title="Profile" />
-      <Muted>Coach</Muted>
-      <Text variant="title" accessibilityRole="header">Coaching</Text>
-      <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>Your verification, minors approval, and duties under the Coach Terms.</Text>
-      <GlassCard>
-        <View style={{ padding: 16 }}>
-          <Text variant="body">Download client data</Text>
-          <Text variant="small" color={colors.textMuted} style={{ marginTop: 4 }}>You don’t get an export of a client’s data from us. When coaching ends, delete every copy you have.</Text>
-        </View>
+      <BackRow title="" />
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Coaching</Text>
+      <Muted style={{ marginTop: 4 }}>Your verification, minors approval, and duties under the Coach Terms.</Muted>
+      <GlassCard style={{ marginTop: 14, borderRadius: 24 }}>
+        <SettingsRow first icon="shield-checkmark-outline" label="Certification verified" sub="NASM checked · identity passed" />
+        <SettingsRow icon="people-outline" label="Work with 16–17 year olds" sub="Approved" />
+        <SettingsRow icon="school-outline" label="Reporting training" sub="Completed" />
+        <SettingsRow icon="flag-outline" label="Report suspected abuse" sub="Texas DFPS hotline and guide" />
       </GlassCard>
+      <Text variant="bodyStrong" style={{ marginTop: 16, marginBottom: 8 }}>Client data</Text>
+      <GlassCard style={{ borderRadius: 24, marginTop: 0 }}>
+        <SettingsRow first highlight icon="trash-outline" label="Deletion requests" sub="Delete client data within 30 days after coaching ends or a client asks" />
+      </GlassCard>
+      <Text variant="label" color={colors.textMuted} style={{ marginTop: 10, paddingHorizontal: 4 }}>You can’t download a copy of a client’s data from [App]. When coaching ends, or a client or we ask, you must delete every copy within 30 days, including anything saved outside [App], and confirm. Ending a relationship cuts off access right away.</Text>
     </Phase6Shell>
   );
 }
 
 export function DeletionReminderScreen() {
   return (
-    <Phase6Shell tab={3}>
-      <BackRow title="Studio" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Delete by Dec 17</Text>
-      <Muted>Reminder: delete Kevin’s data by Dec 17 and confirm in Studio.</Muted>
-      <PrimaryButton label="Confirm deletion" />
+    <Phase6Shell tab={3} overlay={<Toast message="Reminder: delete Kevin’s data by Dec 17 and confirm in Studio." />}>
+      <ClientAdultBody deleteAsk />
     </Phase6Shell>
   );
 }
@@ -425,22 +510,34 @@ export function DeletionReminderPushScreen() {
 }
 
 export function DeletionOverdueScreen() {
+  const { colors } = useTheme();
   return (
     <Phase6Shell tab={3}>
-      <BackRow title="Studio" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Deletion for Kevin is overdue</Text>
-      <Muted>Confirm now. Our trust and safety team has been told, and you can’t add new clients until you confirm.</Muted>
+      <Muted>Coach workspace</Muted>
+      <Text variant="title" accessibilityRole="header">Studio</Text>
+      <GlassCard style={{ marginTop: 16, borderRadius: 24, backgroundColor: colors.surfaceRaised, borderWidth: 2, borderColor: colors.accent }}>
+        <View style={{ padding: 16 }}>
+          <Text variant="heading">Deletion for Kevin is overdue</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 6 }}>Confirm now. Our trust and safety team has been told, and you can’t add new clients until you confirm.</Text>
+        </View>
+      </GlassCard>
       <PrimaryButton label="Confirm deletion" />
     </Phase6Shell>
   );
 }
 
 export function AccountSuspendedScreen() {
+  const { colors } = useTheme();
   return (
     <Phase6Shell tab={3}>
-      <BackRow title="Studio" />
-      <Text variant="title" accessibilityRole="header" style={{ marginTop: 8 }}>Your coach account is suspended</Text>
-      <Muted>You didn’t confirm deleting Kevin’s data by Dec 17, 30 days after coaching ended. Confirm now to ask us to review your account. Your clients have been told coaching has ended.</Muted>
+      <Muted>Coach workspace</Muted>
+      <Text variant="title" accessibilityRole="header">Studio</Text>
+      <GlassCard style={{ marginTop: 16, borderRadius: 24 }}>
+        <View style={{ padding: 16 }}>
+          <Text variant="heading">Your coach account is suspended</Text>
+          <Text variant="small" color={colors.textMuted} style={{ marginTop: 6 }}>You didn’t confirm deleting Kevin’s data by Dec 17, 30 days after coaching ended. Confirm now to ask us to review your account. Your clients have been told coaching has ended.</Text>
+        </View>
+      </GlassCard>
       <PrimaryButton label="Confirm deletion" />
     </Phase6Shell>
   );

@@ -472,14 +472,20 @@ export function MinorsPendingScreen() {
         Approval in review
       </Text>
       <Text variant="small" color={colors.textMuted} style={{ marginTop: 8 }}>
-        Thanks. We’ll email you when this approval is decided. Until then, 16–17 year olds can’t be your clients.
+        Your training is recorded. We’re running the registry search and reviewing this request. We’ll email you when there’s an update. Until then, 16–17 year olds can’t be added as your clients.
       </Text>
-      <StatusList
-        rows={[
-          { label: 'Reporting training', value: 'Done' },
-          { label: 'Registry search', value: 'In progress' },
-        ]}
-      />
+      <GlassCard style={{ marginTop: 16, borderRadius: 24 }}>
+        <View style={{ padding: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <Text variant="body" style={{ flex: 1 }}>Reporting training</Text>
+            <Text variant="small" color={colors.accentInk} style={{ fontWeight: '600' }}>Done</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 10 }}>
+            <Text variant="body" style={{ flex: 1 }}>Registry search</Text>
+            <Text variant="small" color={colors.textMuted}>In progress</Text>
+          </View>
+        </View>
+      </GlassCard>
       <PrimaryButton label="Back to Studio" />
     </Phase6Shell>
   );
