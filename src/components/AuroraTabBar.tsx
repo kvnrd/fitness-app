@@ -8,6 +8,7 @@ const ICONS: Record<string, { off: keyof typeof Ionicons.glyphMap; on: keyof typ
   index: { off: 'home-outline', on: 'home', label: 'Home' },
   train: { off: 'barbell-outline', on: 'barbell', label: 'Train' },
   progress: { off: 'stats-chart-outline', on: 'stats-chart', label: 'Progress' },
+  studio: { off: 'clipboard-outline', on: 'clipboard', label: 'Studio' },
   profile: { off: 'person-outline', on: 'person', label: 'Profile' },
 };
 
@@ -19,12 +20,11 @@ export type TabBarProps = {
   insets?: { bottom: number };
 };
 
-/** Floating glass 4-tab bar. Studio is coach-only and is not a root tab on Aurora. */
+/** Floating glass tab bar. Studio is shown for pending and verified coaches. */
 export function AuroraTabBar({ state, descriptors, navigation, navigateToTab }: TabBarProps) {
   const { colors, radius, fonts, minControlSize } = useTheme();
   const insets = useSafeAreaInsets();
   const tabs = state.routes.filter((route) => {
-    if (route.name === 'studio') return false;
     const href = descriptors[route.key]?.options?.href;
     return href !== null;
   });

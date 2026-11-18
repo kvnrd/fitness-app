@@ -66,6 +66,7 @@ import { ProgressChips } from '../../progress/screens/ProgressChips';
 import { ProgressWeightScreen, PREVIEW_WEIGHT_CHART } from '../../progress/screens/ProgressWeight';
 import { WeightGoalSheet } from '../../progress/screens/WeightGoalSheet';
 import { weightSurfaceState } from '../../progress/weightGate.ts';
+import { Phase6Screen, PHASE6_SCREEN_IDS } from '../../studio/screens/Phase6Screen';
 
 /**
  * Screen preview registry (dev only; used by app/dev-preview.tsx for screenshots). id → render function with
@@ -132,7 +133,13 @@ function PlanNoticePreview() {
   );
 }
 
+const phase6Previews: Record<string, () => ReactElement> = Object.fromEntries(
+  PHASE6_SCREEN_IDS.map((id) => [id, () => <Phase6Screen id={id} />]),
+);
+
 export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
+  ...phase6Previews,
+
   'policy-health': () => <PolicyScreen doc={HEALTH_POLICY_DOC} />,
   welcome: () => <WelcomeScreen onCreate={noop} onSignIn={noop} onTerms={noop} onPrivacy={noop} />,
   method: () => <MethodScreen showApple showGoogle onApple={noop} onGoogle={noop} onEmail={noop} onBack={noop} onSignIn={noop} onTerms={noop} onPrivacy={noop} />,

@@ -4,6 +4,8 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useSession } from '../../auth/SessionProvider';
+import { StudioClientsScreen } from '../../studio/screens/StudioScreens';
+import { StudioLockedScreen } from '../../studio/screens/StudioScreens';
 import { Button, Chip, SectionHeader, Text } from '../../components/ui';
 import { DAY_KEYS, DAY_LABELS, DayKey, Exercise, ExerciseKind, LOG_FIELDS, LogField } from '../../data/types';
 import { useAppStore } from '../../state/AppStore';
@@ -113,11 +115,12 @@ function AddExercise({ day, onDone }: { day: DayKey; onDone: () => void }) {
   );
 }
 
-/** Guard: the editor below is never mounted unless the role is coach_verified. */
+/** Pending coaches see the lock. Verified coaches land on the client list. */
 export default function StudioScreen() {
-  const { isVerifiedCoach } = useSession();
-  if (!isVerifiedCoach) return <Redirect href="/" />;
-  return <StudioEditor />;
+  const { isStudioCoach, isVerifiedCoach } = useSession();
+  if (!isStudioCoach) return <Redirect href="/" />;
+  if (!isVerifiedCoach) return <StudioLockedScreen />;
+  return <StudioClientsScreen />;
 }
 
 function StudioEditor() {
