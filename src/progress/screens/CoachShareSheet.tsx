@@ -38,7 +38,7 @@ export function CoachShareSheet({
       <CopyBlock label={COACH_SHARE_WHO_LABEL} body={coachShareWho(coachFirst)} />
       <CopyBlock label={COACH_SHARE_OFF_LABEL} body={coachShareOff(coachFirst)} />
       <Text color={colors.textMuted} style={{ fontFamily: fonts.body, fontSize: 13 }}>{COACH_SHARE_FOOTER}</Text>
-      <EqualActions left={PHOTO_OPT_IN_NOT_NOW} right={PHOTO_OPT_IN_CONTINUE} onLeft={onNotNow} onRight={onContinue} />
+      <EqualActions equal left={PHOTO_OPT_IN_NOT_NOW} right={PHOTO_OPT_IN_CONTINUE} onLeft={onNotNow} onRight={onContinue} />
     </SheetCard>
   );
 }
