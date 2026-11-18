@@ -141,7 +141,7 @@ export default function WorkoutDayScreen() {
                 onPress={() => setNotesOpen((o) => !o)}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: notesOpen }}
-                accessibilityLabel="Coach's notes"
+                accessibilityLabel="Coach’s notes"
                 style={[
                   styles.notesRow,
                   {
@@ -154,7 +154,7 @@ export default function WorkoutDayScreen() {
               >
                 <Ionicons name="mic" size={20} color={colors.accentInk} />
                 <Text variant="small" style={{ fontFamily: fonts.bodySemi }}>
-                  Coach's notes
+                  Coach’s notes
                 </Text>
                 <Text variant="small" color={colors.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
                   {notesOpen ? '' : previewNote}
@@ -165,7 +165,7 @@ export default function WorkoutDayScreen() {
               </Pressable>
             ) : (
               <View>
-                <SectionHeader title="Coach's notes" />
+                <SectionHeader title="Coach’s notes" />
                 {w.keyPoints.map((k, i) => (
                   <View key={i} style={styles.note}>
                     <View style={[styles.noteBar, { backgroundColor: colors.coach }]} />
@@ -221,12 +221,12 @@ export default function WorkoutDayScreen() {
             onAdjust={(d) => setRest((cur) => (cur ? { ...cur, remaining: Math.max(0, cur.remaining + d), total: Math.max(cur.total, cur.remaining + d) } : cur))}
             onSkip={() => setRest(null)}
             finishLabel={`Finish workout (${done} of ${total} sets)`}
-            onFinish={() => router.back()}
+            onFinish={() => router.push(`/workout/recap?day=${day}`)}
           />
         ) : null}
         {aurora && total > 0 && done > 0 && !rest ? (
           <View style={[styles.finishOnly, { paddingBottom: insets.bottom + space.md, backgroundColor: colors.glass, borderColor: colors.glassBorder, borderRadius: radius.sheet }]}>
-            <Button label={`Finish workout (${done} of ${total} sets)`} onPress={() => router.back()} />
+            <Button label={`Finish workout (${done} of ${total} sets)`} onPress={() => router.push(`/workout/recap?day=${day}`)} />
           </View>
         ) : null}
 
@@ -241,7 +241,7 @@ export default function WorkoutDayScreen() {
             <Button
               label={ratio >= 1 ? 'Save workout' : `Finish workout (${done} of ${total} sets)`}
               disabled={done === 0}
-              onPress={() => router.back()}
+              onPress={() => router.push(`/workout/recap?day=${day}`)}
             />
           </View>
         ) : null}

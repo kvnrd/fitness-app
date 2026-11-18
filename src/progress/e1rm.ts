@@ -95,3 +95,30 @@ export function sessionVolumeLb(sets: readonly StrengthSet[]): number {
   }
   return n;
 }
+
+
+/** Every e1RM value is an estimate and must be labeled as such in the data. */
+export const E1RM_LABEL = 'Est. 1RM' as const;
+export const E1RM_ACCESSIBILITY_LABEL = 'estimated 1 rep max' as const;
+
+export type E1rmEstimate = {
+  lb: number;
+  estimated: true;
+  label: typeof E1RM_LABEL;
+  accessibilityLabel: typeof E1RM_ACCESSIBILITY_LABEL;
+};
+
+/**
+ * Epley (default): load × (1 + reps/30), only for sets of 10 reps or fewer.
+ * Teens never get an e1RM from body-weight loads.
+ */
+export function e1rmEstimate(
+  weightLb: number,
+  reps: number,
+  opts: E1rmOptions & { isMinor?: boolean; bodyweightLift?: boolean } = {},
+): E1rmEstimate | null {
+  if (opts.isMinor && opts.bodyweightLift) return null;
+  const lb = e1rmLb(weightLb, reps, opts);
+  if (lb == null) return null;
+  return { lb, estimated: true, label: E1RM_LABEL, accessibilityLabel: E1RM_ACCESSIBILITY_LABEL };
+}

@@ -10,12 +10,11 @@ export const PHOTO_LOCK_MODE: PhotoLockMode = 'default_on_setting';
 /** Approved: keep the "save copies to camera roll" option. The user default is off. */
 export const CAMERA_ROLL_SAVE_OPTION = true;
 
-/** Approved: teen weight lives only as a Profile current value when it exists. */
-export const TEEN_WEIGHT_PROFILE_ONLY = true;
+/** Approved Option 3: teens see weight, history and trends like adults (not Profile-only). */
+export const TEEN_WEIGHT_PROFILE_ONLY = false;
 
 /**
- * Approved alongside Profile-only: teen weight exists as a Profile current value.
- * false would hide even the Profile current value.
+ * Teen weight exists. Flip to false to hide every teen weight surface.
  */
 export const TEEN_WEIGHT_EXISTS = true;
 

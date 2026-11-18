@@ -14,6 +14,7 @@ export const POLICIES = [
   { id: 'privacy', file: 'privacy-policy.md', exportName: 'PRIVACY_POLICY_DOC' },
   { id: 'health', file: 'consumer-health-data-privacy-policy.md', exportName: 'HEALTH_POLICY_DOC' },
   { id: 'terms', file: 'terms-of-service.md', exportName: 'TERMS_DOC' },
+  { id: 'coach_terms', file: 'coach-terms.md', exportName: 'COACH_TERMS_DOC' },
 ];
 
 export function stripDraftingNotes(md) {

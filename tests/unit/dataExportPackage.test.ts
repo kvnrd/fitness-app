@@ -49,16 +49,18 @@ test('the included and excluded sets match Counsel Rev 4, and inapplicable rows 
   ]) {
     assert.ok((DATA_EXPORT_EXCLUDED as readonly string[]).includes(k));
   }
-  const teenEmpty = dataExportLabelsFor({ isMinor: true, hasConnectedApps: false, hasCoach: false, photoCount: 0 });
+  const teenEmpty = dataExportLabelsFor({ isMinor: true, hasConnectedApps: false, hasCoach: false, photoCount: 0, hasHealthInfo: false });
   assert.equal(teenEmpty.includes('Progress photos'), false);
   assert.equal(teenEmpty.includes('Connected health apps'), false);
   assert.equal(teenEmpty.includes('Messages with your coach'), false);
+  assert.equal(teenEmpty.includes('Health info you’ve saved'), false);
   assert.ok(teenEmpty.includes('Account and settings'));
   // Existence, not age, except photos, which never appear for 16–17s.
-  const teenWithData = dataExportLabelsFor({ isMinor: true, hasConnectedApps: true, hasCoach: true, photoCount: 4 });
+  const teenWithData = dataExportLabelsFor({ isMinor: true, hasConnectedApps: true, hasCoach: true, photoCount: 4, hasHealthInfo: true });
   assert.equal(teenWithData.includes('Progress photos'), false);
   assert.ok(teenWithData.includes('Connected health apps'));
   assert.ok(teenWithData.includes('Messages with your coach'));
+  assert.ok(teenWithData.includes('Health info you’ve saved'));
   const adultNoPhotos = dataExportLabelsFor({ isMinor: false, hasConnectedApps: false, hasCoach: false, photoCount: 0 });
   assert.equal(adultNoPhotos.includes('Progress photos'), false);
   assert.equal(adultNoPhotos.includes('Connected health apps'), false);

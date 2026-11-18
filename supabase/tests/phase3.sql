@@ -886,8 +886,12 @@ select tests.ok('ai-health teen: back on with both', app.has_consent(tests.u(74)
 -- weight_goal in SQL (service-only API emulating the server function). Teen first (health is on for both).
 select tests.login(null, 'service_role');
 select public.health_register_key(tests.u(74), tests.wk(74), 'local-dev', 'local-dev:test');
-select tests.raises('weight: a 16-17 account can never store a weight goal', format($q$select public.health_write(%L, null, null, null, tests.ct('wg'), array['weight_goal'])$q$, tests.u(74)), 'forbidden');
-select tests.raises('weight: ...not even through a full replace', format($q$select public.health_write(%L, tests.ct('n'), null, null, tests.ct('wg'))$q$, tests.u(74)), 'forbidden');
+select public.health_write(tests.u(74), null, null, null, tests.ct('wg'), array['weight_goal']);
+select tests.ok('weight: a 16-17 account may store a weight goal when the optional flag is off',
+  exists (select 1 from public.health_records where user_id = tests.u(74) and weight_goal_ct = tests.ct('wg')));
+select public.health_write(tests.u(74), tests.ct('n'), null, null, tests.ct('wg'));
+select tests.ok('weight: a full replace can also set a teen weight goal',
+  exists (select 1 from public.health_records where user_id = tests.u(74) and weight_goal_ct = tests.ct('wg') and injury_notes_ct = tests.ct('n')));
 select public.health_write(tests.u(74), tests.ct('teen notes'), null, null, null, array['injury_notes','weight_goal']);
 select tests.ok('weight: a teen write that CLEARS weight_goal (null) is allowed', exists (select 1 from public.health_records where user_id = tests.u(74) and weight_goal_ct is null and injury_notes_ct = tests.ct('teen notes')));
 select tests.logout();

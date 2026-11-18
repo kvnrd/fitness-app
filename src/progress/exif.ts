@@ -154,3 +154,92 @@ export function stripPhotoMetadata(input: Uint8Array, mime?: string): StripResul
 export function captureDateForStore(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
+
+/** Scan a JPEG (or an EXIF payload) for a remaining GPS IFD pointer. */
+export function jpegHasGps(bytes: Uint8Array): boolean {
+  if (!isJpeg(bytes)) {
+    return findTag(bytes, 0x8825);
+  }
+  let i = 2;
+  while (i + 3 < bytes.length) {
+    if (bytes[i] !== 0xff) break;
+    while (i + 1 < bytes.length && bytes[i] === 0xff && bytes[i + 1] === 0xff) i++;
+    if (i + 1 >= bytes.length) break;
+    const marker = be16(bytes, i);
+    if (marker === EOI || marker === SOS) break;
+    if ((marker >= 0xffd0 && marker <= 0xffd7) || marker === 0xff01) {
+      i += 2;
+      continue;
+    }
+    const len = be16(bytes, i + 2);
+    const end = i + 2 + len;
+    if (len < 2 || end > bytes.length) break;
+    if (marker === 0xffe1 && exifPayloadHasGps(bytes.subarray(i + 4, end))) return true;
+    i = end;
+  }
+  return false;
+}
+
+/**
+ * Read DateTimeOriginal (0x9003) from a JPEG APP1 EXIF payload, on the phone only.
+ * Returns the raw EXIF ASCII value (usually "YYYY:MM:DD HH:MM:SS") or null.
+ */
+export function readDateTimeOriginal(bytes: Uint8Array): string | null {
+  if (!isJpeg(bytes)) return null;
+  let i = 2;
+  while (i + 3 < bytes.length) {
+    if (bytes[i] !== 0xff) break;
+    while (i + 1 < bytes.length && bytes[i] === 0xff && bytes[i + 1] === 0xff) i++;
+    if (i + 1 >= bytes.length) break;
+    const marker = be16(bytes, i);
+    if (marker === EOI || marker === SOS) break;
+    if ((marker >= 0xffd0 && marker <= 0xffd7) || marker === 0xff01) {
+      i += 2;
+      continue;
+    }
+    const len = be16(bytes, i + 2);
+    const end = i + 2 + len;
+    if (len < 2 || end > bytes.length) break;
+    if (marker === 0xffe1) {
+      const v = dateTimeOriginalFromExif(bytes.subarray(i + 4, end));
+      if (v) return v;
+    }
+    i = end;
+  }
+  return null;
+}
+
+function dateTimeOriginalFromExif(payload: Uint8Array): string | null {
+  let off = 0;
+  if (payload.length >= 6 && payload[0] === 0x45 && payload[1] === 0x78 && payload[2] === 0x69 && payload[3] === 0x66) {
+    off = 6;
+  }
+  const tiff = payload.subarray(off);
+  if (tiff.length < 8) return null;
+  const le = tiff[0] === 0x49 && tiff[1] === 0x49;
+  const be = tiff[0] === 0x4d && tiff[1] === 0x4d;
+  if (!le && !be) return null;
+  const u16 = (i: number) => (le ? tiff[i]! | (tiff[i + 1]! << 8) : (tiff[i]! << 8) | tiff[i + 1]!);
+  const u32 = (i: number) =>
+    le
+      ? tiff[i]! | (tiff[i + 1]! << 8) | (tiff[i + 2]! << 16) | (tiff[i + 3]! << 24)
+      : (tiff[i]! << 24) | (tiff[i + 1]! << 16) | (tiff[i + 2]! << 8) | tiff[i + 3]!;
+  const readIfd = (ifd: number, want: number): { type: number; count: number; value: number } | null => {
+    if (ifd + 2 > tiff.length) return null;
+    const n = u16(ifd);
+    for (let k = 0; k < n; k++) {
+      const e = ifd + 2 + k * 12;
+      if (e + 12 > tiff.length) break;
+      if (u16(e) === want) return { type: u16(e + 2), count: u32(e + 4), value: u32(e + 8) };
+    }
+    return null;
+  };
+  const ifd0 = u32(4);
+  const exifPtr = readIfd(ifd0, 0x8769);
+  if (!exifPtr) return null;
+  const tag = readIfd(exifPtr.value, 0x9003);
+  if (!tag || tag.count < 11) return null;
+  const start = tag.count <= 4 ? null : tag.value;
+  if (start == null || start + 10 > tiff.length) return null;
+  return String.fromCharCode(...tiff.subarray(start, start + 19)).replace(/\x00+$/g, '').trim() || null;
+}

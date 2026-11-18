@@ -156,3 +156,7 @@ Counsel's published Privacy Policy v0.3 DRAFT, Consumer Health Data Privacy Poli
 
 ### For Counsel
 1. ~~Coaches seeing ciphertext weigh-in rows.~~ Answered in the Rev 3 addendum (fully hidden unless sharing is on for that coach).
+
+## Phase 5b
+
+Photo import, recap, PRs, legal v0.4 / Coach Terms, WeatherKit, and teen Option 3 live on `phase-5b-photo-import-recap`. See `docs/phase-5b-rules.md`.

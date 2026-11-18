@@ -49,7 +49,7 @@ Tue   Engine Intervals      40 min  ○
  M   T   W   T   F   S   S     <- underline = selected
 Lower Strength (44px)
 ┌ video, oxide coach line ┐
-Coach's notes, ruled list
+Coach’s notes, ruled list
 1  Back Squat          4 × 6 @ RPE 8
    Set  Last    lb    Reps   [✓]
    1    185×6   205    6      ■   <- stamped numerals

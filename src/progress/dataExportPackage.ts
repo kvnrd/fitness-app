@@ -22,7 +22,7 @@ export const DATA_EXPORT_INCLUDED_LABELS = [
   'Training setup',
   'Workouts, sets and PRs',
   'AI plans',
-  'Health info you\'ve saved',
+  'Health info you’ve saved',
   'Connected health apps',
   'Progress photos',
   'Messages with your coach',
@@ -87,11 +87,13 @@ export function dataExportLabelsFor(opts: {
   hasConnectedApps: boolean;
   hasCoach: boolean;
   photoCount: number;
+  hasHealthInfo?: boolean;
 }): string[] {
   return DATA_EXPORT_INCLUDED_LABELS.filter((label) => {
     if (label === 'Progress photos') return opts.isMinor !== true && opts.photoCount > 0;
     if (label === 'Connected health apps') return opts.hasConnectedApps === true;
     if (label === 'Messages with your coach') return opts.hasCoach === true;
+    if (label === 'Health info you’ve saved') return opts.hasHealthInfo !== false;
     return true;
   });
 }

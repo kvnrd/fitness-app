@@ -273,18 +273,18 @@ select tests.p4_link(tests.u(122), tests.u(124));
 select tests.p4_dual_health_ai(tests.u(122), tests.u(124));
 select tests.ok('teen: both health opt-ins are on', app.has_consent(tests.u(122), 'health_data'));
 select tests.login(tests.u(122));
-select tests.raises('teen: no weigh-in history even with Health on',
+select tests.affected('teen: Option 3 allows weigh-in history when both health opt-ins are on',
   format($q$insert into public.weigh_ins (user_id, recorded_on, weight_ct, unit) values (%L, '2026-11-16', '\x01', 'lb')$q$, tests.u(122)),
-  'teen_weight_history_not_allowed');
+  1);
 select tests.raises('teen: cannot turn on body-weight sharing',
   $q$select public.set_share_body_weight(true)$q$, 'teen_weight_history_not_allowed');
-select tests.eq('teen: Progress weight series is empty',
-  $q$select count(*)::text from public.progress_weight_series('progress')$q$, '0');
-select tests.eq('teen: Home weight series is empty',
-  $q$select count(*)::text from public.progress_weight_series('home')$q$, '0');
-select tests.eq('teen: Profile also has no history series',
-  $q$select count(*)::text from public.progress_weight_series('profile')$q$, '0');
-select tests.ok('teen: the server will not serve a weight trend', not app.can_serve_weight_trend(tests.u(122)));
+select tests.eq('teen: Progress weight series is the teen''s own history',
+  $q$select count(*)::text from public.progress_weight_series('progress')$q$, '1');
+select tests.eq('teen: Home weight series is the teen''s own history',
+  $q$select count(*)::text from public.progress_weight_series('home')$q$, '1');
+select tests.eq('teen: Profile weight series is the teen''s own history',
+  $q$select count(*)::text from public.progress_weight_series('profile')$q$, '1');
+select tests.ok('teen: the server will serve a weight trend to the teen', app.can_serve_weight_trend(tests.u(122)));
 select tests.ok('adult: the server can serve a weight trend', app.can_serve_weight_trend(tests.u(120)));
 select tests.login(tests.u(120));
 select tests.ok('adult: Progress series returns ciphertext weigh-ins when Health is on',
@@ -297,9 +297,10 @@ select tests.ok('teen: can_upload_progress_video is always false', not app.can_u
 select tests.ok('teen: cannot opt in to photos', not app.has_progress_photo_opt_in(tests.u(122)));
 select tests.logout();
 select tests.login(null, 'service_role');
-select tests.raises('teen: service cannot write a weight_goal',
-  format($q$select public.health_write(%L, null, null, null, tests.ct('wg'), array['weight_goal'])$q$, tests.u(122)),
-  'forbidden');
+select public.health_register_key(tests.u(122), tests.wk(122), 'local-dev', 'local-dev:test');
+select public.health_write(tests.u(122), null, null, null, tests.ct('wg'), array['weight_goal']);
+select tests.ok('teen: with both health opt-ins a weight_goal can be stored when the optional flag is off',
+  exists (select 1 from public.health_records where user_id = tests.u(122) and weight_goal_ct = tests.ct('wg')));
 select tests.logout();
 
 select tests.login(tests.u(120));
@@ -378,9 +379,9 @@ select public.health_register_key(tests.u(122), tests.wk(122), 'local-dev', 'loc
 select public.health_write(tests.u(122), null, null, null, null, array['body_weight'], tests.ct('bw-1'));
 select public.health_write(tests.u(122), tests.ct('notes'), tests.ct('screen'), tests.ct('cat'), null, array['injury_notes','health_screen','injury_category','body_weight'], tests.ct('bw-2'));
 select tests.logout();
-select tests.ok('rev3: a new teen weight overwrites the previous value; no history row is kept', (
+select tests.ok('rev3: a new teen current weight overwrites the previous current value; history is kept under Option 3', (
   (select body_weight_ct = tests.ct('bw-2') from public.health_records where user_id = tests.u(122))
-  and (select count(*) from public.weigh_ins where user_id = tests.u(122)) = 0));
+  and (select count(*) from public.weigh_ins where user_id = tests.u(122)) >= 1));
 
 select tests.ok('rev4: teen had AI planning on before Health was turned off', app.has_consent(tests.u(122), 'ai_vendor'));
 select tests.login(tests.u(124));

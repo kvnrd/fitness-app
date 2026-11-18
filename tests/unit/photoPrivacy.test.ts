@@ -36,7 +36,7 @@ function mem(): KeyValueAdapter {
 test('Kevin flags are explicit and the current defaults are documented', () => {
   assert.equal(PHOTO_LOCK_MODE, 'default_on_setting');
   assert.equal(CAMERA_ROLL_SAVE_OPTION, true);
-  assert.equal(TEEN_WEIGHT_PROFILE_ONLY, true);
+  assert.equal(TEEN_WEIGHT_PROFILE_ONLY, false);
   assert.equal(defaultPhotoLockOn(), true);
   assert.equal(DEFAULT_CAMERA_ROLL_COPIES, false);
   assert.equal(defaultPhotoPrivacySettings().cameraRollCopies, false);

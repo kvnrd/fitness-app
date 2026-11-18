@@ -112,9 +112,18 @@ test('health: omitted fields keep their stored value; explicit null clears', asy
   assert.deepEqual([rec.injury_notes, rec.injury_category, rec.health_screen, rec.weight_goal, rec.body_weight], [null, 'knee', 's1', null, null]);
 });
 
-test('health: weight_goal refused for a 16-17 account with the generic error; clearing is fine', async () => {
+test('health: weight_goal is allowed for a 16-17 account when the optional flag is off', async () => {
   const { db, deps } = setup();
   db.minors.add(ALICE);
+  db.teenNoGoalWeight = false;
+  assert.equal((await handleHealthWrite(deps, ALICE, { weight_goal: WG() })).status, 200);
+  assert.equal((await handleHealthWrite(deps, ALICE, { weight_goal: null, injury_notes: 'ok' })).status, 200);
+});
+
+test('health: weight_goal is refused for a 16-17 account when the optional flag is on', async () => {
+  const { db, deps } = setup();
+  db.minors.add(ALICE);
+  db.teenNoGoalWeight = true;
   assert.deepEqual(await handleHealthWrite(deps, ALICE, { weight_goal: WG() }), { status: 403, body: { error: 'forbidden' } });
   assert.equal((await handleHealthWrite(deps, ALICE, { weight_goal: null, injury_notes: 'ok' })).status, 200);
 });

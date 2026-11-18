@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { sha256Hex, sha256HexPure } from '../../src/legal/hash.ts';
-import { HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from '../../src/legal/policies/policies.generated.ts';
+import { COACH_TERMS_DOC, HEALTH_POLICY_DOC, PRIVACY_POLICY_DOC, TERMS_DOC } from '../../src/legal/policies/policies.generated.ts';
 import {
-  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_REASK_BODY, HEALTH_REASK_BODY_TEEN, HEALTH_REASK_TITLE, HEALTH_REASK_WAITING, HEALTH_TEXT_WITH_AI, INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_NOTE, INVITE_SENT_TITLE, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, PRIVACY_SETTINGS_INTRO, TERMS, TERMS_CHECKBOX_TEXT, TERMS_REACCEPT_SUB, TERMS_REACCEPT_WAITING, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
+  AI_NEEDS_HEALTH_ACTION, AI_NEEDS_HEALTH_BODY, AI_NEEDS_HEALTH_DISMISS, AI_NEEDS_HEALTH_TITLE, AI_TEXT_PARENT, COACH_ATTEST_GENERAL, COACH_ATTEST_MINORS, HEALTH_POLICY, HEALTH_REASK_BODY, HEALTH_REASK_BODY_TEEN, HEALTH_REASK_TITLE, HEALTH_REASK_WAITING, HEALTH_TEXT_WITH_AI, INVITE_SENT_BODY_AFTER_EMAIL, INVITE_SENT_BODY_BEFORE_EMAIL, INVITE_SENT_NOTE, INVITE_SENT_TITLE, NOT_ELIGIBLE_BODY, NOT_ELIGIBLE_TITLE, PRIVACY_POLICY, PRIVACY_SETTINGS_INTRO, COACH_TERMS, TERMS, TERMS_CHECKBOX_TEXT, TERMS_REACCEPT_SUB, TERMS_REACCEPT_WAITING, termsAcceptanceCounts, aiNeedsHealthBody, parentAiNeedsHealthBody,
   adultRiskCard, legalTexts, parentAiText, parentAttestationText, parentCoachText, parentRiskCard, RISK_BODY_RISKS,
 } from '../../src/legal/text.ts';
 
@@ -26,10 +26,13 @@ test('policy refs carry version + 64-hex hash', () => {
   for (const p of [PRIVACY_POLICY, HEALTH_POLICY]) {
     assert.match(p.hash, /^[0-9a-f]{64}$/);
     assert.ok(p.version.length >= 1 && p.version.length <= 64);
-    assert.match(p.version, /v0\.3-draft$/);
+    assert.match(p.version, /v0\.4-draft$/);
   }
-  assert.equal(TERMS.version, 'v0.2-draft');
+  assert.equal(TERMS.version, 'v0.4-draft');
   assert.equal(TERMS.preProduction, true);
+  assert.equal(COACH_TERMS.version, 'coach-terms-v0.1-draft');
+  assert.equal(COACH_TERMS.hash, COACH_TERMS_DOC.sha256);
+  assert.equal(COACH_TERMS.preProduction, true);
   assert.match(TERMS.hash, /^[0-9a-f]{64}$/);
   assert.notEqual(PRIVACY_POLICY.hash, HEALTH_POLICY.hash);
   assert.notEqual(TERMS.hash, PRIVACY_POLICY.hash);
@@ -142,6 +145,7 @@ test('bundled legal and consent texts use curly apostrophes and contain no strai
     PRIVACY_POLICY_DOC.body,
     HEALTH_POLICY_DOC.body,
     TERMS_DOC.body,
+    COACH_TERMS_DOC.body,
     legalTexts.terms().text,
     legalTexts.health().text,
     legalTexts.aiAdult().text,

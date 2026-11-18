@@ -216,13 +216,15 @@ select tests.eq('reask: AI consent is off after health is revoked', $q$select pu
 -- Restore for later tests that may want u91? not needed.
 select tests.logout();
 
--- =============================================================== 6. body_weight (minors allowed; weight_goal still not)
+-- =============================================================== 6. body_weight (minors allowed; weight_goal allowed when the optional flag is off)
 select tests.login(null, 'service_role');
 select public.health_register_key(tests.u(103), tests.wk(103), 'local-dev', 'local-dev:test');
 select public.health_write(tests.u(103), null, null, null, null, array['body_weight'], tests.ct('bw-142'));
 select tests.ok('weight: 16-17 may store a current body_weight', exists (
   select 1 from public.health_records where user_id = tests.u(103) and body_weight_ct = tests.ct('bw-142')));
-select tests.raises('weight: 16-17 still cannot store a weight_goal', format($q$select public.health_write(%L, null, null, null, tests.ct('wg'), array['weight_goal'])$q$, tests.u(103)), 'forbidden');
+select public.health_write(tests.u(103), null, null, null, tests.ct('wg'), array['weight_goal']);
+select tests.ok('weight: 16-17 may store a weight_goal when the optional flag is off',
+  exists (select 1 from public.health_records where user_id = tests.u(103) and weight_goal_ct = tests.ct('wg')));
 select tests.eq('weight: health_read (self, via service) returns body_weight_ct', format($q$select (body_weight_ct = tests.ct('bw-142'))::text from public.health_read(%L)$q$, tests.u(103)), 'true');
 -- Parent may read the teen's body weight (they have health consent).
 select tests.ok('weight: parent can read the teen record including body_weight', exists (
@@ -398,7 +400,7 @@ select tests.ok('revoked: authenticated can execute the RPC and anon cannot',
 
 -- ------------------------------------------------------------------ legal_text_versions + dedicated consent-meta pepper
 select tests.ok('legal-text: bundled terms, privacy and health-policy rows were seeded',
-  (select count(*) from public.legal_text_versions where kind in ('terms','privacy_policy','health_policy')) = 3);
+  (select count(*) from public.legal_text_versions where kind in ('terms','privacy_policy','health_policy')) >= 3);
 select tests.ok('legal-text: every archived sha256 matches the stored full text',
   not exists (
     select 1 from public.legal_text_versions
