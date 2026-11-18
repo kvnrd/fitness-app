@@ -260,6 +260,7 @@ select tests.raises('roles: client cannot create trainer codes', $q$select publi
 -- apply_for_coach + admin review
 select tests.login(tests.u(8));
 select tests.raises('coach apply: 18+ attestation required', $q$select public.apply_for_coach(false, 'coach-attest-v1', repeat('a', 64))$q$, 'attestation_required');
+select public.accept_coach_terms('coach-terms-v0.1-draft', repeat('c', 64));
 select public.apply_for_coach(true, 'coach-attest-v1', repeat('a', 64), false, null, null, 'NSCA-CPT', 'NSCA', current_date + 365);
 select tests.eq('coach apply: role becomes coach_pending (definer only)', 'select role from public.user_roles where user_id = tests.u(8)', 'coach_pending');
 select tests.rows('coach apply: applicant reads own application', 'select * from public.coach_applications', 1);
@@ -349,7 +350,7 @@ select tests.raises('health: write blocked after health_data revoked', format('s
 
 -- ---- 7. consent timestamps/history
 select tests.login(tests.u(8));
-select tests.rows('consent: fresh user has none', 'select * from public.consents', 0);
+select tests.rows('consent: fresh user has none', $q$select * from public.consents where kind is distinct from 'coach_terms'$q$, 0);
 select public.record_consent('health_data', 'v1');
 select public.record_consent('ai_vendor', 'v1');
 select public.revoke_consent('ai_vendor');

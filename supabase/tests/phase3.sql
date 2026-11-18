@@ -993,6 +993,7 @@ select tests.login(tests.u(76));
 select tests.raises('attest: general hash is required', $q$select public.apply_for_coach(true, 'coach-attest-v1', null)$q$, 'attestation_required');
 select tests.raises('attest: malformed general hash is refused', $q$select public.apply_for_coach(true, 'coach-attest-v1', 'nope')$q$, 'attestation_required');
 select tests.raises('attest: minors box without version/hash is refused', $q$select public.apply_for_coach(true, 'coach-attest-v1', tests.h('e'), true, null, null)$q$, 'attestation_required');
+select public.accept_coach_terms('coach-terms-v0.1-draft', repeat('c', 64));
 select public.apply_for_coach(true, 'coach-attest-general-v1', tests.h('e'));
 select tests.ok('attest: general-only apply writes one general event and no minors event',
   (select count(*) = 1 from public.coach_attestation_events where coach_id = tests.u(76) and kind = 'general' and policy_version = 'coach-attest-general-v1' and text_hash = tests.h('e'))
@@ -1001,6 +1002,7 @@ select tests.ok('attest: general-only apply writes one general event and no mino
 select tests.logout();
 
 select tests.login(tests.u(77));
+select public.accept_coach_terms('coach-terms-v0.1-draft', repeat('c', 64));
 select public.apply_for_coach(true, 'coach-attest-general-v1', tests.h('e'), true, 'coach-attest-minors-v1', tests.h('8'), 'NSCA-CPT', 'NSCA', current_date + 365);
 select tests.ok('attest: minors box logs a separate event and stamps clearance attest (not NSOPW or training)',
   exists (select 1 from public.coach_attestation_events where coach_id = tests.u(77) and kind = 'general' and text_hash = tests.h('e'))
