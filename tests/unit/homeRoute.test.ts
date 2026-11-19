@@ -54,3 +54,7 @@ test('a screen from another state is left for home', () => {
   assert.equal(shouldGoHome(g({ needsProfile: true }), pushed('/sign-in')), '/onboarding');
   assert.equal(shouldGoHome(g({ needsSetup: true }), pushed('/onboarding')), '/setup/start');
 });
+
+test('the dev screenshot harness is left alone', () => {
+  assert.equal(shouldGoHome(g({ signedOut: true }), root('/dev-preview')), null);
+});

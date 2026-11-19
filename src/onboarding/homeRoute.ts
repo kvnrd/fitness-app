@@ -73,6 +73,8 @@ export function shouldGoHome(
   const home = homeRoute(g);
   if (!home) return null;
   const { path, canGoBack, launchPath } = nav;
+  // The dev-only screenshot harness is mounted only in preview builds; never send it anywhere.
+  if (path === '/dev-preview') return null;
   const homeFolder = home.startsWith('/setup/') ? '/setup' : home;
   if (matches(path, homeFolder)) return null;
   if (PUBLIC_LEGAL.includes(path)) return canGoBack || path === launchPath ? null : home;
