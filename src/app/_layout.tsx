@@ -140,12 +140,19 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
 
   // When a guard blocks the current route, expo-router falls back to the shortest allowed static route, which is
   // rarely this state's own screen (signed out: /age; setup: never setup/[step]). Send the app to the state's home.
+  // Hold the last settled gate while the session reloads (e.g. right after sign-in). Unmounting the Stack for that
+  // moment showed a blank screen, then a fallback screen, before the right page: the "twitch".
+  const live = { notEligible, signedOut, needsProfile, pendingMinor, needsSetup, needsPrivacy, needsTerms, termsWaiting, inAppOk, inApp, showConsent, showParentLink, showParentConsent };
+  const held = useRef<typeof live | null>(null);
+  if (readyWithTerms) held.current = live;
+  const g = readyWithTerms ? live : held.current;
+
   const pathname = usePathname();
   const launchPath = useRef<string | null>(null);
   if (launchPath.current === null) launchPath.current = pathname;
   const gateFlags = { notEligible, signedOut, needsProfile, pendingMinor, needsSetup, needsPrivacy, needsTerms, termsWaiting, inAppOk };
   // A blocked screen goes straight to this state's home (no stop on the router's generic fallback, which flashed).
-  const homeHref = (homeRoute(gateFlags) ?? undefined) as Href | undefined;
+  const homeHref = (g ? homeRoute(g) ?? undefined : undefined) as Href | undefined;
   useEffect(() => {
     if (!readyWithTerms || !nav?.key) return;
     const home = shouldGoHome(gateFlags, { path: pathname, canGoBack: router.canGoBack(), launchPath: launchPath.current });
@@ -164,7 +171,7 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
     if (showParentConsent && nav?.key && consumeAwaitingSignIn()) router.push('/parent-consent');
   }, [showParentConsent, nav?.key]);
 
-  if (!readyWithTerms) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
+  if (!g) return <View style={{ flex: 1, backgroundColor: CARBON_BG }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -177,11 +184,11 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           animation: 'slide_from_right',
         }}
       >
-        <Stack.Protected guard={notEligible} redirectTo={homeHref}>
+        <Stack.Protected guard={g.notEligible} redirectTo={homeHref}>
           <Stack.Screen name="not-eligible" options={{ gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={signedOut} redirectTo={homeHref}>
-          <Stack.Screen name="welcome" />
+        <Stack.Protected guard={g.signedOut} redirectTo={homeHref}>
+          <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
           <Stack.Screen name="method" />
           <Stack.Screen name="age" />
           <Stack.Screen name="parent-help" options={{ gestureEnabled: false }} />
@@ -191,22 +198,22 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="verify" />
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
-        <Stack.Protected guard={needsProfile} redirectTo={homeHref}>
-          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        <Stack.Protected guard={g.needsProfile} redirectTo={homeHref}>
+          <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={pendingMinor} redirectTo={homeHref}>
+        <Stack.Protected guard={g.pendingMinor} redirectTo={homeHref}>
           <Stack.Screen name="waiting-parent" options={{ gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={pendingMinor || needsSetup} redirectTo={homeHref}>
-          <Stack.Screen name="setup/[step]" />
+        <Stack.Protected guard={g.pendingMinor || g.needsSetup} redirectTo={homeHref}>
+          <Stack.Screen name="setup/[step]" options={{ animation: 'fade' }} />
         </Stack.Protected>
-        <Stack.Protected guard={needsPrivacy || inApp} redirectTo={homeHref}>
-          <Stack.Screen name="privacy-safety" options={needsPrivacy ? { gestureEnabled: false } : undefined} />
+        <Stack.Protected guard={g.needsPrivacy || g.inApp} redirectTo={homeHref}>
+          <Stack.Screen name="privacy-safety" options={{ animation: 'fade', gestureEnabled: !g.needsPrivacy }} />
         </Stack.Protected>
-        <Stack.Protected guard={needsTerms || termsWaiting} redirectTo={homeHref}>
-          <Stack.Screen name="legal/reaccept" />
+        <Stack.Protected guard={g.needsTerms || g.termsWaiting} redirectTo={homeHref}>
+          <Stack.Screen name="legal/reaccept" options={{ animation: 'fade' }} />
         </Stack.Protected>
-        <Stack.Protected guard={inApp} redirectTo={homeHref}>
+        <Stack.Protected guard={g.inApp} redirectTo={homeHref}>
           <Stack.Screen name="settings/privacy" />
           <Stack.Screen name="settings/health-reask" />
           <Stack.Screen name="settings/photo-privacy" />
@@ -216,21 +223,21 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="photos/add" />
           <Stack.Screen name="photos/import-consent" />
         </Stack.Protected>
-        <Stack.Protected guard={inAppOk} redirectTo={homeHref}>
-          <Stack.Screen name="(tabs)" />
+        <Stack.Protected guard={g.inAppOk} redirectTo={homeHref}>
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
           <Stack.Screen name="workout/[day]" />
           <Stack.Screen name="workout/recap" />
           <Stack.Screen name="ai" />
           <Stack.Screen name="settings/notifications" />
         </Stack.Protected>
-        <Stack.Protected guard={showConsent} redirectTo={homeHref}>
+        <Stack.Protected guard={g.showConsent} redirectTo={homeHref}>
           <Stack.Screen name="consent" />
         </Stack.Protected>
-        <Stack.Protected guard={showParentLink} redirectTo={homeHref}>
+        <Stack.Protected guard={g.showParentLink} redirectTo={homeHref}>
           <Stack.Screen name="parent-link" />
         </Stack.Protected>
         {/* Signed out it explains "sign in first" and keeps the token in memory only. */}
-        <Stack.Protected guard={showParentConsent || signedOut} redirectTo={homeHref}>
+        <Stack.Protected guard={g.showParentConsent || g.signedOut} redirectTo={homeHref}>
           <Stack.Screen name="parent-consent" />
         </Stack.Protected>
         {/* Unguarded routes come last so the first available screen is always the state's own. */}

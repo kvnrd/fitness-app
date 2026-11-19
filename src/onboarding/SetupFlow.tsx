@@ -2,13 +2,11 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useSession } from '../auth/SessionProvider';
-import { auroraTintForAccent } from '../theme/accentAurora';
-import { CARBON_BG, useTheme } from '../theme/ThemeProvider';
+import { CARBON_BG } from '../theme/ThemeProvider';
 import { applyForCoach, redeemTrainerCode, saveTrainingSetup } from './api';
 import { COACH_REQUEST_FAILED, GENERIC_FAILURE, TRAINER_CODE_INVALID, TRAINER_CODE_OK, TRAINER_CODE_RATE_LIMITED } from './copy';
 import { deviceFlags, deviceSetupStore } from './deviceStorage';
 import { DEFAULT_PACE, isAdultGoalId, isMinorGoalId, type AdultGoalId, type MinorGoalId, type PaceId } from './goals';
-import { cleanAccent, ACCENT_IDS, ACCENT_ID_TO_KEY, type AccentId } from './prefs';
 import { EquipmentScreen } from './screens/SetupEquipment';
 import { GoalAdultScreen, GoalMinorScreen } from './screens/SetupGoal';
 import { PrefsScreen } from './screens/SetupPrefs';
@@ -30,21 +28,6 @@ import { clampWeight, parseWeight, stepMaxLb, stepWeight } from './weightGoal';
  */
 export function SetupFlow({ param }: { param?: string }) {
   const { user, profile, onboarding, refreshRole } = useSession();
-  const { setAccent, family, setAuroraPreset, setCustomHue } = useTheme();
-  /** Applies an accent swatch to the whole app: the v2 accent, and in Aurora a matching tint. */
-  const applyAccent = useCallback(
-    (value: string) => {
-      const id = cleanAccent(value);
-      if (!(ACCENT_IDS as string[]).includes(id)) return;
-      const key = ACCENT_ID_TO_KEY[id as AccentId];
-      setAccent(key);
-      if (family !== 'aurora') return;
-      const tint = auroraTintForAccent(key);
-      if ('hue' in tint) setCustomHue(tint.hue);
-      else setAuroraPreset(tint.preset);
-    },
-    [family, setAccent, setAuroraPreset, setCustomHue],
-  );
   const uid = user?.id ?? null;
   const minor = !!onboarding?.is_minor;
   const mode: SetupMode = !minor ? 'adult' : onboarding?.linked ? 'minor-linked' : 'minor-pending';
@@ -142,9 +125,6 @@ export function SetupFlow({ param }: { param?: string }) {
         return;
       }
       // Finished.
-      if (s === 'prefs') {
-        applyAccent(d.prefs.accent);
-      }
       if (mode === 'minor-pending') {
         setBusy(false);
         if (router.canGoBack()) router.back();
@@ -155,7 +135,7 @@ export function SetupFlow({ param }: { param?: string }) {
       if (alive.current) setBusy(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [busy, persist, mode, minor, uid, draftUploaded, refreshRole, applyAccent],
+    [busy, persist, mode, minor, uid, draftUploaded, refreshRole],
   );
 
   const goBack = useCallback(() => {
@@ -386,10 +366,7 @@ export function SetupFlow({ param }: { param?: string }) {
       return (
         <PrefsScreen
           prefs={draft.prefs}
-          onChange={(prefs) => {
-            if (prefs.accent !== draft.prefs.accent) applyAccent(prefs.accent);
-            patch({ prefs });
-          }}
+          onChange={(prefs) => patch({ prefs })}
           busy={busy}
           message={message}
           ctaLabel={mode === 'minor-pending' ? 'Save and go back' : 'Start training'}
