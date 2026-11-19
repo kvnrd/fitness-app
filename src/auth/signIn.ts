@@ -50,6 +50,25 @@ export async function verifyEmailCode(email: string, code: string): Promise<Auth
   }
 }
 
+/**
+ * DEV ONLY (Kevin, 2026-11-18): password sign-in so the core loop can be tested before custom SMTP
+ * lets Supabase email the 6-digit code. Refuses outside __DEV__ builds and in production env, and the
+ * screen only shows it in __DEV__. Remove once SMTP is set up.
+ */
+export const DEV_PASSWORD_SIGN_IN =
+  typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENV !== 'production';
+
+export async function devSignInWithPassword(email: string, password: string): Promise<AuthResult> {
+  if (!DEV_PASSWORD_SIGN_IN || !supabase) return { ok: false, message: NOT_AVAILABLE };
+  if (!isPlausibleEmail(email) || !password) return { ok: false, message: GENERIC_FAIL };
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    return error ? { ok: false, message: GENERIC_FAIL } : { ok: true };
+  } catch {
+    return { ok: false, message: GENERIC_FAIL };
+  }
+}
+
 export const PASSWORD_MIN = 12;
 export const PASSWORD_MAX = 128;
 
