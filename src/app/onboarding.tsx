@@ -32,6 +32,14 @@ export default function OnboardingRoute() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const started = useRef(false);
+  // Account setup usually finishes well under a second; showing "Setting up your account…" for that long reads as a
+  // flash between the code screen and the next step. Show only the plain background first, and the message only
+  // if setup is slow.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   async function run(birthDateIso: string, store: Awaited<ReturnType<typeof getStoreAgeSignal>>) {
     setBusy(true);
@@ -95,7 +103,7 @@ export default function OnboardingRoute() {
           <PrimaryCta label="Try again" busy={busy} onPress={() => void run(pending.birthDateIso, pending.store)} />
           <SecondaryButton label="Sign out" onPress={() => void signOut()} />
         </>
-      ) : (
+      ) : !slow ? null : (
         <View style={{ gap: 16, alignItems: 'flex-start' }} accessibilityLiveRegion="polite">
           <ActivityIndicator color={colors.accentInk} />
           <Text>Setting up your account…</Text>
