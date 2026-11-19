@@ -1,3 +1,4 @@
+import { AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTabBar';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -60,7 +61,7 @@ export default function HomeScreen() {
     <ScreenBackground>
       <ScrollView
         style={{ flex: 1, backgroundColor: 'transparent' }}
-        contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 20 }}
+        contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48 + AURORA_TAB_BAR_RESERVE + insets.bottom, gap: 20 }}
       >
         <Text variant="hero" accessibilityRole="header">
           Home

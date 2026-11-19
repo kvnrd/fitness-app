@@ -1,3 +1,4 @@
+import { AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTabBar';
 import { router } from 'expo-router';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -85,7 +86,7 @@ export default function ProfileTab() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48, gap: 20 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: 24, paddingBottom: 48 + AURORA_TAB_BAR_RESERVE + insets.bottom, gap: 20 }}>
         <Text variant="hero" accessibilityRole="header">
           Profile
         </Text>
