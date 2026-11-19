@@ -1,0 +1,59 @@
+name: Web preview (GitHub Pages)
+
+# Static web build of the app for Kevin and testers (Kevin, 2026-11-19). See docs/web-preview.md.
+on:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Serve from /<repo>/ (GitHub Pages project path), web build only
+        run: |
+          node -e '
+            const fs = require("fs");
+            const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
+            app.expo.experiments = { ...(app.expo.experiments || {}), baseUrl: "/${{ github.event.repository.name }}" };
+            fs.writeFileSync("app.json", JSON.stringify(app, null, 2));
+          '
+      - name: Export web
+        env:
+          EXPO_PUBLIC_WEB_PREVIEW: '1'
+          EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npx expo export --platform web --output-dir dist
+      - name: SPA fallback and no indexing
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+          printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
