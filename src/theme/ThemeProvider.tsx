@@ -117,7 +117,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const map = Object.fromEntries(pairs);
         if (isThemeMode(map[MODE_STORAGE_KEY])) setModeState(map[MODE_STORAGE_KEY]);
         if (isAccentKey(map[ACCENT_STORAGE_KEY])) setAccentState(map[ACCENT_STORAGE_KEY]);
-        if (isThemeFamily(map[FAMILY_STORAGE_KEY])) setFamilyState(map[FAMILY_STORAGE_KEY]);
+        // Appearance no longer offers Classic v2 (Kevin, 2026-11-19), so a stored 'v2' falls back to Aurora.
+        if (map[FAMILY_STORAGE_KEY] === 'aurora') setFamilyState('aurora');
         if (isAuroraPreset(map[AURORA_PRESET_STORAGE_KEY])) setPresetState(map[AURORA_PRESET_STORAGE_KEY]);
         const hue = map[CUSTOM_HUE_STORAGE_KEY];
         const parsed = hue != null ? clampHue(Number(hue)) : null;
