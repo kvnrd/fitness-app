@@ -32,6 +32,8 @@ export function SignInScreen(p: {
   onUseDifferentEmail: () => void;
   onBack: () => void;
   onCreate: () => void;
+  /** DEV ONLY: password sign-in for testing before SMTP. Rendered only when these are passed. */
+  devPassword?: { value: string; onChange: (v: string) => void; onSubmit: () => void };
 }) {
   const { colors } = useTheme();
   return (
@@ -63,6 +65,12 @@ export function SignInScreen(p: {
           </Text>
         </>
       )}
+      {p.devPassword && !p.codeSent ? (
+        <View style={{ gap: 10 }}>
+          <TextField label="Password (dev only)" value={p.devPassword.value} onChangeText={p.devPassword.onChange} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="password" textContentType="password" maxLength={128} />
+          <PrimaryCta label="Sign in with password (dev)" disabled={!p.email.trim() || !p.devPassword.value} busy={p.busy} onPress={p.devPassword.onSubmit} />
+        </View>
+      ) : null}
       {p.notice ? (
         <Text variant="small" color={colors.danger} accessibilityLiveRegion="polite">
           {p.notice}

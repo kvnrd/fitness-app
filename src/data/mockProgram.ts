@@ -1,4 +1,4 @@
-import { Program } from './types';
+import type { Program } from './types.ts';
 
 /** Sample program used until the backend exists. */
 export const mockProgram: Program = {

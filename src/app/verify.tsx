@@ -2,7 +2,7 @@ import { Redirect, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 import { useAgeGate } from '../auth/AgeGateProvider';
-import { resendSignupCode, verifySignupCode } from '../auth/signIn';
+import { DEV_MOCK_SIGNUP_CODE, DEV_PASSWORD_SIGN_IN, resendSignupCode, verifySignupCode } from '../auth/signIn';
 import { goBackOr } from '../onboarding/flow';
 import { VerifyScreen } from '../onboarding/screens/Verify';
 
@@ -61,7 +61,7 @@ export default function VerifyRoute() {
       onBack={() => goBackOr('/create')}
       onOpenMail={Platform.OS === 'ios' ? () => void Linking.openURL('message://').catch(() => {}) : undefined}
       busy={busy}
-      message={message}
+      message={message ?? (DEV_PASSWORD_SIGN_IN ? `Dev build: no email is sent. Enter ${DEV_MOCK_SIGNUP_CODE}.` : null)}
     />
   );
 }

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { startOAuth, useProviderAvailability } from '../auth/providers';
 import { useSession } from '../auth/SessionProvider';
-import { requestEmailCode, verifyEmailCode } from '../auth/signIn';
+import { DEV_PASSWORD_SIGN_IN, devSignInWithPassword, requestEmailCode, verifyEmailCode } from '../auth/signIn';
 import { goBackOr } from '../onboarding/flow';
 import { SignInScreen } from '../onboarding/screens/SignIn';
 
@@ -15,6 +15,7 @@ export default function SignInRoute() {
   const avail = useProviderAvailability();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [devPassword, setDevPassword] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -53,6 +54,11 @@ export default function SignInRoute() {
       }}
       onBack={() => goBackOr('/welcome')}
       onCreate={() => router.push('/method')}
+      devPassword={
+        DEV_PASSWORD_SIGN_IN
+          ? { value: devPassword, onChange: setDevPassword, onSubmit: () => void run(() => devSignInWithPassword(email, devPassword)) }
+          : undefined
+      }
     />
   );
 }

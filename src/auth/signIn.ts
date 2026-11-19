@@ -1,7 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
-import { supabase } from './supabase';
+import { devThrowawayClient, supabase } from './supabase';
 
 /**
  * Sign-in methods. Errors are deliberately GENERIC: never reveal whether an email has an account
@@ -50,6 +50,40 @@ export async function verifyEmailCode(email: string, code: string): Promise<Auth
   }
 }
 
+/**
+ * DEV ONLY (Kevin, 2026-11-18): password sign-in so the core loop can be tested before custom SMTP
+ * lets Supabase email the 6-digit code. Refuses outside __DEV__ builds and in production env, and the
+ * screen only shows it in __DEV__. Remove once SMTP is set up.
+ */
+/**
+ * The hosted web preview (EXPO_PUBLIC_WEB_PREVIEW=1, Kevin 2026-11-19) is a release build, so __DEV__ is
+ * false there. It gets the same dev sign-in, on web only, so native store builds can never turn it on.
+ */
+export const WEB_PREVIEW_BUILD = Platform.OS === 'web' && process.env.EXPO_PUBLIC_WEB_PREVIEW === '1';
+
+export const DEV_PASSWORD_SIGN_IN =
+  ((typeof __DEV__ !== 'undefined' && __DEV__) || WEB_PREVIEW_BUILD) && process.env.EXPO_PUBLIC_ENV !== 'production';
+
+export async function devSignInWithPassword(email: string, password: string): Promise<AuthResult> {
+  if (!DEV_PASSWORD_SIGN_IN || !supabase) return { ok: false, message: NOT_AVAILABLE };
+  if (!isPlausibleEmail(email) || !password) return { ok: false, message: GENERIC_FAIL };
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    return error ? { ok: false, message: GENERIC_FAIL } : { ok: true };
+  } catch {
+    return { ok: false, message: GENERIC_FAIL };
+  }
+}
+
+/**
+ * DEV ONLY mock of the sign-up code email (Kevin, 2026-11-19). Needs auto-confirm on the dev Supabase
+ * project. In a dev build, signUp runs on a throwaway client so its session never reaches the app, the
+ * password stays in memory, and the Verify screen accepts DEV_MOCK_SIGNUP_CODE, which signs in with that
+ * password on the real client. Remove with DEV_PASSWORD_SIGN_IN once SMTP is set up.
+ */
+export const DEV_MOCK_SIGNUP_CODE = '000000';
+let devPendingSignup: { email: string; password: string } | null = null;
+
 export const PASSWORD_MIN = 12;
 export const PASSWORD_MAX = 128;
 
@@ -63,8 +97,11 @@ export async function signUpWithEmail(email: string, password: string): Promise<
   if (!isPlausibleEmail(email)) return { ok: false, message: 'Enter a valid email address.' };
   if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) return { ok: false, message: GENERIC_SIGNUP_FAIL };
   try {
-    const { error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
-    return error ? { ok: false, message: GENERIC_SIGNUP_FAIL } : { ok: true };
+    const client = (DEV_PASSWORD_SIGN_IN && devThrowawayClient()) || supabase;
+    const { error } = await client.auth.signUp({ email: email.trim().toLowerCase(), password });
+    if (error) return { ok: false, message: GENERIC_SIGNUP_FAIL };
+    if (DEV_PASSWORD_SIGN_IN) devPendingSignup = { email: email.trim().toLowerCase(), password };
+    return { ok: true };
   } catch {
     return { ok: false, message: GENERIC_SIGNUP_FAIL };
   }
@@ -75,8 +112,14 @@ export async function verifySignupCode(email: string, code: string): Promise<Aut
   if (!supabase) return { ok: false, message: NOT_AVAILABLE };
   const token = code.replace(/\s/g, '');
   if (!/^\d{6}$/.test(token)) return { ok: false, message: 'Enter the 6-digit code.' };
+  const normalized = email.trim().toLowerCase();
+  if (DEV_PASSWORD_SIGN_IN && token === DEV_MOCK_SIGNUP_CODE && devPendingSignup?.email === normalized) {
+    const r = await devSignInWithPassword(normalized, devPendingSignup.password);
+    if (r.ok) devPendingSignup = null;
+    return r.ok ? r : { ok: false, message: GENERIC_CODE_FAIL };
+  }
   try {
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: 'signup' });
+    const { error } = await supabase.auth.verifyOtp({ email: normalized, token, type: 'signup' });
     return error ? { ok: false, message: GENERIC_CODE_FAIL } : { ok: true };
   } catch {
     return { ok: false, message: GENERIC_CODE_FAIL };
@@ -86,6 +129,7 @@ export async function verifySignupCode(email: string, code: string): Promise<Aut
 /** Resend the signup code. Always reports ok so it cannot be used to probe for accounts. */
 export async function resendSignupCode(email: string): Promise<AuthResult> {
   if (!supabase) return { ok: false, message: NOT_AVAILABLE };
+  if (DEV_PASSWORD_SIGN_IN) return { ok: true }; // mock: nothing to send
   try {
     await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
   } catch {

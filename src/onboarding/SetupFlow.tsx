@@ -2,12 +2,11 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useSession } from '../auth/SessionProvider';
-import { CARBON_BG, useTheme } from '../theme/ThemeProvider';
+import { CARBON_BG } from '../theme/ThemeProvider';
 import { applyForCoach, redeemTrainerCode, saveTrainingSetup } from './api';
 import { COACH_REQUEST_FAILED, GENERIC_FAILURE, TRAINER_CODE_INVALID, TRAINER_CODE_OK, TRAINER_CODE_RATE_LIMITED } from './copy';
 import { deviceFlags, deviceSetupStore } from './deviceStorage';
 import { DEFAULT_PACE, isAdultGoalId, isMinorGoalId, type AdultGoalId, type MinorGoalId, type PaceId } from './goals';
-import { cleanAccent, ACCENT_IDS, ACCENT_ID_TO_KEY, type AccentId } from './prefs';
 import { EquipmentScreen } from './screens/SetupEquipment';
 import { GoalAdultScreen, GoalMinorScreen } from './screens/SetupGoal';
 import { PrefsScreen } from './screens/SetupPrefs';
@@ -29,7 +28,6 @@ import { clampWeight, parseWeight, stepMaxLb, stepWeight } from './weightGoal';
  */
 export function SetupFlow({ param }: { param?: string }) {
   const { user, profile, onboarding, refreshRole } = useSession();
-  const { setAccent } = useTheme();
   const uid = user?.id ?? null;
   const minor = !!onboarding?.is_minor;
   const mode: SetupMode = !minor ? 'adult' : onboarding?.linked ? 'minor-linked' : 'minor-pending';
@@ -127,10 +125,6 @@ export function SetupFlow({ param }: { param?: string }) {
         return;
       }
       // Finished.
-      if (s === 'prefs') {
-        const id = cleanAccent(d.prefs.accent);
-        if ((ACCENT_IDS as string[]).includes(id)) setAccent(ACCENT_ID_TO_KEY[id as AccentId]);
-      }
       if (mode === 'minor-pending') {
         setBusy(false);
         if (router.canGoBack()) router.back();
@@ -141,7 +135,7 @@ export function SetupFlow({ param }: { param?: string }) {
       if (alive.current) setBusy(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [busy, persist, mode, minor, uid, draftUploaded, refreshRole, setAccent],
+    [busy, persist, mode, minor, uid, draftUploaded, refreshRole],
   );
 
   const goBack = useCallback(() => {
