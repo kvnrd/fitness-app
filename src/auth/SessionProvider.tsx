@@ -85,10 +85,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // On error or missing row fail closed to athlete (never keep a stale elevated role).
       setRole(!r.error && isRole(r.data?.role) ? r.data.role : DEFAULT_ROLE);
       const prof = !p.error && p.data ? (p.data as Profile) : null;
-      setProfile(prof);
       // Fail closed: no profile or a failed call leaves the state null.
       const st = prof ? await myOnboardingState() : null;
-      if (latestUser.current === uid) setOnbState(st);
+      if (latestUser.current !== uid) return;
+      // Set both together. Setting the profile first left one render with a profile but no state, which the
+      // gate reads as "couldn't load your account" and flashed right after sign-up.
+      setProfile(prof);
+      setOnbState(st);
     } catch {
       if (latestUser.current === uid) {
         setRole(DEFAULT_ROLE);
