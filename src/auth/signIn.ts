@@ -55,8 +55,14 @@ export async function verifyEmailCode(email: string, code: string): Promise<Auth
  * lets Supabase email the 6-digit code. Refuses outside __DEV__ builds and in production env, and the
  * screen only shows it in __DEV__. Remove once SMTP is set up.
  */
+/**
+ * The hosted web preview (EXPO_PUBLIC_WEB_PREVIEW=1, Kevin 2026-11-19) is a release build, so __DEV__ is
+ * false there. It gets the same dev sign-in, on web only, so native store builds can never turn it on.
+ */
+export const WEB_PREVIEW_BUILD = Platform.OS === 'web' && process.env.EXPO_PUBLIC_WEB_PREVIEW === '1';
+
 export const DEV_PASSWORD_SIGN_IN =
-  typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENV !== 'production';
+  ((typeof __DEV__ !== 'undefined' && __DEV__) || WEB_PREVIEW_BUILD) && process.env.EXPO_PUBLIC_ENV !== 'production';
 
 export async function devSignInWithPassword(email: string, password: string): Promise<AuthResult> {
   if (!DEV_PASSWORD_SIGN_IN || !supabase) return { ok: false, message: NOT_AVAILABLE };
