@@ -56,7 +56,8 @@ export function WelcomeScreen({ onCreate, onSignIn, onTerms, onPrivacy }: { onCr
 
   const copy = (
     <View style={{ gap: 14 }}>
-      <Text variant="label" color={colors.accent} style={{ textTransform: 'uppercase', letterSpacing: 0.96, fontFamily: fonts.bodyBold }}>
+      {/* The hero plate is dark in both modes; a light-mode accent (e.g. Grove's dark green) is unreadable on it. */}
+      <Text variant="label" color={dark ? colors.accent : '#B4B7BC'} style={{ textTransform: 'uppercase', letterSpacing: 0.96, fontFamily: fonts.bodyBold }}>
         01 / 03 · Your program
       </Text>
       <Text accessibilityRole="header" color="#F4F5F6" style={{ fontFamily: fonts.displayHeavy, fontSize: 64, lineHeight: 58, textTransform: 'uppercase', letterSpacing: -0.6 }}>
@@ -92,24 +93,29 @@ export function WelcomeScreen({ onCreate, onSignIn, onTerms, onPrivacy }: { onCr
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: heroH, overflow: 'hidden', borderBottomLeftRadius: dark ? 0 : 32, borderBottomRightRadius: dark ? 0 : 32 }}>
         <HeroArt width={width} height={heroH} />
       </View>
-      <View style={{ flex: 1, paddingTop: top, paddingHorizontal: 24, paddingBottom: bottom, justifyContent: 'space-between' }}>
-        <Wordmark color="#F4F5F6" />
-        {dark ? (
+      {dark ? (
+        <View style={{ flex: 1, paddingTop: top, paddingHorizontal: 24, paddingBottom: bottom, justifyContent: 'space-between' }}>
+          <Wordmark color="#F4F5F6" />
           <View style={{ gap: 28 }}>
             {copy}
             {actions}
             <TermsFooterLine onTerms={onTerms} onPrivacy={onPrivacy} />
           </View>
-        ) : (
-          <View style={{ flex: 1, justifyContent: 'space-between', paddingTop: 24 }}>
-            <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 36 }}>{copy}</View>
-            <View style={{ gap: 20 }}>
-              {actions}
-              <TermsFooterLine onTerms={onTerms} onPrivacy={onPrivacy} />
-            </View>
+        </View>
+      ) : (
+        <View style={{ flex: 1, paddingTop: top, paddingHorizontal: 24, paddingBottom: bottom }}>
+          {/* Light mode: the headline's light text must sit on the dark hero plate, so pin it inside the hero's height
+              instead of letting it float down onto the light page (it was unreadable on taller phones). */}
+          <View style={{ height: heroH - top, justifyContent: 'space-between', paddingBottom: 32 }}>
+            <Wordmark color="#F4F5F6" />
+            {copy}
           </View>
-        )}
-      </View>
+          <View style={{ flex: 1, justifyContent: 'flex-end', gap: 20, paddingTop: 20 }}>
+            {actions}
+            <TermsFooterLine onTerms={onTerms} onPrivacy={onPrivacy} />
+          </View>
+        </View>
+      )}
     </ScreenBackground>
   );
 }
