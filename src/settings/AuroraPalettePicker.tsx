@@ -183,7 +183,7 @@ function GradientSwatch({
  * immediately. Used by Settings › Appearance and Setup › Make it yours, so both look and behave the same.
  */
 export function AuroraPalettePicker() {
-  const { colors, mode, setMode, resolvedScheme, auroraPreset, setAuroraPreset, customHue, setCustomHue, radius, fonts } = useTheme();
+  const { colors, setMode, resolvedScheme, auroraPreset, setAuroraPreset, customHue, setCustomHue, radius, fonts } = useTheme();
 
   const wheelHue = auroraPreset === 'custom' ? customHue : AURORA_PRESET_HUE[auroraPreset];
   const wheelLabel =
@@ -207,10 +207,10 @@ export function AuroraPalettePicker() {
 
   const pickPreset = (key: AuroraPreset) => {
     setAuroraPreset(key);
-    if (mode !== 'system') {
-      if (key === 'midnight') setMode('dark');
-      if (key === 'grove') setMode('light');
-    }
+    // Midnight and Grove are the dark and light halves of one palette, so picking one must also pick its
+    // scheme. Without this, on "system" mode with a light device, tapping Midnight changed nothing.
+    if (key === 'midnight') setMode('dark');
+    if (key === 'grove') setMode('light');
   };
 
   return (
