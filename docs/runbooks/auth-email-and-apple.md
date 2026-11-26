@@ -6,12 +6,12 @@ what was missing is project configuration.
 
 ## How sign-in works in the app
 
-- **New account (email):** Create screen calls `supabase.auth.signUp` (email + 12+ character password),
-  Supabase emails a 6-digit code (confirm-signup template), Verify screen calls
-  `verifyOtp({ type: 'signup' })`.
-- **Existing account (email):** Sign-in screen calls `signInWithOtp({ shouldCreateUser: false })`, Supabase
-  emails a 6-digit code (magic-link template), then `verifyOtp({ type: 'email' })`. There is no password
-  sign-in screen.
+- **No passwords anywhere** (Kevin, 2026-11-26: codes only).
+- **New account (email):** Create screen (name, email, Terms) calls
+  `signInWithOtp({ shouldCreateUser: true })`. Supabase emails a 6-digit code (confirm-signup template for a
+  new address, magic-link template for a known one), and Verify calls `verifyOtp({ type: 'email' })`.
+- **Existing account (email):** Sign-in screen calls `signInWithOtp({ shouldCreateUser: false })`, then
+  `verifyOtp({ type: 'email' })`.
 - **Apple (iOS only):** `expo-apple-authentication` returns an identity token, the app calls
   `signInWithIdToken({ provider: 'apple' })` with a raw nonce. Native sign-in needs only the app's bundle
   ID in Supabase's Apple client IDs. A Services ID and `.p8` key are needed only for Apple sign-in on the
@@ -23,7 +23,7 @@ what was missing is project configuration.
 Done by Claude via the Management API on 2026-11-26:
 
 - Code expiry `mailer_otp_exp` = 600 (10 minutes), code length 6.
-- `password_min_length` = 12 (matches `PASSWORD_MIN`).
+- `password_min_length` = 12 (unused now that there are no passwords).
 - Apple provider enabled with client ID `host.exp.Exponent` (Expo Go's bundle ID), so Apple sign-in can
   be tested in Expo Go on an iPhone.
 
@@ -31,7 +31,7 @@ Blocked until custom SMTP is set (Supabase refuses template edits on the free ti
 
 - Templates that show the code (`{{ .Token }}`) instead of a link, for confirm-signup and magic-link.
   Today's templates still contain only a link, which the app can't use.
-- Turning **off** `mailer_autoconfirm`. While it is on, sign-up skips the code and signs straight in.
+- Turning **off** `mailer_autoconfirm` (no effect on code sign-up, which always emails a code, but no account should skip email confirmation).
 
 ## Kevin's steps
 

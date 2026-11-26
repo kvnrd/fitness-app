@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useAgeGate } from '../auth/AgeGateProvider';
-import { isEmailShape } from '../onboarding/password';
+import { isEmailShape } from '../onboarding/email';
 import { InviteParentScreen } from '../onboarding/screens/InviteParent';
 
 /**

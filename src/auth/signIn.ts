@@ -7,14 +7,13 @@ import { supabase } from './supabase';
  * Sign-in methods. Errors are deliberately GENERIC: never reveal whether an email has an account
  * (no "user not found" / "already registered" distinctions).
  *
- * No password UI: email sign-in is a 6-digit one-time code, so the 12+ character password policy
- * is unused. (Set the OTP length / expiry in the Supabase project's email auth settings.)
+ * No passwords anywhere: sign-up and sign-in both use a 6-digit emailed code. (OTP length / expiry live in
+ * the Supabase project's email auth settings: 6 digits, 10 minutes.)
  */
 export type AuthResult = { ok: true } | { ok: false; message: string };
 
 const GENERIC_FAIL = 'Could not sign in. Please try again.';
 const GENERIC_CODE_FAIL = 'That code did not work. Check it or request a new one.';
-const GENERIC_SIGNUP_FAIL = 'We couldn’t create the account. Check your details and try again.';
 const NOT_AVAILABLE = 'Sign-in is not available right now.';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
@@ -50,24 +49,21 @@ export async function verifyEmailCode(email: string, code: string): Promise<Auth
   }
 }
 
-export const PASSWORD_MIN = 12;
-export const PASSWORD_MAX = 128;
-
 /**
- * Email sign-up (Create screen). Generic on every outcome: with email confirmation on, Supabase answers the
- * same way for a new and an existing address, and we never add a hint of our own ("If an account exists,
- * we've sent a code"). Only local shape checks produce a specific message.
+ * Email sign-up (Create screen): a 6-digit code, no password (Kevin, 2026-11-26: codes only). Same call as
+ * sign-in but allowed to create the user, so a known address simply gets a sign-in code. Always reports
+ * "sent", so the screen cannot be used to probe which emails have accounts. Only the local shape check
+ * produces a specific message.
  */
-export async function signUpWithEmail(email: string, password: string): Promise<AuthResult> {
+export async function signUpWithEmail(email: string): Promise<AuthResult> {
   if (!supabase) return { ok: false, message: NOT_AVAILABLE };
   if (!isPlausibleEmail(email)) return { ok: false, message: 'Enter a valid email address.' };
-  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) return { ok: false, message: GENERIC_SIGNUP_FAIL };
   try {
-    const { error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
-    return error ? { ok: false, message: GENERIC_SIGNUP_FAIL } : { ok: true };
+    await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
   } catch {
-    return { ok: false, message: GENERIC_SIGNUP_FAIL };
+    // swallow: do not distinguish outcomes
   }
+  return { ok: true };
 }
 
 /** Signup confirmation code (6 digits). Success creates the session. */
@@ -77,7 +73,7 @@ export async function verifySignupCode(email: string, code: string): Promise<Aut
   if (!/^\d{6}$/.test(token)) return { ok: false, message: 'Enter the 6-digit code.' };
   const normalized = email.trim().toLowerCase();
   try {
-    const { error } = await supabase.auth.verifyOtp({ email: normalized, token, type: 'signup' });
+    const { error } = await supabase.auth.verifyOtp({ email: normalized, token, type: 'email' });
     return error ? { ok: false, message: GENERIC_CODE_FAIL } : { ok: true };
   } catch {
     return { ok: false, message: GENERIC_CODE_FAIL };
@@ -88,7 +84,7 @@ export async function verifySignupCode(email: string, code: string): Promise<Aut
 export async function resendSignupCode(email: string): Promise<AuthResult> {
   if (!supabase) return { ok: false, message: NOT_AVAILABLE };
   try {
-    await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
+    await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
   } catch {
     // swallow
   }

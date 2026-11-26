@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAgeGate } from '../auth/AgeGateProvider';
 import { useSession } from '../auth/SessionProvider';
 import { createParentInvite } from '../onboarding/api';
-import { isEmailShape } from '../onboarding/password';
+import { isEmailShape } from '../onboarding/email';
 import { inviteNeedsResend, parentApproveDeadlineText } from '../onboarding/routing';
 import { WaitingParentScreen } from '../onboarding/screens/WaitingParent';
 

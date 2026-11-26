@@ -9,7 +9,7 @@ import { VerifyScreen } from '../onboarding/screens/Verify';
 const RESEND_SECONDS = 60;
 
 /**
- * Account · Step 3 of 8. verifyOtp({type:'signup'}) creates the session; the root gate then runs
+ * Account · Step 3 of 8. verifyOtp({type:'email'}) creates the session; the root gate then runs
  * complete_signup. "Wrong email? Change" goes back to Create, never to the date of birth.
  */
 export default function VerifyRoute() {
