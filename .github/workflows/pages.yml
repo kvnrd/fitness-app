@@ -35,7 +35,6 @@ jobs:
           '
       - name: Export web
         env:
-          EXPO_PUBLIC_WEB_PREVIEW: '1'
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export --platform web --output-dir dist

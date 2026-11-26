@@ -78,19 +78,3 @@ function build(): SupabaseClient | null {
 
 /** Null when Supabase is unconfigured: the prototype runs on the in-memory fallback. */
 export const supabase: SupabaseClient | null = build();
-
-/**
- * DEV ONLY: a client that never stores or broadcasts its session, for the mocked sign-up code
- * (src/auth/signIn.ts). With auto-confirm on, signUp returns a session; doing it here keeps that session
- * out of the app's client so the flow still stops at the Verify screen.
- */
-export function devThrowawayClient(): SupabaseClient | null {
-  if (!isSupabaseConfigured()) return null;
-  try {
-    return createClient(URL_ENV!.trim(), ANON_ENV!.trim(), {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sb-fitness-dev-mock' },
-    });
-  } catch {
-    return null;
-  }
-}
