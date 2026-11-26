@@ -49,7 +49,7 @@ export function PrefsScreen(p: PrefsProps) {
       footer={
         <>
           <PrimaryCta label={p.ctaLabel ?? 'Start training'} busy={p.busy} onPress={p.onFinish} />
-          <FooterHint>Skip uses lb, mi and Champagne</FooterHint>
+          <FooterHint>Skip uses lb and mi</FooterHint>
         </>
       }
     >

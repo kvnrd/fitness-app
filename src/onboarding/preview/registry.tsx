@@ -156,16 +156,12 @@ export const PREVIEW_SCREENS: Record<string, () => ReactElement> = {
     <CreateScreen
       name="Kevin"
       email="kevin@example"
-      password="correct horse stapler"
-      showPassword
       terms={false}
       emailError="Enter a full email, like name@example.com"
       hint="Enter a valid email to continue"
       ready={false}
       onName={noop}
       onEmail={noop}
-      onPassword={noop}
-      onToggleShow={noop}
       onTerms={noop}
       onOpenTerms={noop}
       onOpenPrivacy={noop}

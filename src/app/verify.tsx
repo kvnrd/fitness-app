@@ -2,14 +2,14 @@ import { Redirect, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 import { useAgeGate } from '../auth/AgeGateProvider';
-import { DEV_MOCK_SIGNUP_CODE, DEV_PASSWORD_SIGN_IN, resendSignupCode, verifySignupCode } from '../auth/signIn';
+import { resendSignupCode, verifySignupCode } from '../auth/signIn';
 import { goBackOr } from '../onboarding/flow';
 import { VerifyScreen } from '../onboarding/screens/Verify';
 
 const RESEND_SECONDS = 60;
 
 /**
- * Account · Step 3 of 8. verifyOtp({type:'signup'}) creates the session; the root gate then runs
+ * Account · Step 3 of 8. verifyOtp({type:'email'}) creates the session; the root gate then runs
  * complete_signup. "Wrong email? Change" goes back to Create, never to the date of birth.
  */
 export default function VerifyRoute() {
@@ -61,7 +61,7 @@ export default function VerifyRoute() {
       onBack={() => goBackOr('/create')}
       onOpenMail={Platform.OS === 'ios' ? () => void Linking.openURL('message://').catch(() => {}) : undefined}
       busy={busy}
-      message={message ?? (DEV_PASSWORD_SIGN_IN ? `Dev build: no email is sent. Enter ${DEV_MOCK_SIGNUP_CODE}.` : null)}
+      message={message}
     />
   );
 }
