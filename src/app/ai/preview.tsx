@@ -6,9 +6,11 @@ import { goalLabels, injuryLabel } from '../../ai/quiz';
 import { AiPreviewScreen } from '../../ai/screens/AiPreview';
 import { SAMPLE_PLAN, SAMPLE_REST, SAMPLE_SWAP_NOTE } from '../../ai/screens/samplePlan';
 import { useSession } from '../../auth/SessionProvider';
+import { useAppStore } from '../../state/AppStore';
 
 export default function PreviewRoute() {
   const { onboarding } = useSession();
+  const { reload } = useAppStore();
   const draft = getPlanDraft();
   const teen = !!onboarding?.is_minor;
   const plan = draft.status === 'ready' ? draft.plan : SAMPLE_PLAN;
@@ -19,9 +21,10 @@ export default function PreviewRoute() {
 
   async function onStart() {
     setBusy(true);
-    const ok = await markAiPlanAccepted();
+    const ok = await markAiPlanAccepted(draft.status === 'ready' ? title : undefined);
     setBusy(false);
     if (!ok && draft.status === 'ready') return;
+    reload(); // the server just saved the plan; load it into Home and Train
     router.replace('/(tabs)');
   }
 

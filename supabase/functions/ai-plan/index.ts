@@ -26,6 +26,10 @@ Deno.serve(async (req) => {
       anthropic,
       model,
       newRequestId: () => crypto.randomUUID(),
+      saveDraft: async (a, draft) => {
+        const { error } = await serviceRpc()('save_ai_plan_draft', { p_actor: a, p_draft: draft });
+        if (error) throw new Error('save_draft_failed');
+      },
       onFiltered: async (category) => {
         // Reason code only — never the draft, the prompt, or the model output.
         try {

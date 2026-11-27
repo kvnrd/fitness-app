@@ -22,7 +22,6 @@ export interface MessagesRequest {
   system: string;
   messages: { role: 'user'; content: string }[];
   metadata: { user_id: string };
-  temperature: number;
 }
 
 const OUTPUT_FORMAT = `Reply with ONE JSON object and nothing else:
@@ -59,7 +58,6 @@ export function buildPlanRequest(input: PromptInput, model: string): MessagesReq
   return {
     model,
     max_tokens: 4000,
-    temperature: 0.4,
     system: [BASE_RULES, input.ageBand === '16_17' ? MINOR_RULES : '', OUTPUT_FORMAT].filter(Boolean).join('\n\n'),
     messages: [{ role: 'user', content: `Build a one-week training plan for:\n${JSON.stringify(facts)}` }],
     metadata: { user_id: input.requestId },

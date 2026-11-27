@@ -39,6 +39,7 @@ export interface PlanRow {
   name: string;
   week_label: string | null;
   owner_id: string;
+  ai_generated?: boolean | null;
   plan_days: PlanDayRow[] | null;
 }
 
@@ -130,6 +131,7 @@ export function mapPlan(row: PlanRow, trainerName = ''): Program {
     trainer: { id: row.owner_id, name: trainerName, handle: '', programName: row.name },
     weekLabel: row.week_label ?? '',
     days,
+    ...(row.ai_generated ? { aiGenerated: true } : {}),
   };
 }
 

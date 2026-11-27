@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { ANTHROPIC_MESSAGES_URL, assertAllowedRequest, assertModelAllowed, createAnthropicClient, type AnthropicClient } from '../_shared/ai/anthropic.ts';
+import { planToDraft, type PlanDraft } from '../_shared/ai/draft.ts';
+import type { Plan } from '../_shared/ai/plan.ts';
 import { handleAiPlan, type AiContextRow } from '../_shared/ai/handler.ts';
 import { AI_PLAN_NOTICE } from '../_shared/ai/notice.ts';
 import { buildPlanRequest, type MessagesRequest } from '../_shared/ai/prompt.ts';
@@ -85,7 +87,7 @@ test('redaction: the prompt is built from an allowlist (no PII even if a caller 
   assert.equal(facts(req).injury_category, 'knee');
   assert.equal(facts(req).age_range, '18+');
   assert.deepEqual(req.metadata, { user_id: 'req-1' });
-  assert.deepEqual(Object.keys(req).sort(), ['max_tokens', 'messages', 'metadata', 'model', 'system', 'temperature']);
+  assert.deepEqual(Object.keys(req).sort(), ['max_tokens', 'messages', 'metadata', 'model', 'system']);
 });
 
 test('redaction (end to end): the user id, free-text notes and PII never reach Anthropic; a fresh random id per request', async () => {
@@ -212,7 +214,7 @@ test('anthropic client: Messages API only, no beta headers, key only in the head
 
 test('anthropic client: tools, files, images, containers, MCP and output schemas are refused', () => {
   const base = { model: 'm', max_tokens: 10, system: 's', messages: [{ role: 'user', content: 'x' }] };
-  for (const extra of [{ tools: [] }, { container: 'c' }, { mcp_servers: [] }, { output_format: {} }, { output_config: {} }, { betas: ['files-api'] }, { stream: true }]) {
+  for (const extra of [{ tools: [] }, { container: 'c' }, { mcp_servers: [] }, { output_format: {} }, { output_config: {} }, { betas: ['files-api'] }, { stream: true }, { temperature: 0.4 }, { top_p: 0.9 }, { top_k: 5 }]) {
     assert.throws(() => assertAllowedRequest({ ...base, ...extra }), /field_not_allowed/);
   }
   assert.throws(() => assertAllowedRequest({ ...base, messages: [{ role: 'user', content: [{ type: 'image' }] }] }), /non_text/);
@@ -303,4 +305,45 @@ test('goal weight is never sent to Anthropic, for every user', () => {
   const ok = parsePlanRequest({ goal: 'build_strength', experience: 'beginner', equipment: ['dumbbells'], daysPerWeek: 3, sessionMinutes: 45 });
   assert.ok(ok);
   assert.equal(parsePlanRequest({ ...ok, weight_goal: { direction: 'Lose', target: 138, unit: 'lb' } }), null);
+});
+
+test('draft: a clean plan is kept server-side for "Start this plan"; a withheld one never is', async () => {
+  const { ctx, providers } = await ctxFor();
+  const saved: { actor: string; draft: PlanDraft }[] = [];
+  const d = { ...deps(ctx, providers, mockAnthropic(goodPlanJson()).client), saveDraft: async (actor: string, draft: PlanDraft) => { saved.push({ actor, draft }); } };
+  assert.equal((await handleAiPlan(d, ALICE, VALID)).status, 200);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].actor, ALICE);
+  assert.ok(saved[0].draft.days.length > 0);
+
+  const bad = goodPlanJson().replace('Smooth tempo', 'Do extra cardio to burn off what you ate');
+  const d2 = { ...deps(ctx, providers, mockAnthropic(bad).client), saveDraft: async (actor: string, draft: PlanDraft) => { saved.push({ actor, draft }); } };
+  assert.equal((await handleAiPlan(d2, ALICE, VALID)).status, 422);
+  assert.equal(saved.length, 1);
+
+  const d3 = { ...deps(ctx, providers, mockAnthropic(goodPlanJson()).client), saveDraft: async () => { throw new Error('db down'); } };
+  assert.deepEqual(await handleAiPlan(d3, ALICE, VALID), { status: 500, body: { error: 'server_error' } });
+});
+
+test('draft: exercises map to strength or cardio with matching log fields', () => {
+  const plan: Plan = {
+    days: [
+      { day: 'mon', title: 'Strength', focus: 'Legs', duration_min: 45, rest: false, exercises: [
+        { name: 'Back squat', sets: 4, target: '6-8 reps', notes: 'Brace' },
+        { name: 'Easy run', sets: 1, target: '20 min', notes: '' },
+        { name: 'Row', sets: 1, target: '2 km', notes: '' },
+        { name: 'Walking lunge', sets: 3, target: '10 reps per leg, 20 m', notes: '' },
+      ] },
+      { day: 'tue', title: 'Rest', focus: '', duration_min: 0, rest: true, exercises: [] },
+    ],
+    swaps: [],
+  };
+  const draft = planToDraft(plan);
+  assert.deepEqual(draft.days.map((x) => x.day_key), ['mon', 'tue']);
+  const ex = draft.days[0].exercises;
+  assert.deepEqual(ex.map((x) => x.kind), ['strength', 'cardio', 'cardio', 'strength']);
+  assert.deepEqual(ex[0].fields, ['weight', 'reps']);
+  assert.deepEqual(ex[1].fields, ['time', 'distance']);
+  assert.equal(ex[0].description, 'Brace');
+  assert.equal(draft.days[1].rest, true);
 });
