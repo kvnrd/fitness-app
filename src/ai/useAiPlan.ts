@@ -6,7 +6,9 @@ import { aiNoticeVariant, aiStepRoute, nextAiStep } from './flow';
 export function useAiPlan() {
   const [state, setState] = useState<AiPlanServerState | null>(null);
   const refresh = useCallback(async () => {
-    setState(await myAiPlanState());
+    const next = await myAiPlanState();
+    setState(next);
+    return next;
   }, []);
   useEffect(() => {
     void refresh();

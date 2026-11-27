@@ -33,6 +33,7 @@ export async function loadAssignedPlan(db: SupabaseClient, userId: string): Prom
     .from('plans')
     .select(PLAN_SELECT)
     .eq('client_id', userId)
+    .is('ended_at', null) // an AI plan the user ended (end_ai_plan) no longer shows
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle();

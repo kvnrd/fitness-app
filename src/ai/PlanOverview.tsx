@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Text } from '../components/ui';
 import { useTheme } from '../theme/ThemeProvider';
 
-/** Heading proposed to Kevin on 2026-11-27 (pending his OK on the wording; not from Counsel's string tables). */
+/** Heading approved by Kevin on 2026-11-27 (not from Counsel's string tables). */
 export const PLAN_OVERVIEW_HEADING = 'Plan overview';
 
 /** The AI's 3–5 sentence summary of how the week is structured. Renders nothing when there's no overview. */
