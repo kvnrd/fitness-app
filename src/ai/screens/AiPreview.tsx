@@ -58,7 +58,7 @@ export function AiPreviewScreen({
     >
       <View style={{ gap: 8 }}>
         <Text color={colors.accentInk} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          AI plan · preview
+          Your plan · preview
         </Text>
         <OnbTitle>{title}</OnbTitle>
       </View>

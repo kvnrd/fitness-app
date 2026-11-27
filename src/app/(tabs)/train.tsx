@@ -17,10 +17,11 @@ import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { AiNotice } from '../../components/AiNotice';
 import { PlanOverview } from '../../ai/PlanOverview';
 import { endAiPlan } from '../../ai/api';
+import { BUILD_PLAN_CTA, TRAINER_BADGE } from '../../ai/trainer';
 
-// Proposed to Kevin on 2026-11-27 (he asked for this button); wording pending his OK.
-const NEW_PLAN_BUTTON = 'Start a new AI plan';
-const NEW_PLAN_CONFIRM_TITLE = 'Start a new AI plan?';
+// Kevin asked for this button on 2026-11-27; wording proposed in the thread (less "AI", per Kevin).
+const NEW_PLAN_BUTTON = 'Start a new plan';
+const NEW_PLAN_CONFIRM_TITLE = 'Start a new plan?';
 const NEW_PLAN_CONFIRM_BODY = 'This ends your current plan. Workouts you’ve logged are kept.';
 const NEW_PLAN_CONFIRM_ACTION = 'End plan';
 import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
@@ -164,7 +165,7 @@ export default function TrainScreen() {
         {hasAi ? (
           <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: colors.borderStrong }}>
             <Text color={colors.textSecondary} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-              AI plan
+              {TRAINER_BADGE}
             </Text>
           </View>
         ) : program.trainer.name ? (
@@ -191,7 +192,7 @@ export default function TrainScreen() {
       {program.aiGenerated ? <PlanOverview text={program.overview} /> : null}
 
       {!hasAi && process.env.EXPO_PUBLIC_SCREEN_PREVIEW !== '1' ? (
-        <Button label="Build an AI plan" onPress={start} />
+        <Button label={BUILD_PLAN_CTA} onPress={start} />
       ) : null}
 
       <Today day={today} />
