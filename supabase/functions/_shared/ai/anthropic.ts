@@ -7,7 +7,8 @@ import type { MessagesRequest } from './prompt.ts';
 export const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_VERSION = '2023-06-01';
 
-const ALLOWED_KEYS = ['model', 'max_tokens', 'system', 'messages', 'metadata', 'temperature'];
+// No sampling params (temperature, top_p, top_k): current Claude models reject them with a 400.
+const ALLOWED_KEYS = ['model', 'max_tokens', 'system', 'messages', 'metadata'];
 
 /** Covered Models need 30-day retention, so they are refused when ZDR is in place (Counsel section 12). */
 export function assertModelAllowed(model: string | undefined, zdr: boolean): string {

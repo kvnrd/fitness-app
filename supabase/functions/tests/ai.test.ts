@@ -85,7 +85,7 @@ test('redaction: the prompt is built from an allowlist (no PII even if a caller 
   assert.equal(facts(req).injury_category, 'knee');
   assert.equal(facts(req).age_range, '18+');
   assert.deepEqual(req.metadata, { user_id: 'req-1' });
-  assert.deepEqual(Object.keys(req).sort(), ['max_tokens', 'messages', 'metadata', 'model', 'system', 'temperature']);
+  assert.deepEqual(Object.keys(req).sort(), ['max_tokens', 'messages', 'metadata', 'model', 'system']);
 });
 
 test('redaction (end to end): the user id, free-text notes and PII never reach Anthropic; a fresh random id per request', async () => {
@@ -212,7 +212,7 @@ test('anthropic client: Messages API only, no beta headers, key only in the head
 
 test('anthropic client: tools, files, images, containers, MCP and output schemas are refused', () => {
   const base = { model: 'm', max_tokens: 10, system: 's', messages: [{ role: 'user', content: 'x' }] };
-  for (const extra of [{ tools: [] }, { container: 'c' }, { mcp_servers: [] }, { output_format: {} }, { output_config: {} }, { betas: ['files-api'] }, { stream: true }]) {
+  for (const extra of [{ tools: [] }, { container: 'c' }, { mcp_servers: [] }, { output_format: {} }, { output_config: {} }, { betas: ['files-api'] }, { stream: true }, { temperature: 0.4 }, { top_p: 0.9 }, { top_k: 5 }]) {
     assert.throws(() => assertAllowedRequest({ ...base, ...extra }), /field_not_allowed/);
   }
   assert.throws(() => assertAllowedRequest({ ...base, messages: [{ role: 'user', content: [{ type: 'image' }] }] }), /non_text/);
