@@ -15,7 +15,7 @@ Status: **parts 1 and 2 of 3** (logic, server, native pose module, dev lab). Pro
   - `features.ts`: live rep count is free; angles, flagged reps, bar path and cues are Pro. Pro arrives with Phase 9; `EXPO_PUBLIC_DEV_FORM_CHECK_PRO=1` previews it in non-production builds.
   - `retention.ts`: adult videos stay on the phone and are deleted after 90 days unless starred (20 stars max). 16–17 videos are deleted right after analysis and can't be starred.
   - `sharing.ts`: what a coach may get, the compact body-only skeleton (~10 fps) and the metrics shape.
-- `supabase/migrations/20261127000200_phase7_form_check.sql` + `supabase/tests/phase7.sql` (39 assertions):
+- `supabase/migrations/20261127000400_phase7_form_check.sql` + `supabase/tests/phase7.sql` (39 assertions):
   - `form_checks` (numbers + body-only skeleton, no video, no free text), written only through `save_form_check`, which needs the effective health opt-in.
   - `form_check_shares`: only with the user's own active verified coach. Adults may include video. 16–17: never video (trigger, even for the service role), and the coach sees nothing until the parent approves. Owner or parent can revoke; ending coaching or withdrawing coach_sharing hides it at once.
   - Coach review notes: adults only until the Phase 8 minor chat safeguards exist.
