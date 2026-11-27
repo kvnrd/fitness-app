@@ -141,3 +141,11 @@ test('previousFromRows keeps only the latest earlier date per exercise', () => {
   );
   assert.deepEqual(prev.e1, [{ weight: '185', reps: '6' }, { weight: '195', reps: '6' }]);
 });
+
+test('mapPlan carries the AI flag and overview only when set', () => {
+  assert.equal(mapPlan(plan).aiGenerated, undefined);
+  assert.equal(mapPlan(plan).overview, undefined);
+  const ai = mapPlan({ ...plan, ai_generated: true, overview: 'Three full-body days.' });
+  assert.equal(ai.aiGenerated, true);
+  assert.equal(ai.overview, 'Three full-body days.');
+});

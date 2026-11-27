@@ -21,7 +21,7 @@ export interface AiPlanRequest {
 
 export interface AiPlanExercise { name: string; sets: number; target: string; notes: string }
 export interface AiPlanDay { day: string; title: string; focus: string; duration_min: number; rest: boolean; exercises: AiPlanExercise[] }
-export interface AiPlan { days: AiPlanDay[]; swaps: { avoid: string; instead: string }[] }
+export interface AiPlan { overview?: string; days: AiPlanDay[]; swaps: { avoid: string; instead: string }[] }
 
 export type AiPlanResult =
   | { ok: true; plan: AiPlan; notice: string }

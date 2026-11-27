@@ -94,6 +94,17 @@ export async function markAiPlanAccepted(planName?: string): Promise<boolean> {
   }
 }
 
+/** Ends the user's current AI plan (kept for history, logged sets included) so they can build a new one. */
+export async function endAiPlan(): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.rpc('end_ai_plan');
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export async function markAiFirstSessionDone(): Promise<boolean> {
   if (!supabase) return false;
   try {

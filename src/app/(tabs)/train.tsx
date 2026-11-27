@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { healthScreenAiPaused } from '../../ai/flow';
+import { aiStepRoute, healthScreenAiPaused, nextAiStep } from '../../ai/flow';
 import { useAiPlan } from '../../ai/useAiPlan';
 import { AURORA_TAB_BAR_RESERVE } from '../../components/AuroraTabBar';
 import { HeroNumeral } from '../../components/HeroNumeral';
@@ -15,6 +15,15 @@ import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { AiNotice } from '../../components/AiNotice';
+import { PlanOverview } from '../../ai/PlanOverview';
+import { endAiPlan } from '../../ai/api';
+import { BUILD_PLAN_CTA, TRAINER_BADGE } from '../../ai/trainer';
+
+// Kevin asked for this button on 2026-11-27; wording proposed in the thread (less "AI", per Kevin).
+const NEW_PLAN_BUTTON = 'Start a new plan';
+const NEW_PLAN_CONFIRM_TITLE = 'Start a new plan?';
+const NEW_PLAN_CONFIRM_BODY = 'This ends your current plan. Workouts you’ve logged are kept.';
+const NEW_PLAN_CONFIRM_ACTION = 'End plan';
 import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 import { useSession } from '../../auth/SessionProvider';
 import { space } from '../../theme/tokens';
@@ -108,8 +117,8 @@ function DayRow({ day, isToday }: { day: DayKey; isToday: boolean }) {
 export default function TrainScreen() {
   const { colors, fonts, family, radius } = useTheme();
   const insets = useSafeAreaInsets();
-  const { program, locked } = useAppStore();
-  const { start, notice, state } = useAiPlan();
+  const { program, locked, reload } = useAppStore();
+  const { start, notice, state, refresh } = useAiPlan();
   const { onboarding } = useSession();
   const teen = !!onboarding?.is_minor;
   const today = todayKey();
@@ -118,6 +127,25 @@ export default function TrainScreen() {
     .map((p) => p[0])
     .join('');
   const hasAi = !!state?.planAccepted || program.aiGenerated;
+
+  function confirmNewPlan() {
+    Alert.alert(NEW_PLAN_CONFIRM_TITLE, NEW_PLAN_CONFIRM_BODY, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: NEW_PLAN_CONFIRM_ACTION,
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            if (!(await endAiPlan())) return;
+            reload();
+            // Route from the fresh server state (the hook's state still says a plan is accepted).
+            const fresh = await refresh();
+            router.push(fresh ? aiStepRoute(nextAiStep(fresh)) : '/ai/health-switch');
+          })();
+        },
+      },
+    ]);
+  }
 
   return (
     <ScreenBackground>
@@ -137,7 +165,7 @@ export default function TrainScreen() {
         {hasAi ? (
           <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: colors.borderStrong }}>
             <Text color={colors.textSecondary} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-              AI plan
+              {TRAINER_BADGE}
             </Text>
           </View>
         ) : program.trainer.name ? (
@@ -161,9 +189,10 @@ export default function TrainScreen() {
         <HealthScreenPausedBanner teen={teen} onUpdate={() => router.push('/ai/health')} />
       ) : null}
       {hasAi && notice === 'banner' ? <AiNotice /> : null}
+      {program.aiGenerated ? <PlanOverview text={program.overview} /> : null}
 
       {!hasAi && process.env.EXPO_PUBLIC_SCREEN_PREVIEW !== '1' ? (
-        <Button label="Build an AI plan" onPress={start} />
+        <Button label={BUILD_PLAN_CTA} onPress={start} />
       ) : null}
 
       <Today day={today} />
@@ -176,6 +205,7 @@ export default function TrainScreen() {
           ))}
         </View>
       </View>
+      {program.aiGenerated ? <Button label={NEW_PLAN_BUTTON} variant="secondary" onPress={confirmNewPlan} /> : null}
       {hasAi && notice === 'footer' ? <AiNotice variant="footer" /> : null}
     </ScrollView>
     </ScreenBackground>
@@ -200,6 +230,6 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  dayName: { fontSize: 20, lineHeight: 24, width: 44 },
+  dayName: { fontSize: 20, lineHeight: 24, width: 52 },
   status: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });

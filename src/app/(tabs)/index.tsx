@@ -18,15 +18,15 @@ import { Turned18Card } from '../../progress/screens/Turned18Card';
 import { weightSurfaceState } from '../../progress/weightGate.ts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { space } from '../../theme/tokens';
+import { BUILD_PLAN_CTA, TRAINER_BADGE, TRAINER_INTRO } from '../../ai/trainer';
 
 export default function HomeScreen() {
-  const { onboarding, profile, user } = useSession();
+  const { onboarding, user } = useSession();
   const { start, notice, state } = useAiPlan();
   const insets = useSafeAreaInsets();
   const { colors, fonts } = useTheme();
   const teen = !!onboarding?.is_minor;
   const hasPlan = !!state?.planAccepted;
-  const first = profile?.display_name?.trim().split(/\s+/)[0];
   const [healthSelf, setHealthSelf] = useState(false);
   const [healthParent, setHealthParent] = useState(false);
   const [trendLabel, setTrendLabel] = useState<string | undefined>();
@@ -99,7 +99,7 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => router.push('/(tabs)/train')}
             accessibilityRole="button"
-            accessibilityLabel="Open your AI plan"
+            accessibilityLabel="Open your plan"
             style={{
               padding: 16,
               borderRadius: 16,
@@ -124,7 +124,7 @@ export default function HomeScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                  AI plan{first ? ` · ${first}` : ''}
+                  {TRAINER_BADGE}
                 </Text>
                 <Text color={colors.text} style={{ fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 24 }}>
                   Your current plan
@@ -144,9 +144,9 @@ export default function HomeScreen() {
             }}
           >
             <Text color={colors.text} style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 24 }}>
-              Build an AI plan from a short quiz after the health screen. You can still log workouts without one.
+              {TRAINER_INTRO}
             </Text>
-            <Button label="Build an AI plan" onPress={start} />
+            <Button label={BUILD_PLAN_CTA} onPress={start} />
           </View>
         )}
         {hasPlan && notice === 'footer' ? <AiNotice variant="footer" /> : null}

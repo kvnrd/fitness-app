@@ -4,6 +4,7 @@ import { OnbScreen } from '../../onboarding/ui/OnbScreen';
 import { OnbTitle } from '../../onboarding/ui/OnbText';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
+import { TRAINER_NAME } from '../trainer';
 
 export type GenerateStep = 'done' | 'now' | 'todo';
 
@@ -81,7 +82,7 @@ export function AiGeneratingScreen({
       </View>
       <View style={{ alignItems: 'center', gap: 10 }}>
         <Text color={colors.accentInk} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          AI plan
+          {TRAINER_NAME}
         </Text>
         <OnbTitle>Building your plan</OnbTitle>
         <Text color={colors.textSecondary} style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 24 }}>

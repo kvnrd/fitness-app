@@ -6,6 +6,7 @@ import { PrimaryCta } from '../../onboarding/ui/PrimaryCta';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TabChrome } from './TabChrome';
+import { BUILD_PLAN_CTA, TRAINER_BADGE, TRAINER_INTRO } from '../trainer';
 import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 
 export function HomeAiScreen({
@@ -40,7 +41,7 @@ export function HomeAiScreen({
           {healthScreenPaused ? <HealthScreenPausedBanner teen={teen} /> : null}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text color={colors.accentInk} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-              {hasPlan ? `AI plan · ${planTitle}` : 'Your plan'}
+              {hasPlan ? `${TRAINER_BADGE} · ${planTitle}` : 'Your plan'}
             </Text>
           </View>
           {showWeight && !teen && weightLabel ? (
@@ -90,7 +91,7 @@ export function HomeAiScreen({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text color={colors.textMuted} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                    AI plan · {planTitle}
+                    {TRAINER_BADGE} · {planTitle}
                   </Text>
                   <Text color={colors.text} style={{ fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 24 }}>
                     {weekLabel}
@@ -110,9 +111,9 @@ export function HomeAiScreen({
               }}
             >
               <Text color={colors.text} style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 24 }}>
-                Build an AI plan from a short quiz after the health screen. You can still log workouts without one.
+                {TRAINER_INTRO}
               </Text>
-              <PrimaryCta label="Build an AI plan" onPress={onBuildPlan ?? (() => {})} arrow />
+              <PrimaryCta label={BUILD_PLAN_CTA} onPress={onBuildPlan ?? (() => {})} arrow />
             </View>
           )}
         </View>
