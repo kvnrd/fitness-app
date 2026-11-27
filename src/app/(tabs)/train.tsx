@@ -230,6 +230,6 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  dayName: { fontSize: 20, lineHeight: 24, width: 44 },
+  dayName: { fontSize: 20, lineHeight: 24, width: 52 },
   status: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });

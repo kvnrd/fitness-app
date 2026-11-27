@@ -1,15 +1,15 @@
 import { DAY_LABELS, type DayKey } from '../data/types.ts';
 import type { ThemeFamily } from './tokens.ts';
 
-/** Two-letter weekday labels used on Aurora boards (Mo, Tu, We…). */
+/** Three-letter weekday labels used on Aurora boards (Mon, Tue, Wed…). Kevin, 2026-11-27: 3 letters, not 2. */
 export const AURORA_DAY_SHORT: Record<DayKey, string> = {
-  mon: 'Mo',
-  tue: 'Tu',
-  wed: 'We',
-  thu: 'Th',
-  fri: 'Fr',
-  sat: 'Sa',
-  sun: 'Su',
+  mon: 'Mon',
+  tue: 'Tue',
+  wed: 'Wed',
+  thu: 'Thu',
+  fri: 'Fri',
+  sat: 'Sat',
+  sun: 'Sun',
 };
 
 export function shortDay(day: DayKey, family: ThemeFamily): string {
