@@ -268,6 +268,39 @@ select public.mark_ai_first_session_done();
 select tests.ok('session: a second mark leaves the original timestamp', (select count(*) = 1 from public.ai_plan_sessions where user_id = tests.u(102) and first_session_completed_at is not null));
 select tests.logout();
 
+-- Saving the accepted AI plan: the server-held draft (written by the ai-plan function) becomes the user's plan.
+select tests.login(tests.u(102));
+select tests.raises('draft: a user cannot write their own draft', format($q$select public.save_ai_plan_draft(%L, '{"days":[]}'::jsonb)$q$, tests.u(102)), 'permission denied%');
+select tests.logout();
+select tests.login(null, 'service_role');
+select tests.raises('draft: an empty draft is refused', format($q$select public.save_ai_plan_draft(%L, '{"days":[]}'::jsonb)$q$, tests.u(102)), 'invalid_argument');
+select public.save_ai_plan_draft(tests.u(102), $j${"days":[
+  {"day_key":"mon","title":"Lower body","focus":"Squat","duration_min":45,"rest":false,"exercises":[
+    {"name":"Back squat","kind":"strength","sets":4,"target":"6-8 reps","fields":["weight","reps"],"description":"Brace"},
+    {"name":"Easy run","kind":"cardio","sets":1,"target":"20 min","fields":["time","distance"],"description":""}]},
+  {"day_key":"tue","title":"Rest","focus":"","duration_min":0,"rest":true,"exercises":[]}]}$j$::jsonb);
+select tests.logout();
+select tests.login(tests.u(102));
+select public.mark_ai_plan_accepted('Build strength');
+select tests.ok('draft: accepting saves an AI plan owned by and assigned to the user', exists (
+  select 1 from public.plans where owner_id = tests.u(102) and client_id = tests.u(102) and ai_generated and name = 'Build strength'));
+select tests.eq('draft: the plan has the draft''s days', $q$select count(*)::text from public.plan_days d join public.plans p on p.id = d.plan_id where p.client_id = tests.u(102) and p.ai_generated$q$, '2');
+select tests.eq('draft: exercises keep their order, kind and log fields',
+  $q$select string_agg(e.name || ':' || e.kind || ':' || array_to_string(e.fields, '+'), ',' order by e.position) from public.exercises e join public.plan_days d on d.id = e.plan_day_id join public.plans p on p.id = d.plan_id where p.client_id = tests.u(102) and p.ai_generated$q$,
+  'Back squat:strength:weight+reps,Easy run:cardio:time+distance');
+select public.mark_ai_plan_accepted('Again');
+select tests.ok('draft: the draft is used once (a second accept saves nothing new)', (select count(*) = 1 from public.plans where client_id = tests.u(102) and ai_generated));
+select tests.logout();
+select tests.login(null, 'service_role');
+select public.save_ai_plan_draft(tests.u(102), $j${"days":[{"day_key":"wed","title":"Old","focus":"","duration_min":30,"rest":false,"exercises":[]}]}$j$::jsonb);
+select tests.logout();
+update private.ai_plan_drafts set created_at = now() - interval '2 days' where user_id = tests.u(102);
+select tests.login(tests.u(102));
+select public.mark_ai_plan_accepted('Stale');
+select tests.ok('draft: a draft older than a day is dropped, not saved', not exists (select 1 from public.plans where client_id = tests.u(102) and name = 'Stale'));
+select tests.logout();
+select tests.ok('draft: the stale draft is removed', not exists (select 1 from private.ai_plan_drafts where user_id = tests.u(102)));
+
 select tests.login(tests.u(92));
 select tests.raises('session: cannot accept a plan without consents + screen', $q$select public.mark_ai_plan_accepted()$q$, 'consent_required');
 select tests.raises('session: cannot mark first session with no accepted plan', $q$select public.mark_ai_first_session_done()$q$, 'forbidden');

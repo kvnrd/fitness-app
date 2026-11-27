@@ -4,6 +4,7 @@ import { decryptField, fieldAad } from '../crypto/envelope.ts';
 import { providerFor, type Providers } from '../crypto/providers.ts';
 import { fail, mapDbError, ok, type HandlerResult } from '../http.ts';
 import type { AnthropicClient } from './anthropic.ts';
+import { planToDraft, type PlanDraft } from './draft.ts';
 import { filterPlan } from './filter.ts';
 import { AI_PLAN_NOTICE } from './notice.ts';
 import { parsePlan } from './plan.ts';
@@ -28,6 +29,8 @@ export interface AiDeps {
   newRequestId: () => string;
   /** Category-only event log (no prompt, no output, no rejected draft, no user id in the payload). */
   onFiltered?: (category: string) => void | Promise<void>;
+  /** Keeps the filtered plan server-side so "Start this plan" saves exactly this plan (mark_ai_plan_accepted). */
+  saveDraft?: (actor: string, draft: PlanDraft) => Promise<void>;
 }
 
 async function injuryCategory(deps: AiDeps, actor: string, ctx: AiContextRow): Promise<InjuryCategory> {
@@ -89,6 +92,13 @@ export async function handleAiPlan(deps: AiDeps, actor: string, input: unknown):
   if (!verdict.ok) {
     await deps.onFiltered?.(verdict.category);
     return fail(422, 'plan_unavailable');
+  }
+  if (deps.saveDraft) {
+    try {
+      await deps.saveDraft(actor, planToDraft(plan));
+    } catch {
+      return fail(500, 'server_error');
+    }
   }
   // Nothing is sent back to Anthropic (no thumbs up/down feedback, ever).
   return ok({ plan, ai_generated: true, notice: AI_PLAN_NOTICE });

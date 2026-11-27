@@ -83,10 +83,11 @@ export async function attestHealthClearance(ackText: string, forUser?: string): 
   }
 }
 
-export async function markAiPlanAccepted(): Promise<boolean> {
+/** Accepts the plan. The server saves the draft it kept after the safety filter; the app sends only a name. */
+export async function markAiPlanAccepted(planName?: string): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await supabase.rpc('mark_ai_plan_accepted');
+    const { error } = await supabase.rpc('mark_ai_plan_accepted', planName ? { p_plan_name: planName } : {});
     return !error;
   } catch {
     return false;
