@@ -58,7 +58,7 @@ export function buildPlanRequest(input: PromptInput, model: string): MessagesReq
   };
   return {
     model,
-    max_tokens: 4000,
+    max_tokens: 8000, // a 7-day plan with notes can pass 4000 tokens; a cut-off reply is unusable
     system: [BASE_RULES, input.ageBand === '16_17' ? MINOR_RULES : '', OUTPUT_FORMAT].filter(Boolean).join('\n\n'),
     messages: [{ role: 'user', content: `Build a one-week training plan for:\n${JSON.stringify(facts)}` }],
     metadata: { user_id: input.requestId },
