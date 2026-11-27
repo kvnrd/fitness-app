@@ -15,7 +15,13 @@ export function formCheckOutputs(isPro: boolean): FormCheckOutputs {
   return { repCount: true, angles: isPro, flaggedReps: isPro, barPath: isPro, cues: isPro };
 }
 
+// Expo inlines EXPO_PUBLIC_* only on direct `process.env.NAME` reads.
+const BUILD_ENV = {
+  EXPO_PUBLIC_DEV_FORM_CHECK_PRO: process.env.EXPO_PUBLIC_DEV_FORM_CHECK_PRO,
+  EXPO_PUBLIC_ENV: process.env.EXPO_PUBLIC_ENV,
+};
+
 /** Dev-only Pro preview. Never true in a production build. */
-export function devProPreview(env: Record<string, string | undefined> = process.env): boolean {
+export function devProPreview(env: Record<string, string | undefined> = BUILD_ENV): boolean {
   return env.EXPO_PUBLIC_ENV !== 'production' && env.EXPO_PUBLIC_DEV_FORM_CHECK_PRO === '1';
 }

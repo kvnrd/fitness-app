@@ -6,3 +6,6 @@ export * from './cues.ts';
 export * from './features.ts';
 export * from './retention.ts';
 export * from './sharing.ts';
+export * from './liveSession.ts';
+export * from './overlay.ts';
+export * from './lab.ts';

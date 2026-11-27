@@ -3,6 +3,9 @@ import { test } from 'node:test';
 import {
   BODY_JOINTS,
   FACE_LANDMARK_INDICES,
+  LOST_AFTER_MS,
+  LiveSession,
+  previewPoint,
   MAX_STARRED_VIDEOS,
   RepAnalyzer,
   analyzeSet,
@@ -11,6 +14,7 @@ import {
   canStar,
   compactSkeleton,
   devProPreview,
+  formCheckLabEnabled,
   flaggedReps,
   formCheckOutputs,
   isFaceFree,
@@ -280,4 +284,52 @@ test('shared skeleton is body-only and downsampled; metrics carry no identity', 
   const m = metricsOf(analyzeSet('squat', frames));
   assert.deepEqual(Object.keys(m).sort(), ['barDrift', 'movement', 'repCount', 'reps']);
   assert.equal(m.repCount, 2);
+});
+
+// ---------------------------------------------------------------- live session (native events → analyzer)
+
+function packed(f: BodyFrame): number[] {
+  const out: number[] = [];
+  for (const j of BODY_JOINTS) {
+    const p = f.points[j];
+    out.push(p?.x ?? 0, p?.y ?? 0, p?.v ?? 0);
+  }
+  return out;
+}
+
+test('live session counts reps from native packed events', () => {
+  const s = new LiveSession('squat');
+  assert.equal(s.tracking, 'waiting');
+  for (const { t, a } of trajectory(3, 175, 75)) s.onPose({ t, p: packed(squatFrame(t, a)) });
+  assert.equal(s.tracking, 'tracking');
+  assert.equal(s.repCount, 3);
+  const { analysis, frames } = s.finish();
+  assert.equal(analysis.reps.length, 3);
+  assert.ok(frames.length > 100);
+  assert.equal(s.finish().frames.length, 0, 'frames are handed over once, then dropped');
+});
+
+test('live session drops malformed events and notices when the lifter leaves the frame', () => {
+  const s = new LiveSession('squat');
+  s.onPose({ t: 0, p: new Array(99).fill(0.5) }); // 33 × 3: a payload that could carry face points
+  assert.equal(s.rejectedFrames, 1);
+  assert.equal(s.tracking, 'waiting');
+  s.onPose({ t: 100, p: packed(squatFrame(100, 170)) });
+  s.onNoPose({ t: 100 + LOST_AFTER_MS + 1 });
+  assert.equal(s.tracking, 'lost');
+});
+
+test('preview mapping follows aspect fill (cropped edges map off-screen)', () => {
+  // 1080×1920 frame on a 430×932 view: height-limited? scale = max(430/1080, 932/1920) = 0.4854
+  const frame = { w: 1080, h: 1920 }, view = { w: 430, h: 932 };
+  const c = previewPoint(0.5, 0.5, frame, view)!;
+  assert.ok(Math.abs(c.x - 215) < 0.01 && Math.abs(c.y - 466) < 0.01, 'center stays centered');
+  assert.equal(previewPoint(0.01, 0.5, frame, view), null, 'left edge is cropped away');
+  assert.equal(previewPoint(0.5, 0.5, { w: 0, h: 0 }, view), null);
+});
+
+test('the dev lab is off unless its flag is set, and never in production', () => {
+  assert.equal(formCheckLabEnabled({}), false);
+  assert.equal(formCheckLabEnabled({ EXPO_PUBLIC_FORM_CHECK_LAB: '1' }), true);
+  assert.equal(formCheckLabEnabled({ EXPO_PUBLIC_FORM_CHECK_LAB: '1', EXPO_PUBLIC_ENV: 'production' }), false);
 });
