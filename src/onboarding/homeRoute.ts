@@ -75,6 +75,8 @@ export function shouldGoHome(
   const { path, canGoBack, launchPath } = nav;
   // The dev-only screenshot harness is mounted only in preview builds; never send it anywhere.
   if (path === '/dev-preview') return null;
+  // Same for the dev-only form check lab (src/formCheck/lab.ts).
+  if (path === '/dev-form-check') return null;
   const homeFolder = home.startsWith('/setup/') ? '/setup' : home;
   if (matches(path, homeFolder)) return null;
   if (PUBLIC_LEGAL.includes(path)) return canGoBack || path === launchPath ? null : home;

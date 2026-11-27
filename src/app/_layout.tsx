@@ -26,10 +26,13 @@ import { AppStoreProvider } from '../state/AppStore';
 import { myLatestTerms, needsTermsReaccept } from '../legal/termsApi';
 import { termsReacceptGate } from '../legal/termsGate';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
+import { formCheckLabEnabled } from '../formCheck/lab';
+import { FormCheckLabButton } from '../formCheck/LabButton';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const SCREEN_PREVIEW = process.env.EXPO_PUBLIC_SCREEN_PREVIEW === '1';
+const FORM_CHECK_LAB = formCheckLabEnabled();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -252,11 +255,16 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Protected guard={SCREEN_PREVIEW}>
           <Stack.Screen name="dev-preview" />
         </Stack.Protected>
+        {/* Dev-only form check lab (src/formCheck/lab.ts), same guard pattern as dev-preview. */}
+        <Stack.Protected guard={FORM_CHECK_LAB}>
+          <Stack.Screen name="dev-form-check" />
+        </Stack.Protected>
       </Stack>
       </NavThemeProvider>
       {gated ? <OnboardingSync /> : null}
       {showConsent ? <ConsentFirstRun /> : null}
       {isGoogleConfigured ? <GoogleAuthBridge /> : null}
+      {FORM_CHECK_LAB && pathname !== '/dev-form-check' ? <FormCheckLabButton /> : null}
     </View>
   );
 }

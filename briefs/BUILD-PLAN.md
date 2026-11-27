@@ -19,7 +19,7 @@
 | 5 | Progress and photos | **Merged** Nov 17 | PR #12 (`f6f7e5c`) |
 | 5b | Photo import, workout recap, teen weight | **Merged** Nov 17, **now `main`** | PR #13 (`1ba83c7`) |
 | 6 | Coach Studio, verification, moderation | **In progress.** Local branch `phase-6-coach-studio` at `2c2eddc`, **not pushed**. All checks pass (typecheck, functions tsc, check:shippable, unit 212, functions 63, SQL 1101 on PGlite and Postgres 17, gitleaks). Remaining work is in `briefs/phase-6.md` | none yet |
-| 7 | Form check | Not started | |
+| 7 | Form check | **In progress.** Parts 1–2 (analysis logic, server tables, native pose module, dev lab) in PR #22; screens wait for copy. See `docs/phase-7-form-check.md` | |
 | 8 | Messaging and live check-ins | Not started | |
 | 9 | Paywall and in-app subscriptions | Not started | |
 | 10 | Trainer catalog, 1:1 Stripe and B2B | Not started | |

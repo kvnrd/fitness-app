@@ -14,6 +14,7 @@
     "expo-auth-session": "~58.0.18",
     "expo-constants": "~58.0.16",
     "expo-crypto": "~58.0.8",
+    "expo-dev-client": "~58.0.22",
     "expo-font": "~58.0.12",
     "expo-haptics": "~58.0.8",
     "expo-linking": "~58.0.17",
@@ -37,6 +38,9 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:go": "expo start --go",
+    "ios:device": "expo run:ios --device",
+    "lab:ios": "EXPO_PUBLIC_FORM_CHECK_LAB=1 expo run:ios --device",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

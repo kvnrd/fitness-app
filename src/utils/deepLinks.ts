@@ -1,4 +1,5 @@
 import { DAY_KEYS, DayKey } from '../data/types';
+import { formCheckLabEnabled } from '../formCheck/lab';
 
 /**
  * Deep-link allowlist (scheme `fitnessapp`). Anything else resolves to null.
@@ -8,7 +9,8 @@ import { DAY_KEYS, DayKey } from '../data/types';
  * `/legal/privacy`, `/legal/health-privacy` and `/legal/terms` are public policy text, mounted outside every guard.
  * `/welcome`, `/method`, `/waiting-parent`, `/privacy-safety` are param-free and guarded the same way.
  * `/parent-consent` is the only route that takes a param: `?token=` (64 hex chars or 43 base64url chars), nothing else survives.
- * `/dev-preview` and `/setup/*` are NOT allowlisted.
+ * `/dev-preview` and `/setup/*` are NOT allowlisted. `/dev-form-check` is allowed only in a build with
+ * EXPO_PUBLIC_FORM_CHECK_LAB=1 (never production), so a dev build can open it with fitnessapp://dev-form-check.
  * They take no params and perform no action on open.
  */
 const STATIC_PATHS = new Set(['/', '/progress', '/studio', '/age', '/not-eligible', '/sign-in', '/onboarding', '/parent-link', '/consent', '/legal/privacy', '/legal/health-privacy', '/legal/terms', '/welcome', '/method', '/waiting-parent', '/privacy-safety']);
@@ -31,6 +33,7 @@ export function safeDeepLinkPath(input: string): string | null {
   if (!path.startsWith('/')) path = `/${path}`;
   if (path.length > 1) path = path.replace(/\/+$/, '');
   if (STATIC_PATHS.has(path)) return path;
+  if (path === '/dev-form-check' && formCheckLabEnabled()) return path;
   if (path === '/parent-consent') {
     const token = new URLSearchParams(query).get('token');
     return token && isInviteToken(token) ? `/parent-consent?token=${token}` : null;

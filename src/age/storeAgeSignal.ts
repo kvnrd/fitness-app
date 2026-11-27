@@ -26,6 +26,23 @@ function native(): NativeModule | null {
   }
 }
 
+/**
+ * The store prompt can hang (for example a build without the Declared Age Range entitlement, or the
+ * store service not answering). Never block sign-up on it: after this long it counts as "no signal" and
+ * the server uses the date of birth alone, the same as Expo Go and web.
+ */
+export const STORE_SIGNAL_TIMEOUT_MS = 20_000;
+
+function withTimeout<T>(p: Promise<T>, ms = STORE_SIGNAL_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('store_signal_timeout')), ms);
+    p.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
+
 function source(): StoreAgeSource {
   return Platform.OS === 'ios' ? 'apple_declared_age_range' : 'google_play_age_signals';
 }
@@ -35,7 +52,7 @@ export async function getStoreAgeSignal(): Promise<StoreAgeSignal | null> {
   if (!mod) return null;
   let raw: unknown = null;
   try {
-    raw = await mod.requestAgeRange(AGE_GATES);
+    raw = await withTimeout(mod.requestAgeRange(AGE_GATES));
     // revoked is "no signal" here; the launch check below handles it.
     return mapStoreSignal(raw, source());
   } catch {
@@ -73,7 +90,7 @@ export async function checkStoreAgeSharingRevoked(): Promise<boolean> {
   if (!mod) return false;
   let raw: unknown = null;
   try {
-    raw = await mod.requestAgeRange(AGE_GATES);
+    raw = await withTimeout(mod.requestAgeRange(AGE_GATES));
     const revoked = isRevokedResult(raw);
     if (revoked) {
       for (const l of Array.from(revokedListeners)) {

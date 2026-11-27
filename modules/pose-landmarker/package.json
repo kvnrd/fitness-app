@@ -1,0 +1,7 @@
+{
+  "name": "pose-landmarker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "On-device MediaPipe Pose Landmarker with a live camera view. Body joints only; face points never leave native code.",
+  "main": "src/index.ts"
+}

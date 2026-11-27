@@ -9,9 +9,11 @@ public class StoreAgeSignalModule: Module {
   public func definition() -> ModuleDefinition {
     Name("StoreAgeSignal")
 
+    // async closure: runOnQueue(.main) isn't allowed on it (Swift compile error on SDK 58).
+    // request(gates:) is @MainActor, so it still runs on the main thread.
     AsyncFunction("requestAgeRange") { (gates: [Int]) async -> [String: Any?] in
       return await StoreAgeSignalModule.request(gates: gates)
-    }.runOnQueue(.main)
+    }
   }
 
   private static func result(_ status: String, _ lower: Int? = nil, _ upper: Int? = nil) -> [String: Any?] {
