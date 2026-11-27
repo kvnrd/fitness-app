@@ -33,8 +33,9 @@ export default function PreviewRoute() {
       title={title}
       plan={plan}
       injuryLabel={injury}
-      swapNote={injury ? SAMPLE_SWAP_NOTE : undefined}
-      restNote={SAMPLE_REST}
+      // Sample notes only for the sample plan; a real plan's rest days and swaps come from the plan itself.
+      swapNote={draft.status === 'ready' ? undefined : injury ? SAMPLE_SWAP_NOTE : undefined}
+      restNote={draft.status === 'ready' ? undefined : SAMPLE_REST}
       onBack={() => router.replace('/ai/quiz')}
       onStart={() => void onStart()}
       busy={busy}
