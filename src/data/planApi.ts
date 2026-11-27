@@ -16,7 +16,7 @@ import {
  */
 
 const PLAN_SELECT =
-  'id, name, week_label, owner_id, ai_generated, updated_at, ' +
+  'id, name, week_label, owner_id, ai_generated, overview, updated_at, ' +
   'plan_days(id, day_key, title, focus, duration_min, rest, key_points, video_title, video_duration, video_uri, ' +
   'exercises(id, name, kind, sets, target, fields, description, rest_seconds, position))';
 

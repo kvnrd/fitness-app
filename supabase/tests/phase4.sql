@@ -274,7 +274,7 @@ select tests.raises('draft: a user cannot write their own draft', format($q$sele
 select tests.logout();
 select tests.login(null, 'service_role');
 select tests.raises('draft: an empty draft is refused', format($q$select public.save_ai_plan_draft(%L, '{"days":[]}'::jsonb)$q$, tests.u(102)), 'invalid_argument');
-select public.save_ai_plan_draft(tests.u(102), $j${"days":[
+select public.save_ai_plan_draft(tests.u(102), $j${"overview":"One lifting day and one rest day.","days":[
   {"day_key":"mon","title":"Lower body","focus":"Squat","duration_min":45,"rest":false,"exercises":[
     {"name":"Back squat","kind":"strength","sets":4,"target":"6-8 reps","fields":["weight","reps"],"description":"Brace"},
     {"name":"Easy run","kind":"cardio","sets":1,"target":"20 min","fields":["time","distance"],"description":""}]},
@@ -284,6 +284,7 @@ select tests.login(tests.u(102));
 select public.mark_ai_plan_accepted('Build strength');
 select tests.ok('draft: accepting saves an AI plan owned by and assigned to the user', exists (
   select 1 from public.plans where owner_id = tests.u(102) and client_id = tests.u(102) and ai_generated and name = 'Build strength'));
+select tests.eq('draft: the overview is saved with the plan', $q$select overview from public.plans where client_id = tests.u(102) and ai_generated$q$, 'One lifting day and one rest day.');
 select tests.eq('draft: the plan has the draft''s days', $q$select count(*)::text from public.plan_days d join public.plans p on p.id = d.plan_id where p.client_id = tests.u(102) and p.ai_generated$q$, '2');
 select tests.eq('draft: exercises keep their order, kind and log fields',
   $q$select string_agg(e.name || ':' || e.kind || ':' || array_to_string(e.fields, '+'), ',' order by e.position) from public.exercises e join public.plan_days d on d.id = e.plan_day_id join public.plans p on p.id = d.plan_id where p.client_id = tests.u(102) and p.ai_generated$q$,

@@ -15,6 +15,7 @@ import { useAppStore, useDayProgress } from '../../state/AppStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenBackground } from '../../components/ScreenAtmosphere';
 import { AiNotice } from '../../components/AiNotice';
+import { PlanOverview } from '../../ai/PlanOverview';
 import { HealthScreenPausedBanner } from '../../components/HealthScreenPausedBanner';
 import { useSession } from '../../auth/SessionProvider';
 import { space } from '../../theme/tokens';
@@ -161,6 +162,7 @@ export default function TrainScreen() {
         <HealthScreenPausedBanner teen={teen} onUpdate={() => router.push('/ai/health')} />
       ) : null}
       {hasAi && notice === 'banner' ? <AiNotice /> : null}
+      {program.aiGenerated ? <PlanOverview text={program.overview} /> : null}
 
       {!hasAi && process.env.EXPO_PUBLIC_SCREEN_PREVIEW !== '1' ? (
         <Button label="Build an AI plan" onPress={start} />

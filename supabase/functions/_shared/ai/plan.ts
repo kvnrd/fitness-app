@@ -4,7 +4,7 @@ import { DAY_KEYS, isOneOf } from './schema.ts';
 
 export interface PlanExercise { name: string; sets: number; target: string; notes: string }
 export interface PlanDay { day: (typeof DAY_KEYS)[number]; title: string; focus: string; duration_min: number; rest: boolean; exercises: PlanExercise[] }
-export interface Plan { days: PlanDay[]; swaps: { avoid: string; instead: string }[] }
+export interface Plan { overview: string; days: PlanDay[]; swaps: { avoid: string; instead: string }[] }
 
 const str = (v: unknown, max: number): string | null => (typeof v === 'string' && v.length <= max ? v.trim() : null);
 const int = (v: unknown, lo: number, hi: number): number | null =>
@@ -22,7 +22,7 @@ function extractJson(text: string): unknown {
 }
 
 export function parsePlan(text: string, expectedTrainingDays: number): Plan | null {
-  const raw = extractJson(text) as { days?: unknown; swaps?: unknown } | null;
+  const raw = extractJson(text) as { overview?: unknown; days?: unknown; swaps?: unknown } | null;
   if (!raw || !Array.isArray(raw.days) || raw.days.length === 0 || raw.days.length > 7) return null;
   const seen = new Set<string>();
   const days: PlanDay[] = [];
@@ -48,11 +48,13 @@ export function parsePlan(text: string, expectedTrainingDays: number): Plan | nu
     const avoid = str(s?.avoid, 80), instead = str(s?.instead, 80);
     if (avoid && instead) swaps.push({ avoid, instead });
   }
-  return { days, swaps };
+  // Optional: a missing or over-long overview is dropped rather than failing the whole plan.
+  const overview = str(raw.overview ?? '', 800) ?? '';
+  return { overview, days, swaps };
 }
 
 export function planStrings(plan: Plan): string[] {
-  const out: string[] = [];
+  const out: string[] = [plan.overview];
   for (const d of plan.days) {
     out.push(d.title, d.focus);
     for (const e of d.exercises) out.push(e.name, e.target, e.notes);

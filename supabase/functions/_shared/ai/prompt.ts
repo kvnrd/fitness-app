@@ -25,10 +25,11 @@ export interface MessagesRequest {
 }
 
 const OUTPUT_FORMAT = `Reply with ONE JSON object and nothing else:
-{"days":[{"day":"mon|tue|wed|thu|fri|sat|sun","title":string,"focus":string,"duration_min":integer,"rest":boolean,
+{"overview":string,"days":[{"day":"mon|tue|wed|thu|fri|sat|sun","title":string,"focus":string,"duration_min":integer,"rest":boolean,
 "exercises":[{"name":string,"sets":integer,"target":string,"notes":string}]}],
 "swaps":[{"avoid":string,"instead":string}]}
-Use exactly the requested number of training days; other days are rest days with no exercises.`;
+Use exactly the requested number of training days; other days are rest days with no exercises.
+"overview" is 3 to 5 short, plain sentences on how the week is structured: the split, what each kind of day works on, and how cardio and rest fit in. No promises of results.`;
 
 const BASE_RULES = `You write general strength and conditioning plans for a fitness app.
 Rules:
