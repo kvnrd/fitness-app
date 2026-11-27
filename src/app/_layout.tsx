@@ -27,6 +27,7 @@ import { myLatestTerms, needsTermsReaccept } from '../legal/termsApi';
 import { termsReacceptGate } from '../legal/termsGate';
 import { CARBON_BG, ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { formCheckLabEnabled } from '../formCheck/lab';
+import { FormCheckLabButton } from '../formCheck/LabButton';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -263,6 +264,7 @@ function ThemedApp({ fontsReady }: { fontsReady: boolean }) {
       {gated ? <OnboardingSync /> : null}
       {showConsent ? <ConsentFirstRun /> : null}
       {isGoogleConfigured ? <GoogleAuthBridge /> : null}
+      {FORM_CHECK_LAB && pathname !== '/dev-form-check' ? <FormCheckLabButton /> : null}
     </View>
   );
 }
