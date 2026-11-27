@@ -411,13 +411,13 @@ export function EndRelationshipScreen() {
 }
 
 const DAYS: { d: string; n: string; m: string; s: 'done' | 'today' | 'open' | 'rest' }[] = [
-  { d: 'Mo', n: 'Lower Strength', m: '55 min', s: 'done' },
-  { d: 'Tu', n: 'Engine Intervals', m: '40 min', s: 'done' },
-  { d: 'We', n: 'Upper Push', m: '50 min', s: 'today' },
-  { d: 'Th', n: 'Zone 2 Run', m: '45 min', s: 'open' },
-  { d: 'Fr', n: 'Upper Pull', m: '50 min', s: 'open' },
-  { d: 'Sa', n: 'Conditioning', m: '35 min', s: 'open' },
-  { d: 'Su', n: 'Recovery', m: 'Rest', s: 'rest' },
+  { d: 'Mon', n: 'Lower Strength', m: '55 min', s: 'done' },
+  { d: 'Tue', n: 'Engine Intervals', m: '40 min', s: 'done' },
+  { d: 'Wed', n: 'Upper Push', m: '50 min', s: 'today' },
+  { d: 'Thu', n: 'Zone 2 Run', m: '45 min', s: 'open' },
+  { d: 'Fri', n: 'Upper Pull', m: '50 min', s: 'open' },
+  { d: 'Sat', n: 'Conditioning', m: '35 min', s: 'open' },
+  { d: 'Sun', n: 'Recovery', m: 'Rest', s: 'rest' },
 ];
 
 export function PlanWeekScreen({ empty = false }: { empty?: boolean }) {
@@ -459,7 +459,7 @@ export function PlanWeekScreen({ empty = false }: { empty?: boolean }) {
                 borderTopColor: colors.border,
               }}
             >
-              <Text variant="heading" color={row.s === 'today' ? colors.accentInk : colors.textMuted} style={{ width: 28 }}>
+              <Text variant="heading" color={row.s === 'today' ? colors.accentInk : colors.textMuted} style={{ width: 44 }}>
                 {row.d}
               </Text>
               <Text variant="body" style={{ flex: 1, fontWeight: row.s === 'today' ? '700' : '400' }}>

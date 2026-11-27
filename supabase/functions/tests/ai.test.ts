@@ -23,6 +23,7 @@ const PII = {
 function goodPlanJson(days = 3): string {
   const keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   return JSON.stringify({
+    overview: 'Three full-body days spread across the week. Each day pairs a squat with a push and a pull. Rest days sit in between.',
     days: keys.map((d, i) => i < days
       ? { day: d, title: `Day ${i + 1}`, focus: 'Full body', duration_min: 45, rest: false,
           exercises: [{ name: 'Goblet squat', sets: 3, target: '8-10 reps', notes: 'Smooth tempo' }] }
@@ -327,6 +328,7 @@ test('draft: a clean plan is kept server-side for "Start this plan"; a withheld 
 
 test('draft: exercises map to strength or cardio with matching log fields', () => {
   const plan: Plan = {
+    overview: 'Two days.',
     days: [
       { day: 'mon', title: 'Strength', focus: 'Legs', duration_min: 45, rest: false, exercises: [
         { name: 'Back squat', sets: 4, target: '6-8 reps', notes: 'Brace' },
@@ -346,4 +348,24 @@ test('draft: exercises map to strength or cardio with matching log fields', () =
   assert.deepEqual(ex[1].fields, ['time', 'distance']);
   assert.equal(ex[0].description, 'Brace');
   assert.equal(draft.days[1].rest, true);
+});
+
+test('overview: a short overview comes through, is safety-checked, and is optional', async () => {
+  const { ctx, providers } = await ctxFor();
+  const saved: PlanDraft[] = [];
+  const d = { ...deps(ctx, providers, mockAnthropic(goodPlanJson()).client), saveDraft: async (_a: string, draft: PlanDraft) => { saved.push(draft); } };
+  const r = await handleAiPlan(d, ALICE, VALID);
+  assert.equal(r.status, 200);
+  assert.match(String((r.body.plan as Plan).overview), /^Three full-body days/);
+  assert.match(saved[0].overview, /^Three full-body days/);
+
+  const filtered: string[] = [];
+  const bad = goodPlanJson().replace('Rest days sit in between.', 'Do extra cardio to burn off what you ate.');
+  assert.equal((await handleAiPlan(deps(ctx, providers, mockAnthropic(bad).client, filtered), ALICE, VALID)).status, 422);
+  assert.deepEqual(filtered, ['eating_disorder']);
+
+  const none = JSON.parse(goodPlanJson()); delete none.overview;
+  const r2 = await handleAiPlan(deps(ctx, providers, mockAnthropic(JSON.stringify(none)).client), ALICE, VALID);
+  assert.equal(r2.status, 200);
+  assert.equal((r2.body.plan as Plan).overview, '');
 });

@@ -18,7 +18,7 @@ export interface DraftDay {
   rest: boolean;
   exercises: DraftExercise[];
 }
-export interface PlanDraft { days: DraftDay[] }
+export interface PlanDraft { overview: string; days: DraftDay[] }
 
 // A target given as time or distance ("20 min", "1 mile", "400 m") and not as reps is cardio.
 const TIME_OR_DISTANCE = /\b\d+(\.\d+)?\s*(min|mins|minutes|sec|secs|seconds|mile|miles|mi|km|m|meters?)\b/i;
@@ -30,6 +30,7 @@ export function exerciseKind(e: PlanExercise): 'strength' | 'cardio' {
 
 export function planToDraft(plan: Plan): PlanDraft {
   return {
+    overview: plan.overview,
     days: plan.days.map((d) => ({
       day_key: d.day,
       title: d.title,

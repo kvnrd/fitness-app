@@ -6,6 +6,7 @@ import { OnbScreen } from '../../onboarding/ui/OnbScreen';
 import { OnbTitle } from '../../onboarding/ui/OnbText';
 import { PrimaryCta } from '../../onboarding/ui/PrimaryCta';
 import { useTheme } from '../../theme/ThemeProvider';
+import { PlanOverview } from '../PlanOverview';
 import type { AiPlan } from '../aiPlan';
 
 export function AiPreviewScreen({
@@ -57,10 +58,11 @@ export function AiPreviewScreen({
     >
       <View style={{ gap: 8 }}>
         <Text color={colors.accentInk} style={{ fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          AI plan · preview
+          Your plan · preview
         </Text>
         <OnbTitle>{title}</OnbTitle>
       </View>
+      <PlanOverview text={plan.overview} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {Array.from({ length: weeks }, (_, i) => {
           const w = i + 1;

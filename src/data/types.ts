@@ -69,6 +69,8 @@ export interface Program {
   days: Record<DayKey, WorkoutDay>;
   /** True when the plan came from the ai-plan function; the plan screen then shows Counsel's AI notice. */
   aiGenerated?: boolean;
+  /** The AI's short summary of the week's structure (AI plans only). */
+  overview?: string;
 }
 
 /** One logged row: field -> value as typed. */

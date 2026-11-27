@@ -16,7 +16,7 @@ import {
  */
 
 const PLAN_SELECT =
-  'id, name, week_label, owner_id, ai_generated, updated_at, ' +
+  'id, name, week_label, owner_id, ai_generated, overview, updated_at, ' +
   'plan_days(id, day_key, title, focus, duration_min, rest, key_points, video_title, video_duration, video_uri, ' +
   'exercises(id, name, kind, sets, target, fields, description, rest_seconds, position))';
 
@@ -33,6 +33,7 @@ export async function loadAssignedPlan(db: SupabaseClient, userId: string): Prom
     .from('plans')
     .select(PLAN_SELECT)
     .eq('client_id', userId)
+    .is('ended_at', null) // an AI plan the user ended (end_ai_plan) no longer shows
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle();
