@@ -328,6 +328,12 @@ select tests.ok('filter-log: only the reason code is stored', exists (
   select 1 from public.audit_log
    where actor_id = tests.u(102) and action = 'ai_plan_filtered'
      and metadata = '{"reason": "eating_disorder"}'::jsonb));
+select public.log_ai_plan_filtered(tests.u(102), 'truncated');
+select public.log_ai_plan_filtered(tests.u(102), 'day_count');
+select tests.ok('filter-log: truncated and day_count reason codes are accepted', (
+  select count(*) = 2 from public.audit_log
+   where actor_id = tests.u(102) and action = 'ai_plan_filtered'
+     and metadata->>'reason' in ('truncated', 'day_count')));
 select tests.raises('filter-log: unknown reason codes are refused', format($q$select public.log_ai_plan_filtered(%L, 'not_a_code')$q$, tests.u(102)), 'invalid_argument');
 select tests.logout();
 select tests.login(tests.u(102));

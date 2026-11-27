@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { ANTHROPIC_MESSAGES_URL, assertAllowedRequest, assertModelAllowed, createAnthropicClient, type AnthropicClient } from '../_shared/ai/anthropic.ts';
 import { planToDraft, type PlanDraft } from '../_shared/ai/draft.ts';
-import type { Plan } from '../_shared/ai/plan.ts';
+import { clip, parsePlan, parsePlanResult, type Plan } from '../_shared/ai/plan.ts';
 import { handleAiPlan, type AiContextRow } from '../_shared/ai/handler.ts';
 import { AI_PLAN_NOTICE } from '../_shared/ai/notice.ts';
 import { buildPlanRequest, type MessagesRequest } from '../_shared/ai/prompt.ts';
@@ -195,7 +195,124 @@ test('output: refusals and unparseable plans log only an allowlisted reason code
   const filtered: string[] = [];
   assert.equal((await handleAiPlan(deps(ctx, providers, mockAnthropic(goodPlanJson(), 'refusal').client, filtered), ALICE, VALID)).status, 422);
   assert.equal((await handleAiPlan(deps(ctx, providers, mockAnthropic('not json').client, filtered), ALICE, VALID)).status, 422);
-  assert.deepEqual(filtered, ['refusal', 'unparseable']);
+  // An unreadable reply is retried once, so two unreadable replies log the code twice.
+  assert.deepEqual(filtered, ['refusal', 'unparseable', 'unparseable']);
+});
+
+// ---------------------------------------------------------------- parse tolerance and retry
+function seqAnthropic(replies: { text: string; stopReason?: string | null }[]) {
+  const sent: MessagesRequest[] = [];
+  const client: AnthropicClient = {
+    async createMessage(req) {
+      sent.push(req);
+      const r = replies[Math.min(sent.length - 1, replies.length - 1)];
+      return { text: r.text, stopReason: r.stopReason ?? 'end_turn' };
+    },
+  };
+  return { client, sent };
+}
+function mutate(fn: (p: Record<string, any>) => void, days = 3): string {
+  const p = JSON.parse(goodPlanJson(days));
+  fn(p);
+  return JSON.stringify(p);
+}
+
+test('parse: small slips are normalized instead of failing the plan', () => {
+  const longNote = 'Keep the chest up and the knees tracking over the toes. '.repeat(8);
+  const text = '```json\n' + mutate((p) => {
+    p.days[0].title = 'T'.repeat(30) + ' ' + 'x'.repeat(70);
+    p.days[0].day = 'Monday';
+    p.days[0].exercises[0].sets = '4';
+    p.days[0].exercises[0].notes = longNote;
+    p.days[1].duration_min = 47.5;
+    p.days[1].exercises[0].sets = 12;
+    p.days[2].exercises = Array.from({ length: 14 }, (_, i) => ({ name: `Move ${i}`, sets: 3, target: '8 reps', notes: '' }));
+    p.overview = 'Short week. '.repeat(100);
+  }) + '\n```';
+  const plan = parsePlan(text, 3);
+  assert.ok(plan);
+  assert.equal(plan.days[0].day, 'mon');
+  assert.ok(plan.days[0].title.length <= 80);
+  assert.equal(plan.days[0].exercises[0].sets, 4);
+  assert.ok(plan.days[0].exercises[0].notes.length <= 240 && plan.days[0].exercises[0].notes.endsWith('toes.'));
+  assert.equal(plan.days[1].duration_min, 48);
+  assert.equal(plan.days[1].exercises[0].sets, 10);
+  assert.equal(plan.days[2].exercises.length, 12);
+  assert.ok(plan.overview.length <= 800 && plan.overview.length > 0);
+});
+
+test('parse: meaning-changing problems still fail, with an internal reason', () => {
+  assert.deepEqual(parsePlanResult('no braces here', 3), { ok: false, reason: 'no_json' });
+  assert.deepEqual(parsePlanResult(goodPlanJson().slice(0, -2), 3), { ok: false, reason: 'bad_json' });
+  assert.deepEqual(parsePlanResult(goodPlanJson(4), 3), { ok: false, reason: 'day_count' });
+  assert.deepEqual(parsePlanResult(mutate((p) => { p.days[1].day = 'mon'; }), 3), { ok: false, reason: 'bad_day' });
+  assert.deepEqual(parsePlanResult(mutate((p) => { p.days[1].day = 'someday'; }), 3), { ok: false, reason: 'bad_day' });
+  assert.deepEqual(parsePlanResult(mutate((p) => { p.days[0].exercises[0].sets = 'three'; }), 3), { ok: false, reason: 'bad_exercise' });
+  assert.deepEqual(parsePlanResult(mutate((p) => { p.days[0].exercises[0].name = ''; }), 3), { ok: false, reason: 'bad_exercise' });
+  assert.deepEqual(parsePlanResult('{"days":"mon"}', 3), { ok: false, reason: 'bad_days' });
+});
+
+test('parse: clip never adds text and prefers a sentence end', () => {
+  assert.equal(clip('First sentence here. Second one goes on.', 30), 'First sentence here.');
+  assert.equal(clip('alpha beta gamma delta', 13), 'alpha beta');
+  assert.equal(clip('short', 80), 'short');
+});
+
+test('parse: a clipped note is still checked by the safety filter', async () => {
+  const { ctx, providers } = await ctxFor();
+  const filtered: string[] = [];
+  const bad = mutate((p) => { p.days[0].exercises[0].notes = 'Try fasted cardio on these days. ' + 'Breathe. '.repeat(40); });
+  const r = await handleAiPlan(deps(ctx, providers, mockAnthropic(bad).client, filtered), ALICE, VALID);
+  assert.equal(r.status, 422);
+  assert.deepEqual(filtered, ['eating_disorder']);
+});
+
+test('retry: one unreadable reply is retried and the second, good reply is used', async () => {
+  const { ctx, providers } = await ctxFor();
+  const filtered: string[] = [];
+  const a = seqAnthropic([{ text: goodPlanJson().slice(0, 200), stopReason: 'max_tokens' }, { text: goodPlanJson() }]);
+  const r = await handleAiPlan(deps(ctx, providers, a.client, filtered), ALICE, VALID);
+  assert.equal(r.status, 200);
+  assert.equal(a.sent.length, 2);
+  assert.deepEqual(a.sent[0], a.sent[1]); // the retry sends the same allowlisted request, nothing added
+  assert.deepEqual(filtered, ['truncated']);
+});
+
+test('retry: a wrong training-day count is logged as day_count and retried once', async () => {
+  const { ctx, providers } = await ctxFor();
+  const filtered: string[] = [];
+  const a = seqAnthropic([{ text: goodPlanJson(4) }]);
+  const r = await handleAiPlan(deps(ctx, providers, a.client, filtered), ALICE, VALID);
+  assert.deepEqual(r, { status: 422, body: { error: 'plan_unavailable' } });
+  assert.equal(a.sent.length, 2);
+  assert.deepEqual(filtered, ['day_count', 'day_count']);
+});
+
+test('retry: never after a refusal or a filter hit (fails closed, no re-rolling)', async () => {
+  const { ctx, providers } = await ctxFor();
+  const refused = seqAnthropic([{ text: '', stopReason: 'refusal' }, { text: goodPlanJson() }]);
+  assert.equal((await handleAiPlan(deps(ctx, providers, refused.client), ALICE, VALID)).status, 422);
+  assert.equal(refused.sent.length, 1);
+  const flagged = seqAnthropic([{ text: goodPlanJson().replace('Smooth tempo', 'Then purge') }, { text: goodPlanJson() }]);
+  assert.equal((await handleAiPlan(deps(ctx, providers, flagged.client), ALICE, VALID)).status, 422);
+  assert.equal(flagged.sent.length, 1);
+});
+
+test('retry: skipped when the first call used up the time budget', async () => {
+  const { ctx, providers } = await ctxFor();
+  const filtered: string[] = [];
+  let t = 0;
+  const a = seqAnthropic([{ text: 'not json' }, { text: goodPlanJson() }]);
+  const slow: AnthropicClient = { async createMessage(req) { t += 80_000; return a.client.createMessage(req); } };
+  const r = await handleAiPlan({ ...deps(ctx, providers, slow, filtered), now: () => t }, ALICE, VALID);
+  assert.equal(r.status, 422);
+  assert.equal(a.sent.length, 1);
+  assert.deepEqual(filtered, ['unparseable']);
+});
+
+test('prompt: max_tokens leaves room for a full seven-day plan', () => {
+  const req = buildPlanRequest({ ...VALID, daysPerWeek: 7, requestId: 'r', ageBand: '18_plus', injuryCategory: 'none' }, 'm');
+  assert.ok(req.max_tokens >= 8000);
 });
 
 // ---------------------------------------------------------------- Anthropic client

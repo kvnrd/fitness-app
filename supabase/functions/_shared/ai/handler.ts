@@ -7,7 +7,7 @@ import type { AnthropicClient } from './anthropic.ts';
 import { planToDraft, type PlanDraft } from './draft.ts';
 import { filterPlan } from './filter.ts';
 import { AI_PLAN_NOTICE } from './notice.ts';
-import { parsePlan } from './plan.ts';
+import { parsePlanResult, type Plan } from './plan.ts';
 import { buildPlanRequest } from './prompt.ts';
 import { AGE_BANDS, INJURY_CATEGORIES, isOneOf, MINOR_BLOCKED_GOALS, parsePlanRequest, type InjuryCategory } from './schema.ts';
 
@@ -31,7 +31,15 @@ export interface AiDeps {
   onFiltered?: (category: string) => void | Promise<void>;
   /** Keeps the filtered plan server-side so "Start this plan" saves exactly this plan (mark_ai_plan_accepted). */
   saveDraft?: (actor: string, draft: PlanDraft) => Promise<void>;
+  /** Milliseconds clock, injectable for tests. */
+  now?: () => number;
 }
+
+/** One retry only when the reply could not be read (cut off or malformed). Never after a refusal or a
+ *  filter hit: a plan the filter blocks is not re-rolled until one slips through (fails closed). */
+const MAX_ATTEMPTS = 2;
+/** Start a retry only if it can finish inside the edge function's wall-clock limit (60 s client timeout). */
+const RETRY_BUDGET_MS = 75_000;
 
 async function injuryCategory(deps: AiDeps, actor: string, ctx: AiContextRow): Promise<InjuryCategory> {
   if (!ctx.health_ok || !ctx.injury_category_ct || !ctx.wrapped_key || !ctx.key_provider || !ctx.kms_key_ref) return 'none';
@@ -71,23 +79,30 @@ export async function handleAiPlan(deps: AiDeps, actor: string, input: unknown):
     deps.model,
   );
 
-  let text: string;
-  try {
-    const r = await deps.anthropic.createMessage(request);
+  const now = deps.now ?? Date.now;
+  const started = now();
+  let plan: Plan | null = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && !plan; attempt++) {
+    if (attempt > 1 && now() - started > RETRY_BUDGET_MS) break;
+    let r: { text: string; stopReason: string | null };
+    try {
+      r = await deps.anthropic.createMessage(request);
+    } catch {
+      return fail(502, 'plan_unavailable');
+    }
     if (r.stopReason === 'refusal') {
       await deps.onFiltered?.('refusal');
       return fail(422, 'plan_unavailable');
     }
-    text = r.text;
-  } catch {
-    return fail(502, 'plan_unavailable');
+    const parsed = parsePlanResult(r.text, req.daysPerWeek);
+    if (parsed.ok) {
+      plan = parsed.plan;
+    } else {
+      // Reason code only. A reply cut off at max_tokens is logged apart from other unreadable replies.
+      await deps.onFiltered?.(r.stopReason === 'max_tokens' ? 'truncated' : parsed.reason === 'day_count' ? 'day_count' : 'unparseable');
+    }
   }
-
-  const plan = parsePlan(text, req.daysPerWeek);
-  if (!plan) {
-    await deps.onFiltered?.('unparseable');
-    return fail(422, 'plan_unavailable');
-  }
+  if (!plan) return fail(422, 'plan_unavailable');
   const verdict = filterPlan(plan, { minor });
   if (!verdict.ok) {
     await deps.onFiltered?.(verdict.category);
